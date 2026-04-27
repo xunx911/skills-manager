@@ -11,19 +11,11 @@ Eval-backed SkillHub prototype for managing skill variants, versioned eval sets,
 - An `EvalRun` records pass/fail results for one `VariantVersion + EvalSetVersion`.
 - Standard skill folders can be imported as `skill_bundle` artifacts and viewed or diffed by version.
 
-## Run The Frontend
+## Quick Start
 
-```bash
-cd demo
-npm install
-npm run dev
-```
+Run the backend first, then the frontend in a second terminal.
 
-Open `http://127.0.0.1:5173`.
-
-## Run The Backend
-
-Use a virtual environment so the demo does not touch the global Python install:
+### 1. Backend API
 
 ```bash
 cd demo-backend
@@ -33,7 +25,38 @@ python -m unittest discover -s tests
 python -m skillhub_demo.server --port 8788
 ```
 
-The backend uses only the Python standard library and persists demo state to `demo-backend/data/skillhub-demo.json`.
+The API will be available at `http://127.0.0.1:8788`.
+
+Notes:
+
+- The backend uses only the Python standard library.
+- The virtual environment keeps your global Python install clean.
+- Demo mutations are persisted to `demo-backend/data/skillhub-demo.json`.
+
+### 2. Frontend App
+
+Open a second terminal:
+
+```bash
+cd demo
+npm install
+npm run dev
+```
+
+The app will be available at `http://127.0.0.1:5173`.
+
+### Verification Commands
+
+```bash
+cd demo-backend
+. .venv/bin/activate
+python -m unittest discover -s tests
+```
+
+```bash
+cd demo
+npm run build
+```
 
 ## Main Docs
 
