@@ -63,3 +63,4 @@ npm run build
 - [MVP spec](docs/MVP_SPEC.md)
 - [API contract](docs/api-contract.md)
 - [Design spec](docs/mvp-design-spec.md)
+- [SQLite schema spike](docs/sqlite-schema-spike.md)
