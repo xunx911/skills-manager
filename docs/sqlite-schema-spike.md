@@ -13,8 +13,8 @@ Included:
 - Preserve append-only facts for `VariantVersion`, `EvalSetVersion`, `EvalRun`, and `CaseResult`.
 - Query case details for an `EvalSetVersion`.
 - Query pass/fail counts for `VariantVersion + EvalSetVersion`.
-- Serve the `EvalSet` and `EvalResult` HTTP read paths from SQL when the SQLite repository is active.
-- Track an explicit SQLite schema version in `schema_meta`.
+- Serve the hub, skill, variant, eval-set, and eval-result read paths from SQL when the SQLite repository is active.
+- Track an explicit SQLite schema version in `schema_meta` with a migration hook for future versions.
 - Use foreign keys to reject broken references.
 
 Not included:
@@ -64,7 +64,7 @@ The backend now uses a repository boundary:
 - `SqliteRepository` is the default runtime persistence.
 - `JsonFileRepository` remains available with `--store json`.
 - SQLite stores the exact runtime state in `app_state` and refreshes normalized tables after each save.
-- `GET /api/eval-set` and `GET /api/eval-result` use SQL read models when SQLite is active.
+- `GET /api/skills`, `GET /api/skill`, `GET /api/variant-page`, `GET /api/eval-set`, and `GET /api/eval-result` use SQL read models when SQLite is active.
 
 This is intentionally a bridge implementation. It lets the demo run on SQLite now without prematurely rewriting every CRUD path as SQL.
 
@@ -74,6 +74,7 @@ The spike confirms:
 
 - Seed data imports into normalized tables.
 - Runtime mutations round-trip through SQLite.
+- The hub, skill, and variant SQL read models match the existing domain store API shape.
 - The eval-result SQL read model uses the latest finished run for a given `VariantVersion + EvalSetVersion`.
 - `version-a-v1 + evalset-v1` produces the same result counts as the JSON store: `2 passed / 1 failed / 0 missing`.
 - Eval set pages can retrieve concrete case input and expected output from artifact joins.

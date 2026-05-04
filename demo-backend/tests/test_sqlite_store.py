@@ -11,14 +11,25 @@ from skillhub_demo.sqlite_store import (
     eval_result_counts,
     eval_set_case_details,
     import_app_data,
+    set_schema_version_for_test,
+    skill_detail,
+    skills_overview,
     table_counts,
+    variant_page,
 )
+from skillhub_demo.store import SkillHubStore
 
 
 class SqliteStoreTest(unittest.TestCase):
     def test_initialize_records_schema_version(self):
         connection = connect()
         self.assertEqual(current_schema_version(connection), 1)
+
+    def test_newer_schema_version_is_rejected(self):
+        connection = connect()
+        set_schema_version_for_test(connection, 99)
+        with self.assertRaisesRegex(RuntimeError, "newer than supported"):
+            current_schema_version(connection)
 
     def test_import_seed_data_preserves_counts_and_eval_results(self):
         data = create_seed_data()
@@ -46,6 +57,19 @@ class SqliteStoreTest(unittest.TestCase):
         self.assertEqual(cases[0]["source_type"], "manual")
         self.assertIn("nickname.toUpperCase", cases[0]["input"])
         self.assertIn("toUpperCase", cases[0]["expected_output"])
+
+    def test_skill_and_variant_read_models_match_domain_store_shape(self):
+        data = create_seed_data()
+        connection = connect()
+        import_app_data(connection, data)
+        domain_store = SkillHubStore(data)
+
+        self.assertEqual(skills_overview(connection), domain_store.skills())
+        self.assertEqual(skill_detail(connection, "skill-code-reviewer"), domain_store.skill_detail("skill-code-reviewer"))
+        self.assertEqual(
+            variant_page(connection, "variant-a", "version-a-v1", "evalset-v1"),
+            domain_store.variant_page("variant-a", "version-a-v1", "evalset-v1"),
+        )
 
     def test_eval_result_detail_uses_latest_finished_run(self):
         data = create_seed_data()

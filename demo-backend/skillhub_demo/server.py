@@ -42,7 +42,7 @@ class Handler(BaseHTTPRequestHandler):
             {
                 "/health": lambda _query: {"ok": True},
                 "/api/state": lambda _query: store().state(),
-                "/api/skills": lambda _query: {"skills": store().skills()},
+                "/api/skills": self._skills,
                 "/api/skill": self._skill_detail,
                 "/api/variant-page": self._variant_page,
                 "/api/eval-set": self._eval_set,
@@ -93,14 +93,27 @@ class Handler(BaseHTTPRequestHandler):
             self._send_json(500, {"error": str(error)})
 
     def _variant_page(self, query: Dict[str, str]) -> Any:
+        variant_id = self._required(query, "variant_id")
+        version_id = query.get("version_id")
+        eval_set_version_id = self._required(query, "eval_set_version_id")
+        if REPOSITORY is not None and hasattr(REPOSITORY, "variant_page"):
+            return REPOSITORY.variant_page(variant_id, version_id, eval_set_version_id)  # type: ignore[attr-defined]
         return store().variant_page(
-            self._required(query, "variant_id"),
-            query.get("version_id"),
-            self._required(query, "eval_set_version_id"),
+            variant_id,
+            version_id,
+            eval_set_version_id,
         )
 
+    def _skills(self, _query: Dict[str, str]) -> Any:
+        if REPOSITORY is not None and hasattr(REPOSITORY, "skills"):
+            return {"skills": REPOSITORY.skills()}  # type: ignore[attr-defined]
+        return {"skills": store().skills()}
+
     def _skill_detail(self, query: Dict[str, str]) -> Any:
-        return store().skill_detail(self._required(query, "skill_id"))
+        skill_id = self._required(query, "skill_id")
+        if REPOSITORY is not None and hasattr(REPOSITORY, "skill_detail"):
+            return REPOSITORY.skill_detail(skill_id)  # type: ignore[attr-defined]
+        return store().skill_detail(skill_id)
 
     def _eval_set(self, query: Dict[str, str]) -> Any:
         eval_set_version_id = self._required(query, "eval_set_version_id")

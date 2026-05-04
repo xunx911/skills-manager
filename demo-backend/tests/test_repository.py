@@ -77,6 +77,28 @@ class RepositoryTest(unittest.TestCase):
             self.assertEqual(detail["result_counts"], {"passed": 2, "failed": 1, "missing": 0, "total": 3})
             self.assertEqual([item["result"]["passed"] for item in detail["cases"]], [True, False, True])
 
+    def test_sqlite_repository_serves_hub_skill_and_variant_read_models(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo = SqliteRepository(Path(tmpdir) / "skillhub-demo.sqlite3")
+            store = SkillHubStore(repo.load(create_seed_data))
+            created = store.create_variant(
+                skill_id="skill-code-reviewer",
+                name="Variant C",
+                label="OpenCode tuned",
+                summary="OpenCode 环境下维护的当前认可解。",
+                tags=["opencode", "minimax2.7"],
+            )
+            repo.save(store.data)
+
+            skills = repo.skills()
+            skill = repo.skill_detail("skill-code-reviewer")
+            page = repo.variant_page(created["variant"]["id"], None, "evalset-v1")
+
+            self.assertEqual(skills[0]["variant"]["id"], "variant-a")
+            self.assertEqual(len(skill["variants"]), 3)
+            self.assertEqual(page["variant_version"]["id"], created["variant_version"]["id"])
+            self.assertEqual(page["tags"], ["minimax2.7", "opencode"])
+
     def test_sqlite_repository_imports_legacy_json_once(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             json_path = Path(tmpdir) / "legacy.json"

@@ -2,13 +2,14 @@ from __future__ import annotations
 
 import json
 import sqlite3
-from typing import Any, Dict, Iterable, Tuple
+from typing import Any, Dict, Iterable, List, Tuple
 
 from .models import AppData, to_jsonable
 from .persistence import app_data_from_dict
 
 
 SCHEMA_VERSION = 1
+MIGRATIONS: Dict[int, str] = {}
 
 SCHEMA = """
 PRAGMA foreign_keys = ON;
@@ -154,6 +155,35 @@ def connect(path: str = ":memory:") -> sqlite3.Connection:
 
 def initialize(connection: sqlite3.Connection) -> None:
     connection.executescript(SCHEMA)
+    _migrate_schema(connection)
+
+
+def _migrate_schema(connection: sqlite3.Connection) -> None:
+    row = connection.execute("SELECT version FROM schema_meta WHERE id = 1").fetchone()
+    if row is None:
+        with connection:
+            connection.execute(
+                "INSERT INTO schema_meta (id, version, updated_at) VALUES (1, ?, CURRENT_TIMESTAMP)",
+                (SCHEMA_VERSION,),
+            )
+        return
+
+    version = int(row["version"])
+    if version > SCHEMA_VERSION:
+        raise RuntimeError("SQLite schema version %d is newer than supported version %d" % (version, SCHEMA_VERSION))
+    for next_version in range(version + 1, SCHEMA_VERSION + 1):
+        migration = MIGRATIONS.get(next_version)
+        if migration:
+            connection.executescript(migration)
+        with connection:
+            connection.execute(
+                "UPDATE schema_meta SET version = ?, updated_at = CURRENT_TIMESTAMP WHERE id = 1",
+                (next_version,),
+            )
+
+
+def set_schema_version_for_test(connection: sqlite3.Connection, version: int) -> None:
+    connection.executescript(SCHEMA)
     with connection:
         connection.execute(
             """
@@ -161,7 +191,7 @@ def initialize(connection: sqlite3.Connection) -> None:
             VALUES (1, ?, CURRENT_TIMESTAMP)
             ON CONFLICT(id) DO UPDATE SET version = excluded.version, updated_at = CURRENT_TIMESTAMP
             """,
-            (SCHEMA_VERSION,),
+            (version,),
         )
 
 
@@ -217,6 +247,117 @@ def load_app_snapshot(connection: sqlite3.Connection) -> AppData | None:
     if not isinstance(raw, dict):
         raise ValueError("SQLite app_state.state_json must be an object")
     return app_data_from_dict(raw)
+
+
+def skills_overview(connection: sqlite3.Connection) -> List[Dict[str, Any]]:
+    rows = connection.execute("SELECT id, default_variant_ref FROM skills ORDER BY created_at, id").fetchall()
+    pages = []
+    for row in rows:
+        eval_set = latest_eval_set_for_skill(connection, row["id"])
+        pages.append(variant_page(connection, row["default_variant_ref"], None, eval_set["id"]))
+    return pages
+
+
+def skill_detail(connection: sqlite3.Connection, skill_id: str) -> Dict[str, Any]:
+    skill = _skill_row(connection, skill_id)
+    variants = [
+        _variant_payload(row)
+        for row in connection.execute(
+            """
+            SELECT id, skill_ref, name, label, summary, tag_set_ref, current_version_ref, created_at
+            FROM variants
+            WHERE skill_ref = ?
+            ORDER BY created_at, id
+            """,
+            (skill_id,),
+        ).fetchall()
+    ]
+    return {
+        "skill": _compact(dict(skill)),
+        "variants": variants,
+        "eval_set_version": latest_eval_set_for_skill(connection, skill_id),
+    }
+
+
+def variant_page(
+    connection: sqlite3.Connection,
+    variant_id: str,
+    version_id: str | None,
+    eval_set_version_id: str,
+) -> Dict[str, Any]:
+    variant = _variant_row(connection, variant_id)
+    selected_version_id = version_id or variant["current_version_ref"]
+    version = _variant_version_row(connection, selected_version_id)
+    eval_set = eval_set_detail(connection, eval_set_version_id)["eval_set_version"]
+    history = [
+        _variant_version_payload(row)
+        for row in connection.execute(
+            """
+            SELECT
+              id,
+              variant_ref,
+              version,
+              content_kind,
+              content_locator,
+              content_digest,
+              content_path,
+              change_note,
+              created_at
+            FROM variant_versions
+            WHERE variant_ref = ?
+            ORDER BY created_at DESC, id DESC
+            """,
+            (variant_id,),
+        ).fetchall()
+    ]
+    counts = eval_result_counts(connection, selected_version_id, eval_set_version_id)
+    return {
+        "variant": _variant_payload(variant),
+        "variant_version": _variant_version_payload(version),
+        "tags": tags_for_variant(connection, variant_id),
+        "history": history,
+        "eval_set_version": eval_set,
+        "score": _score_from_counts(counts),
+        "result_counts": counts,
+        "content_ref": _content_ref_payload(version),
+        "verification_runs": _verification_runs(connection, variant["skill_ref"], selected_version_id),
+    }
+
+
+def latest_eval_set_for_skill(connection: sqlite3.Connection, skill_id: str) -> Dict[str, Any]:
+    row = _required_row(
+        connection,
+        """
+        SELECT esv.id, esv.corpus_ref, esv.version, esv.created_at
+        FROM eval_set_versions esv
+        JOIN eval_corpora ec ON ec.id = esv.corpus_ref
+        WHERE ec.skill_ref = ?
+        ORDER BY esv.created_at DESC, esv.id DESC
+        LIMIT 1
+        """,
+        (skill_id,),
+        "No eval set version for skill %s" % skill_id,
+    )
+    case_refs = _eval_set_case_refs(connection, row["id"])
+    return {**dict(row), "case_refs": case_refs}
+
+
+def tags_for_variant(connection: sqlite3.Connection, variant_id: str) -> List[str]:
+    row = _required_row(
+        connection,
+        """
+        SELECT ts.tags_json
+        FROM variants v
+        JOIN tag_sets ts ON ts.id = v.tag_set_ref
+        WHERE v.id = ?
+        """,
+        (variant_id,),
+        "Unknown variant %s" % variant_id,
+    )
+    tags = json.loads(row["tags_json"])
+    if not isinstance(tags, list) or not all(isinstance(item, str) for item in tags):
+        raise ValueError("Invalid tag set JSON for variant %s" % variant_id)
+    return tags
 
 
 def eval_result_counts(connection: sqlite3.Connection, variant_version_id: str, eval_set_version_id: str) -> Dict[str, int]:
@@ -279,13 +420,7 @@ def eval_set_detail(connection: sqlite3.Connection, eval_set_version_id: str) ->
         (eval_set_version_id,),
         "Unknown eval set version %s" % eval_set_version_id,
     )
-    case_refs = [
-        row["case_ref"]
-        for row in connection.execute(
-            "SELECT case_ref FROM eval_set_cases WHERE eval_set_version_ref = ? ORDER BY position",
-            (eval_set_version_id,),
-        ).fetchall()
-    ]
+    case_refs = _eval_set_case_refs(connection, eval_set_version_id)
     return {
         "eval_set_version": {
             **dict(eval_set),
@@ -296,35 +431,8 @@ def eval_set_detail(connection: sqlite3.Connection, eval_set_version_id: str) ->
 
 
 def eval_result_detail(connection: sqlite3.Connection, variant_version_id: str, eval_set_version_id: str) -> Dict[str, Any]:
-    version = _required_row(
-        connection,
-        """
-        SELECT
-          id,
-          variant_ref,
-          version,
-          content_kind,
-          content_locator,
-          content_digest,
-          content_path,
-          change_note,
-          created_at
-        FROM variant_versions
-        WHERE id = ?
-        """,
-        (variant_version_id,),
-        "Unknown variant version %s" % variant_version_id,
-    )
-    variant = _required_row(
-        connection,
-        """
-        SELECT id, skill_ref, name, label, summary, tag_set_ref, current_version_ref, created_at
-        FROM variants
-        WHERE id = ?
-        """,
-        (version["variant_ref"],),
-        "Unknown variant %s" % version["variant_ref"],
-    )
+    version = _variant_version_row(connection, variant_version_id)
+    variant = _variant_row(connection, version["variant_ref"])
     eval_set_payload = eval_set_detail(connection, eval_set_version_id)
     latest_run_id = _latest_finished_run_id(connection, variant_version_id, eval_set_version_id)
     counts = eval_result_counts(connection, variant_version_id, eval_set_version_id)
@@ -351,20 +459,8 @@ def eval_result_detail(connection: sqlite3.Connection, variant_version_id: str, 
         cases.append({**case, "result": result})
 
     return {
-        "variant": dict(variant),
-        "variant_version": {
-            "id": version["id"],
-            "variant_ref": version["variant_ref"],
-            "version": version["version"],
-            "content_ref": {
-                "kind": version["content_kind"],
-                "locator": version["content_locator"],
-                "digest": version["content_digest"],
-                **({"path": version["content_path"]} if version["content_path"] is not None else {}),
-            },
-            "change_note": version["change_note"],
-            "created_at": version["created_at"],
-        },
+        "variant": _variant_payload(variant),
+        "variant_version": _variant_version_payload(version),
         "eval_set_version": eval_set_payload["eval_set_version"],
         "score": score,
         "result_counts": counts,
@@ -386,6 +482,153 @@ def _latest_finished_run_id(connection: sqlite3.Connection, variant_version_id: 
         (variant_version_id, eval_set_version_id),
     ).fetchone()
     return row["id"] if row is not None else None
+
+
+def _verification_runs(connection: sqlite3.Connection, skill_id: str, variant_version_id: str) -> List[Dict[str, Any]]:
+    rows = connection.execute(
+        """
+        SELECT esv.id, esv.corpus_ref, esv.version, esv.created_at
+        FROM eval_set_versions esv
+        JOIN eval_corpora ec ON ec.id = esv.corpus_ref
+        WHERE ec.skill_ref = ?
+        ORDER BY esv.created_at DESC, esv.id DESC
+        """,
+        (skill_id,),
+    ).fetchall()
+    runs = []
+    for row in rows:
+        eval_set = {**dict(row), "case_refs": _eval_set_case_refs(connection, row["id"])}
+        run = _latest_finished_run(connection, variant_version_id, row["id"])
+        counts = eval_result_counts(connection, variant_version_id, row["id"])
+        runs.append(
+            {
+                "eval_set_version": eval_set,
+                "eval_run": run,
+                "score": _score_from_counts(counts),
+                "result_counts": counts,
+            }
+        )
+    return runs
+
+
+def _latest_finished_run(connection: sqlite3.Connection, variant_version_id: str, eval_set_version_id: str) -> Dict[str, Any] | None:
+    row = connection.execute(
+        """
+        SELECT
+          id,
+          variant_version_ref,
+          eval_set_version_ref,
+          strategy_ref,
+          run_config_hash,
+          status,
+          started_at,
+          finished_at,
+          result_artifact_ref
+        FROM eval_runs
+        WHERE variant_version_ref = ?
+          AND eval_set_version_ref = ?
+          AND status = 'finished'
+        ORDER BY started_at DESC
+        LIMIT 1
+        """,
+        (variant_version_id, eval_set_version_id),
+    ).fetchone()
+    return _compact(dict(row)) if row is not None else None
+
+
+def _score_from_counts(counts: Dict[str, int]) -> float | None:
+    if counts["total"] == 0 or counts["missing"] > 0:
+        return None
+    return counts["passed"] / counts["total"]
+
+
+def _eval_set_case_refs(connection: sqlite3.Connection, eval_set_version_id: str) -> List[str]:
+    return [
+        row["case_ref"]
+        for row in connection.execute(
+            "SELECT case_ref FROM eval_set_cases WHERE eval_set_version_ref = ? ORDER BY position",
+            (eval_set_version_id,),
+        ).fetchall()
+    ]
+
+
+def _skill_row(connection: sqlite3.Connection, skill_id: str) -> sqlite3.Row:
+    return _required_row(
+        connection,
+        "SELECT id, slug, owner_ref, default_variant_ref, created_at FROM skills WHERE id = ?",
+        (skill_id,),
+        "Unknown skill %s" % skill_id,
+    )
+
+
+def _variant_row(connection: sqlite3.Connection, variant_id: str) -> sqlite3.Row:
+    return _required_row(
+        connection,
+        """
+        SELECT id, skill_ref, name, label, summary, tag_set_ref, current_version_ref, created_at
+        FROM variants
+        WHERE id = ?
+        """,
+        (variant_id,),
+        "Unknown variant %s" % variant_id,
+    )
+
+
+def _variant_version_row(connection: sqlite3.Connection, variant_version_id: str) -> sqlite3.Row:
+    return _required_row(
+        connection,
+        """
+        SELECT
+          id,
+          variant_ref,
+          version,
+          content_kind,
+          content_locator,
+          content_digest,
+          content_path,
+          change_note,
+          created_at
+        FROM variant_versions
+        WHERE id = ?
+        """,
+        (variant_version_id,),
+        "Unknown variant version %s" % variant_version_id,
+    )
+
+
+def _variant_payload(row: sqlite3.Row) -> Dict[str, Any]:
+    return _compact(dict(row))
+
+
+def _variant_version_payload(row: sqlite3.Row) -> Dict[str, Any]:
+    return {
+        "id": row["id"],
+        "variant_ref": row["variant_ref"],
+        "version": row["version"],
+        "content_ref": {
+            "kind": row["content_kind"],
+            "locator": row["content_locator"],
+            "digest": row["content_digest"],
+            "path": row["content_path"],
+        },
+        "change_note": row["change_note"],
+        "created_at": row["created_at"],
+    }
+
+
+def _content_ref_payload(row: sqlite3.Row) -> Dict[str, Any]:
+    return _compact(
+        {
+            "kind": row["content_kind"],
+            "locator": row["content_locator"],
+            "digest": row["content_digest"],
+            "path": row["content_path"],
+        }
+    )
+
+
+def _compact(payload: Dict[str, Any]) -> Dict[str, Any]:
+    return {key: value for key, value in payload.items() if value is not None}
 
 
 def _required_row(connection: sqlite3.Connection, query: str, params: Tuple[Any, ...], message: str) -> sqlite3.Row:

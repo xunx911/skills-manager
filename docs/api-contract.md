@@ -196,8 +196,8 @@ MVP 约束：
 - 服务启动时：SQLite 有快照则读取快照；没有快照但存在 legacy JSON 时导入 JSON；否则使用 seed data。
 - 每次 `POST` / `PATCH` 成功后：Repository 写回完整 `AppData`。
 - SQLite 写入方式：保存 `app_state` 快照，并刷新一份规范化关系表。
-- SQLite 读路径：`GET /api/eval-set` 和 `GET /api/eval-result` 已经通过 SQL read model 返回。
-- SQLite schema：`schema_meta` 记录当前 schema version，后续 migration 从这里接。
+- SQLite 读路径：`GET /api/skills`、`GET /api/skill`、`GET /api/variant-page`、`GET /api/eval-set` 和 `GET /api/eval-result` 已经通过 SQL read model 返回。
+- SQLite schema：`schema_meta` 记录当前 schema version，初始化流程已预留 migration hook。
 - JSON 写入方式：先写临时文件，再替换目标文件，避免半写入。
 
 这只是 demo 层实现，不改变领域模型。正式版可以继续沿用同一套 Repository 契约，逐步把高价值读写路径替换成 SQL。
