@@ -133,8 +133,8 @@ class Handler(BaseHTTPRequestHandler):
 
     def _create_eval_case(self, _query: Dict[str, str]) -> Any:
         body = self._json_body()
-        return self._persist(
-            store().create_eval_case(
+        return self._mutate(
+            lambda current_store: current_store.create_eval_case(
                 skill_id=self._required(body, "skill_id"),
                 title=self._required(body, "title"),
                 input_text=self._required(body, "input"),
@@ -154,8 +154,8 @@ class Handler(BaseHTTPRequestHandler):
         tags = default_variant.get("tags")
         if not isinstance(tags, list) or not all(isinstance(item, str) for item in tags):
             raise ApiError(400, "default_variant.tags must be a string array")
-        return self._persist(
-            store().create_skill(
+        return self._mutate(
+            lambda current_store: current_store.create_skill(
                 slug=self._required(body, "slug"),
                 owner_ref=owner_ref,
                 variant_name=self._required(default_variant, "name"),
@@ -172,8 +172,8 @@ class Handler(BaseHTTPRequestHandler):
         tags = body.get("tags")
         if not isinstance(tags, list) or not all(isinstance(item, str) for item in tags):
             raise ApiError(400, "tags must be a string array")
-        return self._persist(
-            store().create_variant(
+        return self._mutate(
+            lambda current_store: current_store.create_variant(
                 skill_id=self._required(body, "skill_id"),
                 name=self._required(body, "name"),
                 label=self._required(body, "label"),
@@ -189,8 +189,8 @@ class Handler(BaseHTTPRequestHandler):
         files = body.get("files")
         if not isinstance(files, dict) or not all(isinstance(key, str) and isinstance(value, str) for key, value in files.items()):
             raise ApiError(400, "files must be an object mapping path to string content")
-        return self._persist(
-            store().import_skill_bundle(
+        return self._mutate(
+            lambda current_store: current_store.import_skill_bundle(
                 name=body.get("name", "") if isinstance(body.get("name", ""), str) else "",
                 files=files,
             )
@@ -204,8 +204,8 @@ class Handler(BaseHTTPRequestHandler):
             raise ApiError(400, "label must be a string")
         if summary is not None and not isinstance(summary, str):
             raise ApiError(400, "summary must be a string")
-        return self._persist(
-            store().update_variant(
+        return self._mutate(
+            lambda current_store: current_store.update_variant(
                 variant_id=self._required(body, "variant_id"),
                 label=label,
                 summary=summary,
@@ -223,8 +223,8 @@ class Handler(BaseHTTPRequestHandler):
             raise ApiError(400, "owner_ref must be a string")
         if default_variant_ref is not None and not isinstance(default_variant_ref, str):
             raise ApiError(400, "default_variant_ref must be a string")
-        return self._persist(
-            store().update_skill(
+        return self._mutate(
+            lambda current_store: current_store.update_skill(
                 skill_id=self._required(body, "skill_id"),
                 slug=slug,
                 owner_ref=owner_ref,
@@ -235,8 +235,8 @@ class Handler(BaseHTTPRequestHandler):
     def _publish_variant_version(self, _query: Dict[str, str]) -> Any:
         body = self._json_body()
         content_ref = body.get("content_ref")
-        return self._persist(
-            store().publish_variant_version(
+        return self._mutate(
+            lambda current_store: current_store.publish_variant_version(
                 variant_id=self._required(body, "variant_id"),
                 change_note=self._required(body, "change_note"),
                 content=body.get("content", ""),
@@ -249,8 +249,8 @@ class Handler(BaseHTTPRequestHandler):
         results = body.get("results")
         if not isinstance(results, dict):
             raise ApiError(400, "results must be an object mapping case id to boolean")
-        return self._persist(
-            store().record_eval_run(
+        return self._mutate(
+            lambda current_store: current_store.record_eval_run(
                 variant_version_id=self._required(body, "variant_version_id"),
                 eval_set_version_id=self._required(body, "eval_set_version_id"),
                 results={key: bool(value) for key, value in results.items()},
@@ -260,7 +260,9 @@ class Handler(BaseHTTPRequestHandler):
     def _reset_state(self, _query: Dict[str, str]) -> Any:
         global STORE
         STORE = SkillHubStore(create_seed_data())
-        return self._persist(store().state())
+        if REPOSITORY is not None:
+            REPOSITORY.save(STORE.data)
+        return STORE.state()
 
     def _json_body(self) -> Dict[str, Any]:
         length = int(self.headers.get("Content-Length", "0"))
@@ -294,10 +296,15 @@ class Handler(BaseHTTPRequestHandler):
             raise ApiError(400, "Unknown content_ref.kind")
         return ContentRef(kind=kind, locator=locator, digest=content_digest, path=path)  # type: ignore[arg-type]
 
-    def _persist(self, payload: Any) -> Any:
+    def _mutate(self, operation: Callable[[SkillHubStore], Any]) -> Any:
+        global STORE
         if REPOSITORY is not None:
-            REPOSITORY.save(store().data)
-        return payload
+            result = REPOSITORY.mutate(create_seed_data, operation)
+            STORE = SkillHubStore(REPOSITORY.load(create_seed_data))
+            return result
+        result = operation(store())
+        STORE = store()
+        return result
 
     def _send_json(self, status: int, payload: Any) -> None:
         body = b"" if status == 204 else json.dumps(payload, ensure_ascii=False, indent=2).encode("utf-8")

@@ -28,6 +28,25 @@ class RepositoryTest(unittest.TestCase):
             detail = loaded.skill_detail(created["skill"]["id"])
             self.assertEqual(detail["skill"]["slug"], "api-reviewer")
 
+    def test_json_repository_mutate_loads_saves_and_returns_payload(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo = JsonFileRepository(Path(tmpdir) / "skillhub-demo.json")
+
+            result = repo.mutate(
+                create_seed_data,
+                lambda store: store.create_variant(
+                    skill_id="skill-code-reviewer",
+                    name="Variant C",
+                    label="OpenCode tuned",
+                    summary="OpenCode 环境下维护的当前认可解。",
+                    tags=["opencode", "minimax2.7"],
+                ),
+            )
+
+            loaded = SkillHubStore(repo.load(create_seed_data))
+            self.assertEqual(result["variant"]["id"], loaded.data.variants[-1].id)
+            self.assertEqual(loaded.tags_for_variant(result["variant"]["id"]), ["minimax2.7", "opencode"])
+
     def test_sqlite_repository_persists_snapshot_and_normalized_tables(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             sqlite_path = Path(tmpdir) / "skillhub-demo.sqlite3"
@@ -57,6 +76,24 @@ class RepositoryTest(unittest.TestCase):
                 )
             finally:
                 connection.close()
+
+    def test_sqlite_repository_mutate_refreshes_sql_read_models(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo = SqliteRepository(Path(tmpdir) / "skillhub-demo.sqlite3")
+
+            result = repo.mutate(
+                create_seed_data,
+                lambda store: store.create_eval_case(
+                    skill_id="skill-code-reviewer",
+                    title="PR: token 写入错误响应",
+                    input_text="diff --git a/errors.ts b/errors.ts\n+ return { token }",
+                    expected_output="应指出 token 泄露风险。",
+                ),
+            )
+            detail = repo.eval_set_detail(result["eval_set_version"]["id"])
+
+            self.assertEqual(detail["eval_set_version"]["case_refs"][-1], result["eval_case"]["id"])
+            self.assertEqual(detail["cases"][-1]["input"], "diff --git a/errors.ts b/errors.ts\n+ return { token }")
 
     def test_sqlite_repository_serves_eval_result_read_model(self):
         with tempfile.TemporaryDirectory() as tmpdir:

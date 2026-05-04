@@ -63,6 +63,7 @@ The backend now uses a repository boundary:
 
 - `SqliteRepository` is the default runtime persistence.
 - `JsonFileRepository` remains available with `--store json`.
+- POST/PATCH handlers mutate state through the repository boundary instead of writing the global in-memory store directly.
 - SQLite stores the exact runtime state in `app_state` and refreshes normalized tables after each save.
 - `GET /api/skills`, `GET /api/skill`, `GET /api/variant-page`, `GET /api/eval-set`, and `GET /api/eval-result` use SQL read models when SQLite is active.
 
@@ -74,6 +75,7 @@ The spike confirms:
 
 - Seed data imports into normalized tables.
 - Runtime mutations round-trip through SQLite.
+- Repository `mutate` refreshes normalized SQL tables immediately after writes.
 - The hub, skill, and variant SQL read models match the existing domain store API shape.
 - The eval-result SQL read model uses the latest finished run for a given `VariantVersion + EvalSetVersion`.
 - `version-a-v1 + evalset-v1` produces the same result counts as the JSON store: `2 passed / 1 failed / 0 missing`.

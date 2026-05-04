@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Callable, Optional, Protocol, Union
+from typing import Any, Callable, Optional, Protocol, Union
 
 from .models import AppData
 from .persistence import load_app_data, save_app_data
@@ -15,6 +15,7 @@ from .sqlite_store import (
     skills_overview,
     variant_page,
 )
+from .store import SkillHubStore
 
 
 PathLike = Union[str, Path]
@@ -29,6 +30,9 @@ class StateRepository(Protocol):
     def save(self, data: AppData) -> None:
         ...
 
+    def mutate(self, fallback: Callable[[], AppData], operation: Callable[[SkillHubStore], Any]) -> Any:
+        ...
+
 
 class JsonFileRepository:
     def __init__(self, path: PathLike):
@@ -40,6 +44,12 @@ class JsonFileRepository:
 
     def save(self, data: AppData) -> None:
         save_app_data(self.path, data)
+
+    def mutate(self, fallback: Callable[[], AppData], operation: Callable[[SkillHubStore], Any]) -> Any:
+        store = SkillHubStore(self.load(fallback))
+        result = operation(store)
+        self.save(store.data)
+        return result
 
 
 class SqliteRepository:
@@ -68,6 +78,12 @@ class SqliteRepository:
             save_app_snapshot(connection, data)
         finally:
             connection.close()
+
+    def mutate(self, fallback: Callable[[], AppData], operation: Callable[[SkillHubStore], Any]) -> Any:
+        store = SkillHubStore(self.load(fallback))
+        result = operation(store)
+        self.save(store.data)
+        return result
 
     def skills(self) -> list:
         connection = connect(str(self.path))

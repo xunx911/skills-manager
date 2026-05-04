@@ -194,7 +194,7 @@ MVP 约束：
 - 默认 Repository：SQLite，路径 `demo-backend/data/skillhub-demo.sqlite3`。
 - 兼容 Repository：JSON 文件，使用 `--store json --data-file /tmp/skillhub-demo.json`。
 - 服务启动时：SQLite 有快照则读取快照；没有快照但存在 legacy JSON 时导入 JSON；否则使用 seed data。
-- 每次 `POST` / `PATCH` 成功后：Repository 写回完整 `AppData`。
+- 每次 `POST` / `PATCH` 成功后：HTTP 层通过 Repository `mutate` 边界加载当前状态、执行业务变更、写回完整 `AppData`。
 - SQLite 写入方式：保存 `app_state` 快照，并刷新一份规范化关系表。
 - SQLite 读路径：`GET /api/skills`、`GET /api/skill`、`GET /api/variant-page`、`GET /api/eval-set` 和 `GET /api/eval-result` 已经通过 SQL read model 返回。
 - SQLite schema：`schema_meta` 记录当前 schema version，初始化流程已预留 migration hook。
