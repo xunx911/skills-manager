@@ -56,6 +56,18 @@ Available demo strategies:
 - `all_pass`: marks every case as passed.
 - `title_contains_fail`: marks cases as failed by `--fail-case-version-id` or `--fail-case-title-contains`.
 - `expected_keyword`: marks a case as passed when its expected output or expectation contains `--expected-keyword`.
+- `external_command`: runs `--external-command`, passes `{"eval_set": ...}` on stdin, and expects JSON results on stdout.
+
+Example external command output:
+
+```json
+{
+  "results": {
+    "casever-null-v1": true,
+    "casever-auth-v1": false
+  }
+}
+```
 
 ## API Sketch
 

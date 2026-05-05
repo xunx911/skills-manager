@@ -1,4 +1,5 @@
 import socket
+import sys
 import threading
 import unittest
 from http.server import ThreadingHTTPServer
@@ -103,6 +104,41 @@ class ExternalRunnerTest(unittest.TestCase):
                 eval_set_version_id="evalset-v1",
                 strategy_ref="external-demo-runner-v1",
                 strategy="expected_keyword",
+            )
+
+    def test_runner_supports_external_command_strategy(self):
+        command = [
+            sys.executable,
+            "-c",
+            (
+                "import json, sys; "
+                "payload=json.load(sys.stdin); "
+                "cases=payload['eval_set']['eval_set_version']['case_version_refs']; "
+                "print(json.dumps({'results': {case: case.endswith('auth-v1') for case in cases}}))"
+            ),
+        ]
+
+        payload = build_eval_result_payload(
+            base_url=self.base_url,
+            variant_version_id="version-a-v1",
+            eval_set_version_id="evalset-v1",
+            strategy_ref="external-demo-runner-v1",
+            strategy="external_command",
+            external_command=command,
+        )
+
+        self.assertEqual(payload["results"]["casever-auth-v1"], True)
+        self.assertEqual(payload["results"]["casever-null-v1"], False)
+        self.assertEqual(payload["config"]["external_command"], command)
+
+    def test_external_command_strategy_requires_command(self):
+        with self.assertRaisesRegex(ValueError, "external_command"):
+            build_eval_result_payload(
+                base_url=self.base_url,
+                variant_version_id="version-a-v1",
+                eval_set_version_id="evalset-v1",
+                strategy_ref="external-demo-runner-v1",
+                strategy="external_command",
             )
 
 

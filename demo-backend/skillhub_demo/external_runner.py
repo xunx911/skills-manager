@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import argparse
 import json
+import shlex
+import subprocess
 from typing import Any, Dict, Iterable, List, Set
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
@@ -19,6 +21,8 @@ def build_eval_result_payload(
     fail_case_version_ids: Iterable[str] = (),
     fail_case_title_contains: Iterable[str] = (),
     expected_keyword: str = "",
+    external_command: Iterable[str] = (),
+    external_timeout_seconds: int = 30,
     run_config_hash: str = "",
 ) -> Dict[str, Any]:
     eval_set = fetch_eval_set(base_url, eval_set_version_id)
@@ -30,6 +34,8 @@ def build_eval_result_payload(
         fail_case_version_ids=list(fail_case_version_ids),
         fail_case_title_contains=list(fail_case_title_contains),
         expected_keyword=expected_keyword,
+        external_command=list(external_command),
+        external_timeout_seconds=external_timeout_seconds,
     )
     results = run_strategy(strategy, eval_set, strategy_config)
     validate_result_keys(case_refs, results)
@@ -95,16 +101,22 @@ class RunnerStrategyConfig:
         fail_case_version_ids: List[str],
         fail_case_title_contains: List[str],
         expected_keyword: str,
+        external_command: List[str],
+        external_timeout_seconds: int,
     ):
         self.fail_case_version_ids = fail_case_version_ids
         self.fail_case_title_contains = fail_case_title_contains
         self.expected_keyword = expected_keyword
+        self.external_command = external_command
+        self.external_timeout_seconds = external_timeout_seconds
 
     def to_jsonable(self) -> Dict[str, Any]:
         return {
             "fail_case_version_ids": sorted(self.fail_case_version_ids),
             "fail_case_title_contains": sorted(self.fail_case_title_contains),
             "expected_keyword": self.expected_keyword,
+            "external_command": self.external_command,
+            "external_timeout_seconds": self.external_timeout_seconds,
         }
 
 
@@ -115,6 +127,8 @@ def run_strategy(strategy: str, eval_set: Dict[str, Any], config: RunnerStrategy
         return title_contains_fail_strategy(eval_set, config)
     if strategy == "expected_keyword":
         return expected_keyword_strategy(eval_set, config)
+    if strategy == "external_command":
+        return external_command_strategy(eval_set, config)
     raise ValueError("Unknown runner strategy: %s" % strategy)
 
 
@@ -141,6 +155,34 @@ def expected_keyword_strategy(eval_set: Dict[str, Any], config: RunnerStrategyCo
         expectation = case.get("expectation", "")
         haystack = "%s\n%s" % (expected_output, expectation)
         results[case_id] = config.expected_keyword in haystack
+    return results
+
+
+def external_command_strategy(eval_set: Dict[str, Any], config: RunnerStrategyConfig) -> Dict[str, bool]:
+    if not config.external_command:
+        raise ValueError("external_command strategy requires --external-command")
+    completed = subprocess.run(
+        config.external_command,
+        input=json.dumps({"eval_set": eval_set}, ensure_ascii=False),
+        text=True,
+        capture_output=True,
+        timeout=config.external_timeout_seconds,
+        check=False,
+    )
+    if completed.returncode != 0:
+        raise ValueError("external command failed with exit code %d: %s" % (completed.returncode, completed.stderr.strip()))
+    try:
+        raw = json.loads(completed.stdout)
+    except json.JSONDecodeError as error:
+        raise ValueError("external command must print JSON: %s" % error) from error
+    if not isinstance(raw, dict):
+        raise ValueError("external command JSON output must be an object")
+
+    results = raw.get("results", raw)
+    if not isinstance(results, dict):
+        raise ValueError("external command results must be an object")
+    if not all(isinstance(key, str) and isinstance(value, bool) for key, value in results.items()):
+        raise ValueError("external command results must map case version id to boolean")
     return results
 
 
@@ -200,7 +242,7 @@ def main() -> None:
     parser.add_argument("--strategy-ref", default="external-demo-runner-v1")
     parser.add_argument(
         "--strategy",
-        choices=["all_pass", "title_contains_fail", "expected_keyword"],
+        choices=["all_pass", "title_contains_fail", "expected_keyword", "external_command"],
         default="title_contains_fail",
     )
     parser.add_argument("--run-config-hash", default="")
@@ -221,6 +263,17 @@ def main() -> None:
         default="",
         help="For expected_keyword strategy, pass only cases whose expected output or expectation contains this text.",
     )
+    parser.add_argument(
+        "--external-command",
+        default="",
+        help="For external_command strategy, command to run. The eval set is passed as JSON on stdin.",
+    )
+    parser.add_argument(
+        "--external-timeout-seconds",
+        default=30,
+        type=int,
+        help="Timeout for external_command strategy.",
+    )
     parser.add_argument("--dry-run", action="store_true", help="Print payload without importing it.")
     args = parser.parse_args()
 
@@ -233,6 +286,8 @@ def main() -> None:
         fail_case_version_ids=parse_fail_case_refs(args.fail_case_version_id),
         fail_case_title_contains=args.fail_case_title_contains,
         expected_keyword=args.expected_keyword,
+        external_command=shlex.split(args.external_command) if args.external_command else [],
+        external_timeout_seconds=args.external_timeout_seconds,
         run_config_hash=args.run_config_hash,
     )
     if args.dry_run:

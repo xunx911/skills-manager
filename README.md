@@ -75,6 +75,9 @@ python -m skillhub_demo.external_runner \
   --fail-case-title-contains 仅重命名
 ```
 
+To connect a real local evaluator, use the `external_command` strategy. The command receives
+`{"eval_set": ...}` on stdin and prints `{ "results": { "<case_version_id>": true } }`.
+
 ## Main Docs
 
 - [MVP spec](docs/MVP_SPEC.md)
