@@ -69,6 +69,42 @@ class ExternalRunnerTest(unittest.TestCase):
         self.assertEqual(payload["results"]["casever-noise-v1"], False)
         self.assertEqual(payload["results"]["casever-null-v1"], True)
 
+    def test_runner_supports_all_pass_strategy(self):
+        payload = build_eval_result_payload(
+            base_url=self.base_url,
+            variant_version_id="version-a-v1",
+            eval_set_version_id="evalset-v1",
+            strategy_ref="external-demo-runner-v1",
+            strategy="all_pass",
+        )
+
+        self.assertEqual(set(payload["results"].values()), {True})
+        self.assertEqual(payload["config"]["strategy"], "all_pass")
+
+    def test_runner_supports_expected_keyword_strategy(self):
+        payload = build_eval_result_payload(
+            base_url=self.base_url,
+            variant_version_id="version-a-v1",
+            eval_set_version_id="evalset-v1",
+            strategy_ref="external-demo-runner-v1",
+            strategy="expected_keyword",
+            expected_keyword="ownerId",
+        )
+
+        self.assertEqual(payload["results"]["casever-auth-v1"], True)
+        self.assertEqual(payload["results"]["casever-null-v1"], False)
+        self.assertEqual(payload["results"]["casever-noise-v1"], False)
+
+    def test_expected_keyword_strategy_requires_keyword(self):
+        with self.assertRaisesRegex(ValueError, "expected_keyword"):
+            build_eval_result_payload(
+                base_url=self.base_url,
+                variant_version_id="version-a-v1",
+                eval_set_version_id="evalset-v1",
+                strategy_ref="external-demo-runner-v1",
+                strategy="expected_keyword",
+            )
+
 
 if __name__ == "__main__":
     unittest.main()

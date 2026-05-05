@@ -51,6 +51,12 @@ python -m skillhub_demo.external_runner \
 
 Use `--dry-run` to print the payload without importing it.
 
+Available demo strategies:
+
+- `all_pass`: marks every case as passed.
+- `title_contains_fail`: marks cases as failed by `--fail-case-version-id` or `--fail-case-title-contains`.
+- `expected_keyword`: marks a case as passed when its expected output or expectation contains `--expected-keyword`.
+
 ## API Sketch
 
 - `GET /health`

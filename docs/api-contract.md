@@ -596,6 +596,8 @@ python -m skillhub_demo.external_runner \
   --fail-case-title-contains 仅重命名
 ```
 
+Demo runner 当前提供三个策略：`all_pass`、`title_contains_fail`、`expected_keyword`。它们都是外部策略接入形态的样例，不是正式测评质量的上限。
+
 ### Reset Demo State
 
 ```http
