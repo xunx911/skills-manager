@@ -29,6 +29,38 @@ class StoreTest(unittest.TestCase):
         self.assertEqual(len(detail["cases"]), 4)
         self.assertEqual(detail["cases"][-1]["input"], "diff --git a/errors.ts b/errors.ts\n+ return { token }")
 
+    def test_eval_case_version_creates_new_eval_set_version_without_mutating_history(self):
+        result = self.store.create_eval_case_version(
+            case_id="case-null",
+            input_text="diff --git a/profile.ts b/profile.ts\n+ saveDisplayName((user.nickname ?? '').toUpperCase())",
+            expected_output="不应再报告 nickname 为空导致 toUpperCase 崩溃。",
+        )
+
+        self.assertEqual(result["eval_case"]["current_version_ref"], result["eval_case_version"]["id"])
+        self.assertEqual(result["eval_case_version"]["version"], "v2")
+        self.assertEqual(result["eval_set_version"]["version"], "v2")
+        self.assertEqual(
+            self.store.eval_set_detail("evalset-v1")["eval_set_version"]["case_version_refs"],
+            ["casever-null-v1", "casever-auth-v1", "casever-noise-v1"],
+        )
+        self.assertEqual(
+            result["eval_set_version"]["case_version_refs"],
+            [result["eval_case_version"]["id"], "casever-auth-v1", "casever-noise-v1"],
+        )
+        self.assertEqual(self.store.result_counts("version-a-v1", result["eval_set_version"]["id"])["missing"], 3)
+
+    def test_eval_case_version_can_be_saved_without_moving_current_case_pointer(self):
+        result = self.store.create_eval_case_version(
+            case_id="case-null",
+            input_text="candidate input",
+            expected_output="candidate expected",
+            make_current=False,
+        )
+
+        self.assertEqual(result["eval_case"]["current_version_ref"], "casever-null-v1")
+        self.assertIsNone(result["eval_set_version"])
+        self.assertEqual(result["eval_case_version"]["version"], "v2")
+
     def test_create_skill_creates_default_variant_and_empty_eval_set(self):
         result = self.store.create_skill(
             slug="api-reviewer",

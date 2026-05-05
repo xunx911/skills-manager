@@ -1,7 +1,12 @@
 import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from "react";
-import { aggregateScore, casesForVersion, percent, resultCounts } from "../domain/scoring";
+import { aggregateScore, artifactContent, casesForVersion, percent, resultCounts } from "../domain/scoring";
 import type { AppState } from "../domain/types";
-import { publishBackendSkillBundleVersion, publishBackendVariantVersion, recordBackendEvalRun } from "../store/backendState";
+import {
+  createBackendEvalCaseVersion,
+  publishBackendSkillBundleVersion,
+  publishBackendVariantVersion,
+  recordBackendEvalRun,
+} from "../store/backendState";
 import { EvalMatrix } from "./EvalMatrix";
 
 export function WorkbenchPage({
@@ -26,6 +31,11 @@ export function WorkbenchPage({
   const [evalVariantVersionRef, setEvalVariantVersionRef] = useState(state.selectedVersionRef);
   const [evalSetVersionRef, setEvalSetVersionRef] = useState(state.evalSetVersionRef || versions.at(-1)?.id || "");
   const [manualResults, setManualResults] = useState<Record<string, boolean>>({});
+  const [caseVersionForm, setCaseVersionForm] = useState({
+    caseRef: "",
+    input: "",
+    expectedOutput: "",
+  });
   const [versionForm, setVersionForm] = useState({
     variantRef: state.selectedVariantRef || variants[0]?.id || "",
     changeNote: "根据最新实验结果更新当前变体版本，简化输出并加强敏感信息检查。",
@@ -101,6 +111,17 @@ export function WorkbenchPage({
     const defaults = Object.fromEntries(cases.map((item) => [item.id, manualResults[item.id] ?? true]));
     return defaults as Record<string, boolean>;
   }, [cases, manualResults]);
+  const selectedCase = cases.find((item) => item.id === caseVersionForm.caseRef) ?? cases[0];
+
+  useEffect(() => {
+    if (!selectedCase) return;
+    if (caseVersionForm.caseRef && cases.some((item) => item.id === caseVersionForm.caseRef)) return;
+    setCaseVersionForm({
+      caseRef: selectedCase.id,
+      input: artifactContent(data, selectedCase.inputArtifactRef),
+      expectedOutput: artifactContent(data, selectedCase.expectationArtifactRef),
+    });
+  }, [caseVersionForm.caseRef, cases, data, selectedCase]);
 
   if (!version) return null;
 
@@ -220,6 +241,69 @@ export function WorkbenchPage({
               />
             </label>
           ))}
+        </div>
+      </section>
+
+      <section className="panel">
+        <div className="panel-header">
+          <div>
+            <h2>修订测试用例</h2>
+            <p>给已有 EvalCase 创建新的不可变版本，并生成新的 EvalSetVersion。旧测评结果仍绑定旧用例版本。</p>
+          </div>
+          <button
+            className="primary-button"
+            type="button"
+            disabled={!selectedCase}
+            onClick={() => {
+              if (!selectedCase) return;
+              runApiAction(
+                createBackendEvalCaseVersion({
+                  caseId: selectedCase.caseRef ?? selectedCase.id,
+                  input: caseVersionForm.input,
+                  expectedOutput: caseVersionForm.expectedOutput,
+                  skillId: state.selectedSkillRef,
+                  evalSetVersionRef: version.id,
+                  view: "workbench",
+                }),
+              );
+            }}
+          >
+            发布 case version
+          </button>
+        </div>
+        <div className="form-grid">
+          <label className="field-block">
+            <span>EvalCase</span>
+            <select
+              value={selectedCase?.id ?? ""}
+              onChange={(event) => {
+                const nextCase = cases.find((item) => item.id === event.target.value);
+                if (!nextCase) return;
+                setCaseVersionForm({
+                  caseRef: nextCase.id,
+                  input: artifactContent(data, nextCase.inputArtifactRef),
+                  expectedOutput: artifactContent(data, nextCase.expectationArtifactRef),
+                });
+              }}
+            >
+              {cases.map((item) => (
+                <option value={item.id} key={item.id}>
+                  {item.title}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="field-block wide">
+            <span>Input</span>
+            <textarea value={caseVersionForm.input} onChange={(event) => setCaseVersionForm({ ...caseVersionForm, input: event.target.value })} />
+          </label>
+          <label className="field-block wide">
+            <span>Expected output</span>
+            <textarea
+              value={caseVersionForm.expectedOutput}
+              onChange={(event) => setCaseVersionForm({ ...caseVersionForm, expectedOutput: event.target.value })}
+            />
+          </label>
         </div>
       </section>
 

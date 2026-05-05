@@ -41,6 +41,28 @@ export async function createBackendEvalCase(input: {
   });
 }
 
+export async function createBackendEvalCaseVersion(input: {
+  caseId: string;
+  input: string;
+  expectedOutput: string;
+  makeCurrent?: boolean;
+  skillId?: string;
+  evalSetVersionRef?: string;
+  view?: AppState["view"];
+}): Promise<AppState> {
+  const result = await postJson("/api/eval-case-versions", {
+    case_id: input.caseId,
+    input: input.input,
+    expected_output: input.expectedOutput,
+    make_current: input.makeCurrent ?? true,
+  });
+  return loadBackendState({
+    view: input.view ?? "workbench",
+    selectedSkillRef: input.skillId,
+    evalSetVersionRef: result?.eval_set_version?.id ?? input.evalSetVersionRef,
+  });
+}
+
 export async function createBackendSkill(input: {
   slug: string;
   ownerRef: string;

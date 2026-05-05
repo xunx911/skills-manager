@@ -196,6 +196,84 @@ class SkillHubStore:
             "eval_set_version": self._eval_set_payload(eval_set),
         }
 
+    def create_eval_case_version(
+        self,
+        case_id: str,
+        input_text: str,
+        expected_output: str,
+        make_current: bool = True,
+    ) -> Dict[str, Any]:
+        eval_case = self._eval_case(case_id)
+        corpus = self._corpus(eval_case.corpus_ref)
+        current_eval_set = self._latest_eval_set_for_corpus(corpus.id)
+        created_at = now_iso()
+        existing_versions = [item for item in self.data.eval_case_versions if item.case_ref == eval_case.id]
+        next_number = len(existing_versions) + 1
+        case_version_id = self._unique_id(
+            "casever-%s-v%d" % (eval_case.id, next_number),
+            [item.id for item in self.data.eval_case_versions],
+            created_at,
+        )
+        input_artifact_id = "artifact-%s-input" % case_version_id
+        expected_artifact_id = "artifact-%s-expected" % case_version_id
+
+        self.data.artifacts.extend(
+            [
+                Artifact(
+                    id=input_artifact_id,
+                    kind="eval_input",
+                    content=input_text,
+                    content_hash=digest(input_text),
+                    media_type="text/plain",
+                    created_at=created_at,
+                ),
+                Artifact(
+                    id=expected_artifact_id,
+                    kind="expected_output",
+                    content=expected_output,
+                    content_hash=digest(expected_output),
+                    media_type="text/plain",
+                    created_at=created_at,
+                ),
+            ]
+        )
+
+        eval_case_version = EvalCaseVersion(
+            id=case_version_id,
+            case_ref=eval_case.id,
+            version="v%d" % next_number,
+            input_artifact_ref=input_artifact_id,
+            expectation_artifact_ref=expected_artifact_id,
+            grader_ref="manual-pass-fail-v1",
+            expectation=expected_output,
+            created_at=created_at,
+        )
+        self.data.eval_case_versions.append(eval_case_version)
+
+        eval_set = None
+        if make_current:
+            eval_case.current_version_ref = eval_case_version.id
+            next_eval_set_number = len([item for item in self.data.eval_set_versions if item.corpus_ref == corpus.id]) + 1
+            refs = self._replace_case_version_ref(current_eval_set.case_version_refs, eval_case.id, eval_case_version.id)
+            eval_set = EvalSetVersion(
+                id=self._unique_id(
+                    "evalset-v%d" % next_eval_set_number,
+                    [item.id for item in self.data.eval_set_versions],
+                    created_at,
+                ),
+                corpus_ref=corpus.id,
+                version="v%d" % next_eval_set_number,
+                case_version_refs=refs,
+                created_at=created_at,
+            )
+            self.data.eval_set_versions.append(eval_set)
+
+        return {
+            "eval_case": to_jsonable(eval_case),
+            "eval_case_version": to_jsonable(eval_case_version),
+            "eval_set_version": self._eval_set_payload(eval_set) if eval_set is not None else None,
+        }
+
     def create_skill(
         self,
         slug: str,
@@ -455,9 +533,12 @@ class SkillHubStore:
 
     def latest_eval_set_for_skill(self, skill_id: str) -> EvalSetVersion:
         corpus = self._corpus_for_skill(skill_id)
-        versions = [item for item in self.data.eval_set_versions if item.corpus_ref == corpus.id]
+        return self._latest_eval_set_for_corpus(corpus.id)
+
+    def _latest_eval_set_for_corpus(self, corpus_id: str) -> EvalSetVersion:
+        versions = [item for item in self.data.eval_set_versions if item.corpus_ref == corpus_id]
         if not versions:
-            raise KeyError("No eval set version for skill %s" % skill_id)
+            raise KeyError("No eval set version for corpus %s" % corpus_id)
         return sorted(versions, key=lambda item: item.version)[-1]
 
     def tags_for_variant(self, variant_id: str) -> List[str]:
@@ -584,6 +665,12 @@ class SkillHubStore:
             raise KeyError("Unknown eval corpus for skill %s" % skill_id)
         return corpus
 
+    def _corpus(self, corpus_id: str):
+        corpus = next((item for item in self.data.eval_corpora if item.id == corpus_id), None)
+        if corpus is None:
+            raise KeyError("Unknown eval corpus %s" % corpus_id)
+        return corpus
+
     def _artifact(self, artifact_id: str):
         artifact = next((item for item in self.data.artifacts if item.id == artifact_id), None)
         if artifact is None:
@@ -598,6 +685,21 @@ class SkillHubStore:
             raise ValueError("ContentRef locator must point to a skill_bundle artifact")
         if content_ref.digest != "sha-%s" % artifact.content_hash:
             raise ValueError("ContentRef digest does not match bundle artifact")
+
+    def _replace_case_version_ref(self, refs: List[str], case_id: str, next_case_version_id: str) -> List[str]:
+        replaced = False
+        next_refs: List[str] = []
+        for case_version_ref in refs:
+            case_version = self._eval_case_version(case_version_ref)
+            if case_version.case_ref == case_id:
+                if not replaced:
+                    next_refs.append(next_case_version_id)
+                    replaced = True
+                continue
+            next_refs.append(case_version_ref)
+        if not replaced:
+            next_refs.append(next_case_version_id)
+        return next_refs
 
     def _set_lifecycle(self, item, lifecycle_status: str) -> None:
         if lifecycle_status not in {"active", "archived"}:

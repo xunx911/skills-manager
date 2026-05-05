@@ -167,6 +167,7 @@ MVP 约束：
 | `VariantVersion` | `POST /api/variant-versions` | `GET /api/variant-page` | 不允许原地更新 | 不允许硬删 | 已覆盖 append-only |
 | `skill_bundle` artifact | `POST /api/skill-bundles` | `GET /api/skill-bundle` | 不允许原地更新 | 不允许硬删 | 已覆盖导入和读取 |
 | `EvalCase` | `POST /api/eval-cases` | `GET /api/eval-set` | 不建议原地更新 | 未实现，正式版做 archive | 已覆盖 append-only |
+| `EvalCaseVersion` | `POST /api/eval-case-versions` | `GET /api/eval-set` | 不允许原地更新 | 不允许硬删 | 已覆盖 append-only |
 | `EvalSetVersion` | 由 `POST /api/eval-cases` 自动创建 | `GET /api/eval-set` | 不允许原地更新 | 不允许硬删 | 已覆盖快照 |
 | `EvalRun` | `POST /api/eval-runs` | `GET /api/eval-result`、`GET /api/variant-page` | finished 后不改事实 | 不允许硬删 | 已覆盖测评记录 |
 | `CaseResult` | 随 `POST /api/eval-runs` 创建 | `GET /api/eval-result` | 不允许原地更新 | 不允许硬删 | 已覆盖 pass/fail |
@@ -489,6 +490,28 @@ Content-Type: application/json
 - 创建 `EvalCaseVersion v1`。
 - 创建 input / expected artifacts。
 - 基于当前最新测评集创建新的 `EvalSetVersion`。
+
+### Create Eval Case Version
+
+```http
+POST /api/eval-case-versions
+Content-Type: application/json
+
+{
+  "case_id": "case-null",
+  "input": "diff ...",
+  "expected_output": "不应再报告 nickname 为空导致 toUpperCase 崩溃。",
+  "make_current": true
+}
+```
+
+行为：
+
+- 创建新的 `EvalCaseVersion`。
+- 创建 input / expected artifacts。
+- 如果 `make_current=true` 或省略，更新 `EvalCase.current_version_ref`。
+- 基于当前最新测评集创建新的 `EvalSetVersion`，用新 case version 替换同一 case 的旧 version。
+- 旧 `EvalSetVersion`、旧 `EvalRun` 和旧 `CaseResult` 保持不变。
 
 ### Eval Result Detail
 

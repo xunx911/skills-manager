@@ -50,6 +50,7 @@ python -m skillhub_demo.server --sqlite-file /tmp/skillhub-demo.sqlite3
 - `PATCH /api/variants`
 - `POST /api/skill-bundles`
 - `POST /api/eval-cases`
+- `POST /api/eval-case-versions`
 - `POST /api/variant-versions`
 - `POST /api/eval-runs`
 - `POST /api/reset`

@@ -58,6 +58,7 @@ class Handler(BaseHTTPRequestHandler):
                 "/api/variants": self._create_variant,
                 "/api/skill-bundles": self._import_skill_bundle,
                 "/api/eval-cases": self._create_eval_case,
+                "/api/eval-case-versions": self._create_eval_case_version,
                 "/api/variant-versions": self._publish_variant_version,
                 "/api/eval-runs": self._record_eval_run,
                 "/api/reset": self._reset_state,
@@ -143,6 +144,17 @@ class Handler(BaseHTTPRequestHandler):
                 input_text=self._required(body, "input"),
                 expected_output=self._required(body, "expected_output"),
                 source_type=body.get("source_type", "manual"),
+            )
+        )
+
+    def _create_eval_case_version(self, _query: Dict[str, str]) -> Any:
+        body = self._json_body()
+        return self._mutate(
+            lambda current_store: current_store.create_eval_case_version(
+                case_id=self._required(body, "case_id"),
+                input_text=self._required(body, "input"),
+                expected_output=self._required(body, "expected_output"),
+                make_current=bool(body.get("make_current", True)),
             )
         )
 

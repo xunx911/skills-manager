@@ -100,6 +100,23 @@ class HttpApiTest(unittest.TestCase):
             )
         self.assertEqual(context.exception.code, 400)
 
+    def test_eval_case_version_publish_flow(self):
+        result = self.post(
+            "/api/eval-case-versions",
+            {
+                "case_id": "case-null",
+                "input": "updated input",
+                "expected_output": "updated expected",
+            },
+        )
+
+        self.assertEqual(result["eval_case_version"]["version"], "v2")
+        self.assertEqual(result["eval_case"]["current_version_ref"], result["eval_case_version"]["id"])
+        self.assertEqual(result["eval_set_version"]["version"], "v2")
+        detail = self.get("/api/eval-set?eval_set_version_id=%s" % result["eval_set_version"]["id"])
+        self.assertEqual(detail["cases"][0]["id"], result["eval_case_version"]["id"])
+        self.assertEqual(detail["cases"][0]["input"], "updated input")
+
     def get(self, path):
         with urlopen("%s%s" % (self.base_url, path), timeout=5) as response:
             return json.loads(response.read().decode("utf-8"))
