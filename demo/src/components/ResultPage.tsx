@@ -16,6 +16,10 @@ export function ResultPage({
   const cases = casesForVersion(data, evalSetVersion);
   const counts = resultCounts(data, variantVersion.id, evalSetVersion.id);
   const run = runFor(data, variantVersion.id, evalSetVersion.id);
+  const resultArtifact = run?.resultArtifactRef ? data.artifacts.find((artifact) => artifact.id === run.resultArtifactRef) : undefined;
+  const importedResult = resultArtifact ? parseJsonObject(resultArtifact.content) : null;
+  const runConfig = importedResult && isRecord(importedResult.config) ? importedResult.config : null;
+  const runMetadata = importedResult && isRecord(importedResult.metadata) ? importedResult.metadata : null;
 
   return (
     <section className="panel">
@@ -43,6 +47,26 @@ export function ResultPage({
         <Metric label="通过" value={String(counts.passed)} />
         <Metric label="不通过" value={String(counts.failed)} />
         <Metric label="未测" value={String(counts.missing)} />
+      </div>
+      <div className="run-inspection">
+        <div className="run-inspection-grid">
+          <Metric label="Strategy" value={run?.strategyRef ?? "无"} />
+          <Metric label="Config hash" value={run?.runConfigHash ?? "无"} />
+          <Metric label="Status" value={run?.status ?? "无"} />
+          <Metric label="Result artifact" value={run?.resultArtifactRef ?? "无"} />
+        </div>
+        {run && (
+          <div className="run-inspection-detail">
+            <div>
+              <h3>Config</h3>
+              <pre className="case-artifact">{formatJson(runConfig)}</pre>
+            </div>
+            <div>
+              <h3>Metadata</h3>
+              <pre className="case-artifact">{formatJson(runMetadata)}</pre>
+            </div>
+          </div>
+        )}
       </div>
       <div className="data-table">
         <table>
@@ -83,4 +107,21 @@ function Metric({ label, value }: { label: string; value: string }) {
       <div className="metric-value">{value}</div>
     </div>
   );
+}
+
+function parseJsonObject(value: string): Record<string, unknown> | null {
+  try {
+    const parsed = JSON.parse(value) as unknown;
+    return isRecord(parsed) ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function formatJson(value: Record<string, unknown> | null): string {
+  return value ? JSON.stringify(value, null, 2) : "无";
 }

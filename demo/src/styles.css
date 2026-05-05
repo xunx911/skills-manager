@@ -956,6 +956,34 @@ button:disabled {
   align-items: flex-start;
 }
 
+.run-inspection {
+  padding: 16px;
+  border-bottom: 1px solid var(--line);
+  display: grid;
+  gap: 12px;
+}
+
+.run-inspection-grid,
+.run-inspection-detail {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.run-inspection-detail {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.run-inspection-detail h3 {
+  margin: 0 0 8px;
+  font-size: 13px;
+}
+
+.run-inspection .metric-value {
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
 .workbench {
   display: grid;
   gap: 14px;
@@ -1187,6 +1215,8 @@ td {
   .diff-summary,
   .diff-selector-row,
   .drawer-split,
+  .run-inspection-grid,
+  .run-inspection-detail,
   .skill-intro-metrics {
     grid-template-columns: 1fr;
   }
