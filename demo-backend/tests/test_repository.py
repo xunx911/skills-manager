@@ -96,6 +96,16 @@ class RepositoryTest(unittest.TestCase):
             self.assertEqual(detail["eval_set_version"]["case_refs"][-1], result["eval_case"]["id"])
             self.assertEqual(detail["cases"][-1]["input"], "diff --git a/errors.ts b/errors.ts\n+ return { token }")
 
+    def test_sqlite_repository_hides_archived_skill_from_hub(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo = SqliteRepository(Path(tmpdir) / "skillhub-demo.sqlite3")
+
+            repo.mutate(create_seed_data, lambda store: store.update_skill("skill-code-reviewer", lifecycle_status="archived"))
+
+            self.assertEqual(repo.skills(), [])
+            detail = repo.skill_detail("skill-code-reviewer")
+            self.assertEqual(detail["skill"]["lifecycle_status"], "archived")
+
     def test_sqlite_repository_serves_eval_result_read_model(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             repo = SqliteRepository(Path(tmpdir) / "skillhub-demo.sqlite3")

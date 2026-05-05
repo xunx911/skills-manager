@@ -8,8 +8,15 @@ from .models import AppData, to_jsonable
 from .persistence import app_data_from_dict
 
 
-SCHEMA_VERSION = 1
-MIGRATIONS: Dict[int, str] = {}
+SCHEMA_VERSION = 2
+MIGRATIONS: Dict[int, str] = {
+    2: """
+    ALTER TABLE skills ADD COLUMN lifecycle_status TEXT NOT NULL DEFAULT 'active';
+    ALTER TABLE skills ADD COLUMN archived_at TEXT;
+    ALTER TABLE variants ADD COLUMN lifecycle_status TEXT NOT NULL DEFAULT 'active';
+    ALTER TABLE variants ADD COLUMN archived_at TEXT;
+    """,
+}
 
 SCHEMA = """
 PRAGMA foreign_keys = ON;
@@ -26,6 +33,8 @@ CREATE TABLE IF NOT EXISTS skills (
   owner_ref TEXT NOT NULL,
   default_variant_ref TEXT,
   created_at TEXT NOT NULL,
+  lifecycle_status TEXT NOT NULL DEFAULT 'active',
+  archived_at TEXT,
   FOREIGN KEY (default_variant_ref) REFERENCES variants(id)
 );
 
@@ -53,6 +62,8 @@ CREATE TABLE IF NOT EXISTS variants (
   tag_set_ref TEXT NOT NULL,
   current_version_ref TEXT,
   created_at TEXT NOT NULL,
+  lifecycle_status TEXT NOT NULL DEFAULT 'active',
+  archived_at TEXT,
   FOREIGN KEY (skill_ref) REFERENCES skills(id),
   FOREIGN KEY (tag_set_ref) REFERENCES tag_sets(id),
   FOREIGN KEY (current_version_ref) REFERENCES variant_versions(id)
@@ -250,7 +261,14 @@ def load_app_snapshot(connection: sqlite3.Connection) -> AppData | None:
 
 
 def skills_overview(connection: sqlite3.Connection) -> List[Dict[str, Any]]:
-    rows = connection.execute("SELECT id, default_variant_ref FROM skills ORDER BY created_at, id").fetchall()
+    rows = connection.execute(
+        """
+        SELECT id, default_variant_ref
+        FROM skills
+        WHERE lifecycle_status = 'active'
+        ORDER BY created_at, id
+        """
+    ).fetchall()
     pages = []
     for row in rows:
         eval_set = latest_eval_set_for_skill(connection, row["id"])
@@ -264,7 +282,7 @@ def skill_detail(connection: sqlite3.Connection, skill_id: str) -> Dict[str, Any
         _variant_payload(row)
         for row in connection.execute(
             """
-            SELECT id, skill_ref, name, label, summary, tag_set_ref, current_version_ref, created_at
+            SELECT id, skill_ref, name, label, summary, tag_set_ref, current_version_ref, created_at, lifecycle_status, archived_at
             FROM variants
             WHERE skill_ref = ?
             ORDER BY created_at, id
@@ -555,7 +573,7 @@ def _eval_set_case_refs(connection: sqlite3.Connection, eval_set_version_id: str
 def _skill_row(connection: sqlite3.Connection, skill_id: str) -> sqlite3.Row:
     return _required_row(
         connection,
-        "SELECT id, slug, owner_ref, default_variant_ref, created_at FROM skills WHERE id = ?",
+        "SELECT id, slug, owner_ref, default_variant_ref, created_at, lifecycle_status, archived_at FROM skills WHERE id = ?",
         (skill_id,),
         "Unknown skill %s" % skill_id,
     )
@@ -565,7 +583,7 @@ def _variant_row(connection: sqlite3.Connection, variant_id: str) -> sqlite3.Row
     return _required_row(
         connection,
         """
-        SELECT id, skill_ref, name, label, summary, tag_set_ref, current_version_ref, created_at
+        SELECT id, skill_ref, name, label, summary, tag_set_ref, current_version_ref, created_at, lifecycle_status, archived_at
         FROM variants
         WHERE id = ?
         """,
@@ -679,20 +697,33 @@ def _insert_artifacts(connection: sqlite3.Connection, data: AppData) -> None:
 def _insert_skills_without_default(connection: sqlite3.Connection, data: AppData) -> None:
     connection.executemany(
         """
-        INSERT INTO skills (id, slug, owner_ref, default_variant_ref, created_at)
-        VALUES (?, ?, ?, NULL, ?)
+        INSERT INTO skills (id, slug, owner_ref, default_variant_ref, created_at, lifecycle_status, archived_at)
+        VALUES (?, ?, ?, NULL, ?, ?, ?)
         """,
-        [(item.id, item.slug, item.owner_ref, item.created_at) for item in data.skills],
+        [(item.id, item.slug, item.owner_ref, item.created_at, item.lifecycle_status, item.archived_at) for item in data.skills],
     )
 
 
 def _insert_variants_without_current(connection: sqlite3.Connection, data: AppData) -> None:
     connection.executemany(
         """
-        INSERT INTO variants (id, skill_ref, name, label, summary, tag_set_ref, current_version_ref, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, NULL, ?)
+        INSERT INTO variants (id, skill_ref, name, label, summary, tag_set_ref, current_version_ref, created_at, lifecycle_status, archived_at)
+        VALUES (?, ?, ?, ?, ?, ?, NULL, ?, ?, ?)
         """,
-        [(item.id, item.skill_ref, item.name, item.label, item.summary, item.tag_set_ref, item.created_at) for item in data.variants],
+        [
+            (
+                item.id,
+                item.skill_ref,
+                item.name,
+                item.label,
+                item.summary,
+                item.tag_set_ref,
+                item.created_at,
+                item.lifecycle_status,
+                item.archived_at,
+            )
+            for item in data.variants
+        ],
     )
 
 

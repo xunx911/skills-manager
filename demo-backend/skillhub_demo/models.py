@@ -7,6 +7,7 @@ from typing import Any, Dict, List, Literal, Optional
 ContentKind = Literal["inline_bundle", "skill_bundle", "artifact", "git", "external_repo"]
 EvalCaseSource = Literal["manual", "bad_case", "imported", "generated"]
 EvalRunStatus = Literal["queued", "running", "finished", "failed"]
+LifecycleStatus = Literal["active", "archived"]
 
 
 @dataclass
@@ -16,6 +17,8 @@ class Skill:
     owner_ref: str
     default_variant_ref: str
     created_at: str
+    lifecycle_status: LifecycleStatus = "active"
+    archived_at: Optional[str] = None
 
 
 @dataclass
@@ -43,6 +46,8 @@ class Variant:
     tag_set_ref: str
     current_version_ref: str
     created_at: str
+    lifecycle_status: LifecycleStatus = "active"
+    archived_at: Optional[str] = None
 
 
 @dataclass

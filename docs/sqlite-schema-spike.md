@@ -15,21 +15,22 @@ Included:
 - Query pass/fail counts for `VariantVersion + EvalSetVersion`.
 - Serve the hub, skill, variant, eval-set, and eval-result read paths from SQL when the SQLite repository is active.
 - Track an explicit SQLite schema version in `schema_meta` with a migration hook for future versions.
+- Store `Skill` / `Variant` lifecycle status for archive/deprecate without hard delete.
 - Use foreign keys to reject broken references.
 
 Not included:
 
-- Multi-version migrations beyond the current initial schema.
-- Auth, tenancy, archive/deprecate workflows.
+- Multi-version migrations beyond the current v2 migration.
+- Auth and tenancy workflows.
 - Automatic eval execution.
 
 ## Key Mapping Decisions
 
 | Domain object | SQLite mapping |
 | --- | --- |
-| `Skill` | `skills`, with `default_variant_ref` as a pointer. |
+| `Skill` | `skills`, with `default_variant_ref`, `lifecycle_status`, and `archived_at`. |
 | `TagSet` | `tag_sets`, with tags stored as JSON because tags are a small normalized value object. |
-| `Variant` | `variants`, with `current_version_ref` as a pointer. |
+| `Variant` | `variants`, with `current_version_ref`, `lifecycle_status`, and `archived_at`. |
 | `VariantVersion` | `variant_versions`, with `content_ref` split into columns. |
 | `EvalCorpus` | `eval_corpora`, one corpus per skill for MVP. |
 | `EvalCase` | `eval_cases`, with input and expected output stored as artifact refs. |
@@ -79,6 +80,7 @@ The spike confirms:
 - Repository `mutate` refreshes normalized SQL tables immediately after writes.
 - Skill bundle imports round-trip through the file-backed artifact store while preserving legacy inline bundle reads.
 - The hub, skill, and variant SQL read models match the existing domain store API shape.
+- Archived skills are hidden from hub listing but remain readable by direct detail endpoints.
 - The eval-result SQL read model uses the latest finished run for a given `VariantVersion + EvalSetVersion`.
 - `version-a-v1 + evalset-v1` produces the same result counts as the JSON store: `2 passed / 1 failed / 0 missing`.
 - Eval set pages can retrieve concrete case input and expected output from artifact joins.

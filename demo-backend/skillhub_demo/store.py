@@ -40,7 +40,11 @@ class SkillHubStore:
         return to_jsonable(self.data)
 
     def skills(self) -> List[Dict[str, Any]]:
-        return [self.variant_page(skill.default_variant_ref, None, self.latest_eval_set_for_skill(skill.id).id) for skill in self.data.skills]
+        return [
+            self.variant_page(skill.default_variant_ref, None, self.latest_eval_set_for_skill(skill.id).id)
+            for skill in self.data.skills
+            if skill.lifecycle_status == "active"
+        ]
 
     def skill_detail(self, skill_id: str) -> Dict[str, Any]:
         skill = self._skill(skill_id)
@@ -237,6 +241,7 @@ class SkillHubStore:
         slug: Optional[str] = None,
         owner_ref: Optional[str] = None,
         default_variant_ref: Optional[str] = None,
+        lifecycle_status: Optional[str] = None,
     ) -> Dict[str, Any]:
         skill = self._skill(skill_id)
         if slug is not None:
@@ -247,7 +252,11 @@ class SkillHubStore:
             variant = self._variant(default_variant_ref)
             if variant.skill_ref != skill.id:
                 raise ValueError("Default variant must belong to skill %s" % skill.id)
+            if variant.lifecycle_status != "active":
+                raise ValueError("Default variant must be active")
             skill.default_variant_ref = default_variant_ref
+        if lifecycle_status is not None:
+            self._set_lifecycle(skill, lifecycle_status)
         return {"skill": to_jsonable(skill)}
 
     def create_variant(
@@ -355,12 +364,18 @@ class SkillHubStore:
         variant_id: str,
         label: Optional[str] = None,
         summary: Optional[str] = None,
+        lifecycle_status: Optional[str] = None,
     ) -> Dict[str, Any]:
         variant = self._variant(variant_id)
         if label is not None:
             variant.label = label
         if summary is not None:
             variant.summary = summary
+        if lifecycle_status is not None:
+            skill = self._skill(variant.skill_ref)
+            if lifecycle_status == "archived" and skill.default_variant_ref == variant.id:
+                raise ValueError("Cannot archive the default variant; choose another default variant first")
+            self._set_lifecycle(variant, lifecycle_status)
         return {"variant": to_jsonable(variant)}
 
     def publish_variant_version(
@@ -542,6 +557,12 @@ class SkillHubStore:
             raise ValueError("ContentRef locator must point to a skill_bundle artifact")
         if content_ref.digest != "sha-%s" % artifact.content_hash:
             raise ValueError("ContentRef digest does not match bundle artifact")
+
+    def _set_lifecycle(self, item, lifecycle_status: str) -> None:
+        if lifecycle_status not in {"active", "archived"}:
+            raise ValueError("lifecycle_status must be active or archived")
+        item.lifecycle_status = lifecycle_status
+        item.archived_at = now_iso() if lifecycle_status == "archived" else None
 
     def _normalize_bundle_files(self, files: Dict[str, str]) -> Dict[str, str]:
         return normalize_bundle_files(files)

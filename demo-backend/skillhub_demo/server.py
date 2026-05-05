@@ -211,15 +211,19 @@ class Handler(BaseHTTPRequestHandler):
         body = self._json_body()
         label = body.get("label")
         summary = body.get("summary")
+        lifecycle_status = body.get("lifecycle_status")
         if label is not None and not isinstance(label, str):
             raise ApiError(400, "label must be a string")
         if summary is not None and not isinstance(summary, str):
             raise ApiError(400, "summary must be a string")
+        if lifecycle_status is not None and not isinstance(lifecycle_status, str):
+            raise ApiError(400, "lifecycle_status must be a string")
         return self._mutate(
             lambda current_store: current_store.update_variant(
                 variant_id=self._required(body, "variant_id"),
                 label=label,
                 summary=summary,
+                lifecycle_status=lifecycle_status,
             )
         )
 
@@ -228,18 +232,22 @@ class Handler(BaseHTTPRequestHandler):
         slug = body.get("slug")
         owner_ref = body.get("owner_ref")
         default_variant_ref = body.get("default_variant_ref")
+        lifecycle_status = body.get("lifecycle_status")
         if slug is not None and not isinstance(slug, str):
             raise ApiError(400, "slug must be a string")
         if owner_ref is not None and not isinstance(owner_ref, str):
             raise ApiError(400, "owner_ref must be a string")
         if default_variant_ref is not None and not isinstance(default_variant_ref, str):
             raise ApiError(400, "default_variant_ref must be a string")
+        if lifecycle_status is not None and not isinstance(lifecycle_status, str):
+            raise ApiError(400, "lifecycle_status must be a string")
         return self._mutate(
             lambda current_store: current_store.update_skill(
                 skill_id=self._required(body, "skill_id"),
                 slug=slug,
                 owner_ref=owner_ref,
                 default_variant_ref=default_variant_ref,
+                lifecycle_status=lifecycle_status,
             )
         )
 

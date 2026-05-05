@@ -105,6 +105,26 @@ class StoreTest(unittest.TestCase):
         self.assertEqual(result["skill"]["slug"], "code-reviewer-v2")
         self.assertEqual(result["skill"]["default_variant_ref"], "variant-b")
 
+    def test_archived_skill_is_hidden_from_hub_but_direct_detail_remains(self):
+        result = self.store.update_skill("skill-code-reviewer", lifecycle_status="archived")
+
+        self.assertEqual(result["skill"]["lifecycle_status"], "archived")
+        self.assertEqual(self.store.skills(), [])
+        detail = self.store.skill_detail("skill-code-reviewer")
+        self.assertEqual(detail["skill"]["id"], "skill-code-reviewer")
+        self.assertEqual(detail["skill"]["lifecycle_status"], "archived")
+
+    def test_archiving_default_variant_requires_changing_default_first(self):
+        with self.assertRaisesRegex(ValueError, "default variant"):
+            self.store.update_variant("variant-a", lifecycle_status="archived")
+
+        self.store.update_skill("skill-code-reviewer", default_variant_ref="variant-b")
+        result = self.store.update_variant("variant-a", lifecycle_status="archived")
+
+        self.assertEqual(result["variant"]["lifecycle_status"], "archived")
+        page = self.store.variant_page("variant-a", None, "evalset-v1")
+        self.assertEqual(page["variant"]["lifecycle_status"], "archived")
+
     def test_import_skill_bundle_creates_content_ref(self):
         result = self.store.import_skill_bundle(
             name="code-reviewer-bundle",

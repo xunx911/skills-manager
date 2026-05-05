@@ -2,6 +2,7 @@ export type View = "hub" | "skill" | "eval" | "result" | "workbench" | "manage";
 
 export type EvalCaseSource = "manual" | "bad_case" | "imported" | "generated";
 export type EvalRunStatus = "queued" | "running" | "finished" | "failed";
+export type LifecycleStatus = "active" | "archived";
 
 export interface Skill {
   id: string;
@@ -9,6 +10,8 @@ export interface Skill {
   ownerRef: string;
   defaultVariantRef: string;
   createdAt: string;
+  lifecycleStatus?: LifecycleStatus;
+  archivedAt?: string;
 }
 
 export interface TagSet {
@@ -33,6 +36,8 @@ export interface Variant {
   tagSetRef: string;
   currentVersionRef: string;
   createdAt: string;
+  lifecycleStatus?: LifecycleStatus;
+  archivedAt?: string;
 }
 
 export interface VariantVersion {

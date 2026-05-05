@@ -145,7 +145,7 @@ MVP 约束：
 - 创建和读取核心对象。
 - 允许更新少量 metadata。
 - 对版本、测评集、测评结果保持 append-only。
-- 删除先不做，正式版考虑 archive/deprecate。
+- 不做硬删除；Skill / Variant 已支持轻量 archive/deprecate。
 
 ## 当前 Demo Endpoint 覆盖矩阵
 
@@ -154,8 +154,8 @@ MVP 约束：
 | 资源 | Create | Read | Update | Delete / Archive | MVP 结论 |
 | --- | --- | --- | --- | --- | --- |
 | `AppData` | seed / reset | `GET /api/state` | 不直接更新 | `POST /api/reset` 仅 demo 用 | 已覆盖 demo 同步 |
-| `Skill` | `POST /api/skills` | `GET /api/skills`、`GET /api/skill` | `PATCH /api/skills` | 未实现，正式版做 archive | 已覆盖 |
-| `Variant` | `POST /api/variants` | `GET /api/skill`、`GET /api/variant-page` | `PATCH /api/variants` | 未实现，正式版做 deprecate | 已覆盖 |
+| `Skill` | `POST /api/skills` | `GET /api/skills`、`GET /api/skill` | `PATCH /api/skills` | `PATCH lifecycle_status=archived` | 已覆盖 |
+| `Variant` | `POST /api/variants` | `GET /api/skill`、`GET /api/variant-page` | `PATCH /api/variants` | `PATCH lifecycle_status=archived` | 已覆盖 |
 | `VariantVersion` | `POST /api/variant-versions` | `GET /api/variant-page` | 不允许原地更新 | 不允许硬删 | 已覆盖 append-only |
 | `skill_bundle` artifact | `POST /api/skill-bundles` | `GET /api/skill-bundle` | 不允许原地更新 | 不允许硬删 | 已覆盖导入和读取 |
 | `EvalCase` | `POST /api/eval-cases` | `GET /api/eval-set` | 不建议原地更新 | 未实现，正式版做 archive | 已覆盖 append-only |
@@ -167,7 +167,7 @@ MVP 约束：
 
 - `VariantVersion`、`EvalSetVersion`、`EvalRun`、`CaseResult` 都是事实记录，正式版也应默认 append-only。
 - `EvalCase` 在 MVP 中视为不可变；修正文案或输入时新建 case，并生成新的 `EvalSetVersion`。
-- 删除会影响可追溯性，正式版应该优先设计 `archive/deprecate`，而不是硬删。
+- 删除会影响可追溯性；MVP 对 `Skill` / `Variant` 使用 `lifecycle_status` 做 archive/deprecate，而不是硬删。
 
 ## 最小闭环调用链
 
@@ -538,6 +538,5 @@ Content-Type: application/json
 
 正式化前还需要补：
 
-- archive/deprecate 接口，而不是硬 delete。
 - 持久化迁移：schema version、迁移脚本、SQL 化关键查询。
 - 权限模型：谁能创建 skill、发布版本、切默认入口。

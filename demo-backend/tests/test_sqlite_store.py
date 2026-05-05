@@ -23,7 +23,7 @@ from skillhub_demo.store import SkillHubStore
 class SqliteStoreTest(unittest.TestCase):
     def test_initialize_records_schema_version(self):
         connection = connect()
-        self.assertEqual(current_schema_version(connection), 1)
+        self.assertEqual(current_schema_version(connection), 2)
 
     def test_newer_schema_version_is_rejected(self):
         connection = connect()

@@ -278,10 +278,11 @@ flowchart LR
 - 查看当前结果和逐 case 结果。
 - 查看 variant 历史版本。
 - Repository 持久化，默认 SQLite、可切回 JSON，能刷新后保留 demo 状态。
+- Skill / Variant 支持 archive/deprecate，不做硬删除；Hub 默认隐藏 archived skill，direct link 仍可查。
 
 明确暂不做：
 
-- 删除和硬删除。
+- 硬删除。
 - 完整权限管理。
 - fork / branch / PR 协作流。
 - 自动测评 runner。
