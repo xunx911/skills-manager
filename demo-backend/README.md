@@ -69,6 +69,16 @@ Example external command output:
 }
 ```
 
+Runnable example evaluator:
+
+```bash
+python -m skillhub_demo.external_runner \
+  --variant-version-id version-a-v1 \
+  --eval-set-version-id evalset-v1 \
+  --strategy external_command \
+  --external-command '.venv/bin/python ../examples/evaluators/keyword_evaluator.py --keyword ownerId'
+```
+
 ## API Sketch
 
 - `GET /health`

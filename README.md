@@ -77,6 +77,15 @@ python -m skillhub_demo.external_runner \
 
 To connect a real local evaluator, use the `external_command` strategy. The command receives
 `{"eval_set": ...}` on stdin and prints `{ "results": { "<case_version_id>": true } }`.
+See [keyword_evaluator.py](examples/evaluators/keyword_evaluator.py) for a minimal evaluator script.
+
+```bash
+python -m skillhub_demo.external_runner \
+  --variant-version-id version-a-v1 \
+  --eval-set-version-id evalset-v1 \
+  --strategy external_command \
+  --external-command '../demo-backend/.venv/bin/python ../examples/evaluators/keyword_evaluator.py --keyword ownerId'
+```
 
 ## Main Docs
 

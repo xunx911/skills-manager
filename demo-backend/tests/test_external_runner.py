@@ -3,11 +3,15 @@ import sys
 import threading
 import unittest
 from http.server import ThreadingHTTPServer
+from pathlib import Path
 
 from skillhub_demo import server as server_module
 from skillhub_demo.external_runner import build_eval_result_payload, import_eval_result
 from skillhub_demo.seed import create_seed_data
 from skillhub_demo.store import SkillHubStore
+
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
 class ExternalRunnerTest(unittest.TestCase):
@@ -140,6 +144,21 @@ class ExternalRunnerTest(unittest.TestCase):
                 strategy_ref="external-demo-runner-v1",
                 strategy="external_command",
             )
+
+    def test_runner_can_use_example_keyword_evaluator(self):
+        evaluator_path = REPO_ROOT / "examples" / "evaluators" / "keyword_evaluator.py"
+        payload = build_eval_result_payload(
+            base_url=self.base_url,
+            variant_version_id="version-a-v1",
+            eval_set_version_id="evalset-v1",
+            strategy_ref="example-keyword-evaluator-v1",
+            strategy="external_command",
+            external_command=[sys.executable, str(evaluator_path), "--keyword", "ownerId"],
+        )
+
+        self.assertEqual(payload["results"]["casever-auth-v1"], True)
+        self.assertEqual(payload["results"]["casever-null-v1"], False)
+        self.assertEqual(payload["strategy_ref"], "example-keyword-evaluator-v1")
 
 
 if __name__ == "__main__":

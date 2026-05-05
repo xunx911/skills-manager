@@ -596,7 +596,7 @@ python -m skillhub_demo.external_runner \
   --fail-case-title-contains 仅重命名
 ```
 
-Demo runner 当前提供四个策略：`all_pass`、`title_contains_fail`、`expected_keyword`、`external_command`。其中 `external_command` 会把 `{"eval_set": ...}` 写入命令 stdin，并要求命令 stdout 返回 `{ "results": { "<case_version_id>": true } }`。
+Demo runner 当前提供四个策略：`all_pass`、`title_contains_fail`、`expected_keyword`、`external_command`。其中 `external_command` 会把 `{"eval_set": ...}` 写入命令 stdin，并要求命令 stdout 返回 `{ "results": { "<case_version_id>": true } }`。最小 evaluator 示例见 [`examples/evaluators/keyword_evaluator.py`](../examples/evaluators/keyword_evaluator.py)。
 
 ### Reset Demo State
 
