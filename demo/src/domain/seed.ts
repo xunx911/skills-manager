@@ -155,6 +155,7 @@ export const seedData: AppData = {
       createdAt: now,
     },
   ],
+  evalCaseVersions: [],
   evalSetVersions: [
     {
       id: "evalset-v1",

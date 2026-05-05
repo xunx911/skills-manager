@@ -73,12 +73,21 @@ class EvalCase:
     corpus_ref: str
     title: str
     source_type: EvalCaseSource
+    current_version_ref: str
+    created_at: str
+    origin_ref: Optional[str] = None
+
+
+@dataclass
+class EvalCaseVersion:
+    id: str
+    case_ref: str
+    version: str
     input_artifact_ref: str
     expectation_artifact_ref: str
     grader_ref: str
     expectation: str
     created_at: str
-    origin_ref: Optional[str] = None
 
 
 @dataclass
@@ -86,7 +95,7 @@ class EvalSetVersion:
     id: str
     corpus_ref: str
     version: str
-    case_refs: List[str]
+    case_version_refs: List[str]
     created_at: str
 
 
@@ -106,7 +115,7 @@ class EvalRun:
 @dataclass
 class CaseResult:
     run_ref: str
-    case_ref: str
+    case_version_ref: str
     passed: bool
     score: int
 
@@ -129,6 +138,7 @@ class AppData:
     variant_versions: List[VariantVersion]
     eval_corpora: List[EvalCorpus]
     eval_cases: List[EvalCase]
+    eval_case_versions: List[EvalCaseVersion]
     eval_set_versions: List[EvalSetVersion]
     eval_runs: List[EvalRun]
     case_results: List[CaseResult]

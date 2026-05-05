@@ -93,7 +93,7 @@ class RepositoryTest(unittest.TestCase):
             )
             detail = repo.eval_set_detail(result["eval_set_version"]["id"])
 
-            self.assertEqual(detail["eval_set_version"]["case_refs"][-1], result["eval_case"]["id"])
+            self.assertEqual(detail["eval_set_version"]["case_version_refs"][-1], result["eval_case_version"]["id"])
             self.assertEqual(detail["cases"][-1]["input"], "diff --git a/errors.ts b/errors.ts\n+ return { token }")
 
     def test_sqlite_repository_hides_archived_skill_from_hub(self):
@@ -114,7 +114,7 @@ class RepositoryTest(unittest.TestCase):
             store.record_eval_run(
                 variant_version_id=published["variant_version"]["id"],
                 eval_set_version_id="evalset-v1",
-                results={"case-null": True, "case-auth": False, "case-noise": True},
+                results={"casever-null-v1": True, "casever-auth-v1": False, "casever-noise-v1": True},
             )
             repo.save(store.data)
 

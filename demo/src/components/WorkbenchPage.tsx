@@ -29,6 +29,7 @@ export function WorkbenchPage({
   const [versionForm, setVersionForm] = useState({
     variantRef: state.selectedVariantRef || variants[0]?.id || "",
     changeNote: "根据最新实验结果更新当前变体版本，简化输出并加强敏感信息检查。",
+    makeCurrent: true,
   });
   const [bundleForm, setBundleForm] = useState({
     bundleName: "code-reviewer-bundle",
@@ -226,7 +227,7 @@ export function WorkbenchPage({
         <div className="panel-header">
           <div>
             <h2>发布新版本</h2>
-            <p>同一个 Variant 维护线性历史。发布新版本会更新 current version，旧实验记录仍指向旧版本。</p>
+            <p>同一个 Variant 维护线性历史。新版本可以先测评，再决定是否移动 current version。</p>
           </div>
           <div className="topbar-actions">
             <button
@@ -239,6 +240,7 @@ export function WorkbenchPage({
                     variantId: versionForm.variantRef,
                     skillId: state.selectedSkillRef,
                     changeNote: versionForm.changeNote,
+                    makeCurrent: versionForm.makeCurrent,
                     view: "workbench",
                   }),
                 )
@@ -263,6 +265,7 @@ export function WorkbenchPage({
                     changeNote: versionForm.changeNote,
                     bundleName: bundleForm.bundleName,
                     files,
+                    makeCurrent: versionForm.makeCurrent,
                     view: "workbench",
                   }),
                 );
@@ -291,6 +294,17 @@ export function WorkbenchPage({
             <textarea
               value={versionForm.changeNote}
               onChange={(event) => setVersionForm({ ...versionForm, changeNote: event.target.value })}
+            />
+          </label>
+          <label className="manual-case-row">
+            <span>
+              <strong>设为 current version</strong>
+              <em>关闭后只创建可测评的新版本，不改变默认分发指针。</em>
+            </span>
+            <input
+              type="checkbox"
+              checked={versionForm.makeCurrent}
+              onChange={(event) => setVersionForm({ ...versionForm, makeCurrent: event.target.checked })}
             />
           </label>
           <label className="field-block">

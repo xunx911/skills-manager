@@ -62,6 +62,20 @@ export interface EvalCase {
   title: string;
   sourceType: EvalCaseSource;
   originRef?: string;
+  currentVersionRef?: string;
+  caseRef?: string;
+  caseVersion?: string;
+  inputArtifactRef: string;
+  expectationArtifactRef: string;
+  graderRef: string;
+  expectation: string;
+  createdAt: string;
+}
+
+export interface EvalCaseVersion {
+  id: string;
+  caseRef: string;
+  version: string;
   inputArtifactRef: string;
   expectationArtifactRef: string;
   graderRef: string;
@@ -74,6 +88,7 @@ export interface EvalSetVersion {
   corpusRef: string;
   version: string;
   caseRefs: string[];
+  caseVersionRefs?: string[];
   createdAt: string;
 }
 
@@ -92,6 +107,7 @@ export interface EvalRun {
 export interface CaseResult {
   runRef: string;
   caseRef: string;
+  caseVersionRef?: string;
   passed: boolean;
   score: number;
   evidenceArtifactRef?: string;
@@ -127,6 +143,7 @@ export interface AppData {
   variantVersions: VariantVersion[];
   evalCorpora: EvalCorpus[];
   evalCases: EvalCase[];
+  evalCaseVersions: EvalCaseVersion[];
   evalSetVersions: EvalSetVersion[];
   evalRuns: EvalRun[];
   caseResults: CaseResult[];

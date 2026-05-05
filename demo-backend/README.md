@@ -59,5 +59,7 @@ The core invariant is:
 ```text
 Skill -> default Variant -> current VariantVersion
 EvalRun -> VariantVersion + EvalSetVersion
-CaseResult -> pass/fail for one EvalCase
+EvalCase -> current EvalCaseVersion
+EvalSetVersion -> ordered EvalCaseVersion snapshot
+CaseResult -> pass/fail for one EvalCaseVersion
 ```

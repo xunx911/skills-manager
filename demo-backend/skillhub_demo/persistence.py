@@ -10,6 +10,7 @@ from .models import (
     CaseResult,
     ContentRef,
     EvalCase,
+    EvalCaseVersion,
     EvalCorpus,
     EvalRun,
     EvalSetVersion,
@@ -53,10 +54,11 @@ def app_data_from_dict(raw: Dict[str, object]) -> AppData:
         variants=_items(raw, "variants", Variant),
         variant_versions=[_variant_version(item) for item in _dicts(raw, "variant_versions")],
         eval_corpora=_items(raw, "eval_corpora", EvalCorpus),
-        eval_cases=_items(raw, "eval_cases", EvalCase),
-        eval_set_versions=_items(raw, "eval_set_versions", EvalSetVersion),
+        eval_cases=_eval_cases(raw),
+        eval_case_versions=_eval_case_versions(raw),
+        eval_set_versions=_eval_set_versions(raw),
         eval_runs=_items(raw, "eval_runs", EvalRun),
-        case_results=_items(raw, "case_results", CaseResult),
+        case_results=_case_results(raw),
         artifacts=_items(raw, "artifacts", Artifact),
     )
 
@@ -77,6 +79,105 @@ def _variant_version(raw: Dict[str, object]) -> VariantVersion:
         change_note=raw.get("change_note") if isinstance(raw.get("change_note"), str) else None,
         created_at=str(raw["created_at"]),
     )
+
+
+def _eval_cases(raw: Dict[str, object]) -> List[EvalCase]:
+    cases: List[EvalCase] = []
+    for item in _dicts(raw, "eval_cases"):
+        case_id = str(item["id"])
+        current_version_ref = item.get("current_version_ref")
+        cases.append(
+            EvalCase(
+                id=case_id,
+                corpus_ref=str(item["corpus_ref"]),
+                title=str(item["title"]),
+                source_type=str(item["source_type"]),  # type: ignore[arg-type]
+                current_version_ref=str(current_version_ref) if isinstance(current_version_ref, str) else _legacy_case_version_id(case_id),
+                origin_ref=item.get("origin_ref") if isinstance(item.get("origin_ref"), str) else None,
+                created_at=str(item["created_at"]),
+            )
+        )
+    return cases
+
+
+def _eval_case_versions(raw: Dict[str, object]) -> List[EvalCaseVersion]:
+    explicit = _dicts(raw, "eval_case_versions")
+    if explicit:
+        return [EvalCaseVersion(**item) for item in explicit]  # type: ignore[arg-type]
+
+    versions: List[EvalCaseVersion] = []
+    for item in _dicts(raw, "eval_cases"):
+        case_id = str(item["id"])
+        versions.append(
+            EvalCaseVersion(
+                id=_legacy_case_version_id(case_id),
+                case_ref=case_id,
+                version="v1",
+                input_artifact_ref=str(item["input_artifact_ref"]),
+                expectation_artifact_ref=str(item["expectation_artifact_ref"]),
+                grader_ref=str(item["grader_ref"]),
+                expectation=str(item["expectation"]),
+                created_at=str(item["created_at"]),
+            )
+        )
+    return versions
+
+
+def _eval_set_versions(raw: Dict[str, object]) -> List[EvalSetVersion]:
+    versions: List[EvalSetVersion] = []
+    legacy_case_to_version = {
+        str(item["id"]): _legacy_case_version_id(str(item["id"]))
+        for item in _dicts(raw, "eval_cases")
+        if "current_version_ref" not in item
+    }
+    current_case_to_version = {
+        str(item["id"]): str(item["current_version_ref"])
+        for item in _dicts(raw, "eval_cases")
+        if isinstance(item.get("current_version_ref"), str)
+    }
+    case_to_version = {**legacy_case_to_version, **current_case_to_version}
+
+    for item in _dicts(raw, "eval_set_versions"):
+        case_version_refs = item.get("case_version_refs")
+        if isinstance(case_version_refs, list):
+            refs = [str(ref) for ref in case_version_refs]
+        else:
+            refs = [case_to_version.get(str(ref), str(ref)) for ref in item.get("case_refs", [])] if isinstance(item.get("case_refs"), list) else []
+        versions.append(
+            EvalSetVersion(
+                id=str(item["id"]),
+                corpus_ref=str(item["corpus_ref"]),
+                version=str(item["version"]),
+                case_version_refs=refs,
+                created_at=str(item["created_at"]),
+            )
+        )
+    return versions
+
+
+def _case_results(raw: Dict[str, object]) -> List[CaseResult]:
+    case_to_version = {
+        str(item["id"]): str(item.get("current_version_ref") or _legacy_case_version_id(str(item["id"])))
+        for item in _dicts(raw, "eval_cases")
+    }
+    results: List[CaseResult] = []
+    for item in _dicts(raw, "case_results"):
+        case_version_ref = item.get("case_version_ref")
+        if not isinstance(case_version_ref, str):
+            case_version_ref = case_to_version.get(str(item.get("case_ref")), str(item.get("case_ref")))
+        results.append(
+            CaseResult(
+                run_ref=str(item["run_ref"]),
+                case_version_ref=case_version_ref,
+                passed=bool(item["passed"]),
+                score=int(item["score"]),
+            )
+        )
+    return results
+
+
+def _legacy_case_version_id(case_id: str) -> str:
+    return "casever-%s-v1" % case_id
 
 
 def _dicts(raw: Dict[str, object], key: str) -> List[Dict[str, object]]:

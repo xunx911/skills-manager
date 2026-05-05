@@ -81,6 +81,7 @@ class SqliteRepository:
         try:
             snapshot = load_app_snapshot(connection)
             if snapshot is not None:
+                save_app_snapshot(connection, snapshot)
                 return snapshot
             data = self._initial_data(fallback)
             save_app_snapshot(connection, data)

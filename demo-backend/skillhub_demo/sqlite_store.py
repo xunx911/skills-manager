@@ -8,13 +8,24 @@ from .models import AppData, to_jsonable
 from .persistence import app_data_from_dict
 
 
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
 MIGRATIONS: Dict[int, str] = {
     2: """
     ALTER TABLE skills ADD COLUMN lifecycle_status TEXT NOT NULL DEFAULT 'active';
     ALTER TABLE skills ADD COLUMN archived_at TEXT;
     ALTER TABLE variants ADD COLUMN lifecycle_status TEXT NOT NULL DEFAULT 'active';
     ALTER TABLE variants ADD COLUMN archived_at TEXT;
+    """,
+    3: """
+    PRAGMA foreign_keys = OFF;
+    DROP TABLE IF EXISTS case_results;
+    DROP TABLE IF EXISTS eval_runs;
+    DROP TABLE IF EXISTS eval_set_cases;
+    DROP TABLE IF EXISTS eval_set_versions;
+    DROP TABLE IF EXISTS eval_case_versions;
+    DROP TABLE IF EXISTS eval_cases;
+    DROP TABLE IF EXISTS eval_corpora;
+    PRAGMA foreign_keys = ON;
     """,
 }
 
@@ -95,15 +106,26 @@ CREATE TABLE IF NOT EXISTS eval_cases (
   corpus_ref TEXT NOT NULL,
   title TEXT NOT NULL,
   source_type TEXT NOT NULL,
+  current_version_ref TEXT,
+  origin_ref TEXT,
+  created_at TEXT NOT NULL,
+  FOREIGN KEY (corpus_ref) REFERENCES eval_corpora(id),
+  FOREIGN KEY (current_version_ref) REFERENCES eval_case_versions(id)
+);
+
+CREATE TABLE IF NOT EXISTS eval_case_versions (
+  id TEXT PRIMARY KEY,
+  case_ref TEXT NOT NULL,
+  version TEXT NOT NULL,
   input_artifact_ref TEXT NOT NULL,
   expectation_artifact_ref TEXT NOT NULL,
   grader_ref TEXT NOT NULL,
   expectation TEXT NOT NULL,
-  origin_ref TEXT,
   created_at TEXT NOT NULL,
-  FOREIGN KEY (corpus_ref) REFERENCES eval_corpora(id),
+  FOREIGN KEY (case_ref) REFERENCES eval_cases(id),
   FOREIGN KEY (input_artifact_ref) REFERENCES artifacts(id),
-  FOREIGN KEY (expectation_artifact_ref) REFERENCES artifacts(id)
+  FOREIGN KEY (expectation_artifact_ref) REFERENCES artifacts(id),
+  UNIQUE (case_ref, version)
 );
 
 CREATE TABLE IF NOT EXISTS eval_set_versions (
@@ -117,11 +139,11 @@ CREATE TABLE IF NOT EXISTS eval_set_versions (
 
 CREATE TABLE IF NOT EXISTS eval_set_cases (
   eval_set_version_ref TEXT NOT NULL,
-  case_ref TEXT NOT NULL,
+  case_version_ref TEXT NOT NULL,
   position INTEGER NOT NULL,
-  PRIMARY KEY (eval_set_version_ref, case_ref),
+  PRIMARY KEY (eval_set_version_ref, case_version_ref),
   FOREIGN KEY (eval_set_version_ref) REFERENCES eval_set_versions(id),
-  FOREIGN KEY (case_ref) REFERENCES eval_cases(id)
+  FOREIGN KEY (case_version_ref) REFERENCES eval_case_versions(id)
 );
 
 CREATE TABLE IF NOT EXISTS eval_runs (
@@ -141,12 +163,12 @@ CREATE TABLE IF NOT EXISTS eval_runs (
 
 CREATE TABLE IF NOT EXISTS case_results (
   run_ref TEXT NOT NULL,
-  case_ref TEXT NOT NULL,
+  case_version_ref TEXT NOT NULL,
   passed INTEGER NOT NULL CHECK (passed IN (0, 1)),
   score INTEGER NOT NULL,
-  PRIMARY KEY (run_ref, case_ref),
+  PRIMARY KEY (run_ref, case_version_ref),
   FOREIGN KEY (run_ref) REFERENCES eval_runs(id),
-  FOREIGN KEY (case_ref) REFERENCES eval_cases(id)
+  FOREIGN KEY (case_version_ref) REFERENCES eval_case_versions(id)
 );
 
 CREATE TABLE IF NOT EXISTS app_state (
@@ -224,6 +246,8 @@ def import_app_data(connection: sqlite3.Connection, data: AppData) -> None:
         _update_skill_default_variants(connection, data)
         _insert_eval_corpora(connection, data)
         _insert_eval_cases(connection, data)
+        _insert_eval_case_versions(connection, data)
+        _update_eval_case_current_versions(connection, data)
         _insert_eval_set_versions(connection, data)
         _insert_eval_runs(connection, data)
         _insert_case_results(connection, data)
@@ -356,8 +380,8 @@ def latest_eval_set_for_skill(connection: sqlite3.Connection, skill_id: str) -> 
         (skill_id,),
         "No eval set version for skill %s" % skill_id,
     )
-    case_refs = _eval_set_case_refs(connection, row["id"])
-    return {**dict(row), "case_refs": case_refs}
+    case_version_refs = _eval_set_case_version_refs(connection, row["id"])
+    return {**dict(row), "case_version_refs": case_version_refs, "case_refs": case_version_refs}
 
 
 def tags_for_variant(connection: sqlite3.Connection, variant_id: str) -> List[str]:
@@ -382,11 +406,11 @@ def eval_result_counts(connection: sqlite3.Connection, variant_version_id: str, 
     latest_run_id = _latest_finished_run_id(connection, variant_version_id, eval_set_version_id)
     rows = connection.execute(
         """
-        SELECT esc.case_ref, cr.passed
+        SELECT esc.case_version_ref, cr.passed
         FROM eval_set_cases esc
         LEFT JOIN case_results cr
           ON cr.run_ref = ?
-         AND cr.case_ref = esc.case_ref
+         AND cr.case_version_ref = esc.case_version_ref
         WHERE esc.eval_set_version_ref = ?
         ORDER BY esc.position
         """,
@@ -407,28 +431,50 @@ def eval_set_case_details(connection: sqlite3.Connection, eval_set_version_id: s
     rows = connection.execute(
         """
         SELECT
-          ec.id,
+          ecv.id AS id,
+          ec.id AS case_ref,
           ec.corpus_ref,
           ec.title,
           ec.source_type,
-          ec.input_artifact_ref,
-          ec.expectation_artifact_ref,
-          ec.grader_ref,
-          ec.expectation,
+          ec.current_version_ref,
           ec.origin_ref,
-          ec.created_at,
+          ecv.id AS case_version_ref,
+          ecv.version AS case_version,
+          ecv.input_artifact_ref,
+          ecv.expectation_artifact_ref,
+          ecv.grader_ref,
+          ecv.expectation,
+          ecv.created_at,
           input.content AS input,
           expected.content AS expected_output
         FROM eval_set_cases esc
-        JOIN eval_cases ec ON ec.id = esc.case_ref
-        JOIN artifacts input ON input.id = ec.input_artifact_ref
-        JOIN artifacts expected ON expected.id = ec.expectation_artifact_ref
+        JOIN eval_case_versions ecv ON ecv.id = esc.case_version_ref
+        JOIN eval_cases ec ON ec.id = ecv.case_ref
+        JOIN artifacts input ON input.id = ecv.input_artifact_ref
+        JOIN artifacts expected ON expected.id = ecv.expectation_artifact_ref
         WHERE esc.eval_set_version_ref = ?
         ORDER BY esc.position
         """,
         (eval_set_version_id,),
     ).fetchall()
-    return [dict(row) for row in rows]
+    return [
+        _compact(
+            {
+                **dict(row),
+                "case_version": {
+                    "id": row["case_version_ref"],
+                    "case_ref": row["case_ref"],
+                    "version": row["case_version"],
+                    "input_artifact_ref": row["input_artifact_ref"],
+                    "expectation_artifact_ref": row["expectation_artifact_ref"],
+                    "grader_ref": row["grader_ref"],
+                    "expectation": row["expectation"],
+                    "created_at": row["created_at"],
+                },
+            }
+        )
+        for row in rows
+    ]
 
 
 def eval_set_detail(connection: sqlite3.Connection, eval_set_version_id: str) -> Dict[str, Any]:
@@ -438,11 +484,12 @@ def eval_set_detail(connection: sqlite3.Connection, eval_set_version_id: str) ->
         (eval_set_version_id,),
         "Unknown eval set version %s" % eval_set_version_id,
     )
-    case_refs = _eval_set_case_refs(connection, eval_set_version_id)
+    case_version_refs = _eval_set_case_version_refs(connection, eval_set_version_id)
     return {
         "eval_set_version": {
             **dict(eval_set),
-            "case_refs": case_refs,
+            "case_version_refs": case_version_refs,
+            "case_refs": case_version_refs,
         },
         "cases": list(eval_set_case_details(connection, eval_set_version_id)),
     }
@@ -463,14 +510,15 @@ def eval_result_detail(connection: sqlite3.Connection, variant_version_id: str, 
         result_row = None
         if latest_run_id is not None:
             result_row = connection.execute(
-                "SELECT run_ref, case_ref, passed, score FROM case_results WHERE run_ref = ? AND case_ref = ?",
+                "SELECT run_ref, case_version_ref, passed, score FROM case_results WHERE run_ref = ? AND case_version_ref = ?",
                 (latest_run_id, case["id"]),
             ).fetchone()
         result = None
         if result_row is not None:
             result = {
                 "run_ref": result_row["run_ref"],
-                "case_ref": result_row["case_ref"],
+                "case_version_ref": result_row["case_version_ref"],
+                "case_ref": result_row["case_version_ref"],
                 "passed": bool(result_row["passed"]),
                 "score": result_row["score"],
             }
@@ -515,7 +563,8 @@ def _verification_runs(connection: sqlite3.Connection, skill_id: str, variant_ve
     ).fetchall()
     runs = []
     for row in rows:
-        eval_set = {**dict(row), "case_refs": _eval_set_case_refs(connection, row["id"])}
+        case_version_refs = _eval_set_case_version_refs(connection, row["id"])
+        eval_set = {**dict(row), "case_version_refs": case_version_refs, "case_refs": case_version_refs}
         run = _latest_finished_run(connection, variant_version_id, row["id"])
         counts = eval_result_counts(connection, variant_version_id, row["id"])
         runs.append(
@@ -560,11 +609,11 @@ def _score_from_counts(counts: Dict[str, int]) -> float | None:
     return counts["passed"] / counts["total"]
 
 
-def _eval_set_case_refs(connection: sqlite3.Connection, eval_set_version_id: str) -> List[str]:
+def _eval_set_case_version_refs(connection: sqlite3.Connection, eval_set_version_id: str) -> List[str]:
     return [
-        row["case_ref"]
+        row["case_version_ref"]
         for row in connection.execute(
-            "SELECT case_ref FROM eval_set_cases WHERE eval_set_version_ref = ? ORDER BY position",
+            "SELECT case_version_ref FROM eval_set_cases WHERE eval_set_version_ref = ? ORDER BY position",
             (eval_set_version_id,),
         ).fetchall()
     ]
@@ -662,6 +711,7 @@ def _drop_domain_tables(connection: sqlite3.Connection) -> None:
         "eval_runs",
         "eval_set_cases",
         "eval_set_versions",
+        "eval_case_versions",
         "eval_cases",
         "eval_corpora",
         "variant_versions",
@@ -776,8 +826,8 @@ def _insert_eval_cases(connection: sqlite3.Connection, data: AppData) -> None:
     connection.executemany(
         """
         INSERT INTO eval_cases
-          (id, corpus_ref, title, source_type, input_artifact_ref, expectation_artifact_ref, grader_ref, expectation, origin_ref, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          (id, corpus_ref, title, source_type, current_version_ref, origin_ref, created_at)
+        VALUES (?, ?, ?, ?, NULL, ?, ?)
         """,
         [
             (
@@ -785,15 +835,41 @@ def _insert_eval_cases(connection: sqlite3.Connection, data: AppData) -> None:
                 item.corpus_ref,
                 item.title,
                 item.source_type,
-                item.input_artifact_ref,
-                item.expectation_artifact_ref,
-                item.grader_ref,
-                item.expectation,
                 item.origin_ref,
                 item.created_at,
             )
             for item in data.eval_cases
         ],
+    )
+
+
+def _insert_eval_case_versions(connection: sqlite3.Connection, data: AppData) -> None:
+    connection.executemany(
+        """
+        INSERT INTO eval_case_versions
+          (id, case_ref, version, input_artifact_ref, expectation_artifact_ref, grader_ref, expectation, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        [
+            (
+                item.id,
+                item.case_ref,
+                item.version,
+                item.input_artifact_ref,
+                item.expectation_artifact_ref,
+                item.grader_ref,
+                item.expectation,
+                item.created_at,
+            )
+            for item in data.eval_case_versions
+        ],
+    )
+
+
+def _update_eval_case_current_versions(connection: sqlite3.Connection, data: AppData) -> None:
+    connection.executemany(
+        "UPDATE eval_cases SET current_version_ref = ? WHERE id = ?",
+        [(item.current_version_ref, item.id) for item in data.eval_cases],
     )
 
 
@@ -803,11 +879,11 @@ def _insert_eval_set_versions(connection: sqlite3.Connection, data: AppData) -> 
         [(item.id, item.corpus_ref, item.version, item.created_at) for item in data.eval_set_versions],
     )
     connection.executemany(
-        "INSERT INTO eval_set_cases (eval_set_version_ref, case_ref, position) VALUES (?, ?, ?)",
+        "INSERT INTO eval_set_cases (eval_set_version_ref, case_version_ref, position) VALUES (?, ?, ?)",
         [
-            (item.id, case_ref, index)
+            (item.id, case_version_ref, index)
             for item in data.eval_set_versions
-            for index, case_ref in enumerate(item.case_refs)
+            for index, case_version_ref in enumerate(item.case_version_refs)
         ],
     )
 
@@ -838,8 +914,8 @@ def _insert_eval_runs(connection: sqlite3.Connection, data: AppData) -> None:
 
 def _insert_case_results(connection: sqlite3.Connection, data: AppData) -> None:
     connection.executemany(
-        "INSERT INTO case_results (run_ref, case_ref, passed, score) VALUES (?, ?, ?, ?)",
-        [(item.run_ref, item.case_ref, int(item.passed), item.score) for item in data.case_results],
+        "INSERT INTO case_results (run_ref, case_version_ref, passed, score) VALUES (?, ?, ?, ?)",
+        [(item.run_ref, item.case_version_ref, int(item.passed), item.score) for item in data.case_results],
     )
 
 
@@ -851,6 +927,7 @@ def table_counts(connection: sqlite3.Connection) -> Dict[str, int]:
         "variant_versions",
         "eval_corpora",
         "eval_cases",
+        "eval_case_versions",
         "eval_set_versions",
         "eval_set_cases",
         "eval_runs",

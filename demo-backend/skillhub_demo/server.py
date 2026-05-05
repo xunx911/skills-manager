@@ -260,6 +260,7 @@ class Handler(BaseHTTPRequestHandler):
                 change_note=self._required(body, "change_note"),
                 content=body.get("content", ""),
                 content_ref=self._content_ref(content_ref) if content_ref is not None else None,
+                make_current=bool(body.get("make_current", False)),
             )
         )
 

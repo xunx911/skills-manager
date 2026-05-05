@@ -1,6 +1,6 @@
 import { createInitialState } from "../domain/seed";
 import { applyRouteToState } from "../domain/routes";
-import type { AppData, AppState, ContentRef } from "../domain/types";
+import type { AppData, AppState, ContentRef, EvalCase } from "../domain/types";
 
 const API_BASE = "http://127.0.0.1:8788";
 
@@ -181,12 +181,14 @@ export async function publishBackendVariantVersion(input: {
   skillId?: string;
   changeNote: string;
   contentRef?: ContentRef;
+  makeCurrent?: boolean;
   view?: AppState["view"];
 }): Promise<AppState> {
   const result = await postJson("/api/variant-versions", {
     variant_id: input.variantId,
     change_note: input.changeNote,
     content_ref: input.contentRef ? snakeize(input.contentRef) : undefined,
+    make_current: input.makeCurrent ?? true,
   });
   const versionId = result?.variant_version?.id;
   const overrides: StateOverrides = {
@@ -204,6 +206,7 @@ export async function publishBackendSkillBundleVersion(input: {
   changeNote: string;
   bundleName: string;
   files: Record<string, string>;
+  makeCurrent?: boolean;
   view?: AppState["view"];
 }): Promise<AppState> {
   const bundle = await importBackendSkillBundle({ name: input.bundleName, files: input.files });
@@ -212,6 +215,7 @@ export async function publishBackendSkillBundleVersion(input: {
     skillId: input.skillId,
     changeNote: input.changeNote,
     contentRef: bundle.contentRef,
+    makeCurrent: input.makeCurrent,
     view: input.view,
   });
 }
@@ -345,19 +349,51 @@ function normalizeStateSelection(state: AppState): AppState {
 }
 
 function normalizeAppData(data: Partial<AppData>): AppData {
+  const projectedEvalCases = projectEvalCaseVersions(data);
   return {
     skills: data.skills ?? [],
     tagSets: data.tagSets ?? [],
     variants: data.variants ?? [],
     variantVersions: data.variantVersions ?? [],
     evalCorpora: data.evalCorpora ?? [],
-    evalCases: data.evalCases ?? [],
-    evalSetVersions: data.evalSetVersions ?? [],
+    evalCases: projectedEvalCases.length > 0 ? projectedEvalCases : data.evalCases ?? [],
+    evalCaseVersions: data.evalCaseVersions ?? [],
+    evalSetVersions: (data.evalSetVersions ?? []).map((version) => ({
+      ...version,
+      caseRefs: version.caseVersionRefs ?? version.caseRefs ?? [],
+    })),
     evalRuns: data.evalRuns ?? [],
-    caseResults: data.caseResults ?? [],
+    caseResults: (data.caseResults ?? []).map((result) => ({
+      ...result,
+      caseRef: result.caseVersionRef ?? result.caseRef,
+    })),
     sourceFeedback: data.sourceFeedback ?? [],
     artifacts: data.artifacts ?? [],
   };
+}
+
+function projectEvalCaseVersions(data: Partial<AppData>): EvalCase[] {
+  const stableCases = data.evalCases ?? [];
+  const caseVersions = data.evalCaseVersions ?? [];
+  if (caseVersions.length === 0) return [];
+  return caseVersions.map((version) => {
+    const stableCase = stableCases.find((item) => item.id === version.caseRef);
+    return {
+      id: version.id,
+      corpusRef: stableCase?.corpusRef ?? "",
+      title: stableCase?.title ?? version.caseRef,
+      sourceType: stableCase?.sourceType ?? "manual",
+      originRef: stableCase?.originRef,
+      currentVersionRef: stableCase?.currentVersionRef,
+      caseRef: stableCase?.id ?? version.caseRef,
+      caseVersion: version.version,
+      inputArtifactRef: version.inputArtifactRef,
+      expectationArtifactRef: version.expectationArtifactRef,
+      graderRef: version.graderRef,
+      expectation: version.expectation,
+      createdAt: version.createdAt,
+    };
+  });
 }
 
 function camelize(value: unknown): unknown {

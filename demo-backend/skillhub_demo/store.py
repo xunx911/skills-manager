@@ -12,6 +12,7 @@ from .models import (
     CaseResult,
     ContentRef,
     EvalCase,
+    EvalCaseVersion,
     EvalCorpus,
     EvalRun,
     EvalSetVersion,
@@ -53,7 +54,7 @@ class SkillHubStore:
         return {
             "skill": to_jsonable(skill),
             "variants": to_jsonable(variants),
-            "eval_set_version": to_jsonable(eval_set),
+            "eval_set_version": self._eval_set_payload(eval_set),
         }
 
     def variant_page(
@@ -72,7 +73,7 @@ class SkillHubStore:
             "variant_version": to_jsonable(version),
             "tags": self.tags_for_variant(variant.id),
             "history": to_jsonable(history),
-            "eval_set_version": to_jsonable(eval_set),
+            "eval_set_version": self._eval_set_payload(eval_set),
             "score": self.aggregate_score(version.id, eval_set.id),
             "result_counts": self.result_counts(version.id, eval_set.id),
             "content_ref": to_jsonable(version.content_ref),
@@ -81,29 +82,29 @@ class SkillHubStore:
 
     def eval_set_detail(self, eval_set_version_id: str) -> Dict[str, Any]:
         eval_set = self._eval_set_version(eval_set_version_id)
-        cases = [self._eval_case(case_ref) for case_ref in eval_set.case_refs]
+        case_versions = [self._eval_case_version(case_version_ref) for case_version_ref in eval_set.case_version_refs]
         return {
-            "eval_set_version": to_jsonable(eval_set),
-            "cases": [self._case_detail(case) for case in cases],
+            "eval_set_version": self._eval_set_payload(eval_set),
+            "cases": [self._case_detail(case_version) for case_version in case_versions],
         }
 
     def eval_result_detail(self, variant_version_id: str, eval_set_version_id: str) -> Dict[str, Any]:
         version = self._variant_version(variant_version_id)
         variant = self._variant(version.variant_ref)
         eval_set = self._eval_set_version(eval_set_version_id)
-        cases = [self._eval_case(case_ref) for case_ref in eval_set.case_refs]
+        case_versions = [self._eval_case_version(case_version_ref) for case_version_ref in eval_set.case_version_refs]
         return {
             "variant": to_jsonable(variant),
             "variant_version": to_jsonable(version),
-            "eval_set_version": to_jsonable(eval_set),
+            "eval_set_version": self._eval_set_payload(eval_set),
             "score": self.aggregate_score(version.id, eval_set.id),
             "result_counts": self.result_counts(version.id, eval_set.id),
             "cases": [
                 {
-                    **self._case_detail(case),
-                    "result": self.case_result(version.id, eval_set.id, case.id),
+                    **self._case_detail(case_version),
+                    "result": self.case_result(version.id, eval_set.id, case_version.id),
                 }
-                for case in cases
+                for case_version in case_versions
             ],
         }
 
@@ -134,6 +135,7 @@ class SkillHubStore:
         created_at = now_iso()
         sequence = len(self.data.eval_cases) + 1
         case_id = "case-%d" % sequence
+        case_version_id = "casever-%d-v1" % sequence
         input_artifact_id = "artifact-%s-input" % case_id
         expected_artifact_id = "artifact-%s-expected" % case_id
 
@@ -163,6 +165,13 @@ class SkillHubStore:
             corpus_ref=corpus.id,
             title=title,
             source_type=source_type,  # type: ignore[arg-type]
+            current_version_ref=case_version_id,
+            created_at=created_at,
+        )
+        eval_case_version = EvalCaseVersion(
+            id=case_version_id,
+            case_ref=case_id,
+            version="v1",
             input_artifact_ref=input_artifact_id,
             expectation_artifact_ref=expected_artifact_id,
             grader_ref="manual-pass-fail-v1",
@@ -170,17 +179,22 @@ class SkillHubStore:
             created_at=created_at,
         )
         self.data.eval_cases.append(eval_case)
+        self.data.eval_case_versions.append(eval_case_version)
 
         next_number = len([item for item in self.data.eval_set_versions if item.corpus_ref == corpus.id]) + 1
         eval_set = EvalSetVersion(
             id=self._unique_id("evalset-v%d" % next_number, [item.id for item in self.data.eval_set_versions], created_at),
             corpus_ref=corpus.id,
             version="v%d" % next_number,
-            case_refs=[*current_eval_set.case_refs, eval_case.id],
+            case_version_refs=[*current_eval_set.case_version_refs, eval_case_version.id],
             created_at=created_at,
         )
         self.data.eval_set_versions.append(eval_set)
-        return {"eval_case": to_jsonable(eval_case), "eval_set_version": to_jsonable(eval_set)}
+        return {
+            "eval_case": to_jsonable(eval_case),
+            "eval_case_version": to_jsonable(eval_case_version),
+            "eval_set_version": self._eval_set_payload(eval_set),
+        }
 
     def create_skill(
         self,
@@ -213,7 +227,7 @@ class SkillHubStore:
             id=eval_set_id,
             corpus_ref=corpus_id,
             version="v1",
-            case_refs=[],
+            case_version_refs=[],
             created_at=created_at,
         )
         self.data.eval_set_versions.append(eval_set)
@@ -232,7 +246,7 @@ class SkillHubStore:
             "skill": to_jsonable(skill),
             "variant": variant_result["variant"],
             "variant_version": variant_result["variant_version"],
-            "eval_set_version": to_jsonable(eval_set),
+            "eval_set_version": self._eval_set_payload(eval_set),
         }
 
     def update_skill(
@@ -384,6 +398,7 @@ class SkillHubStore:
         change_note: str,
         content: str = "",
         content_ref: Optional[ContentRef] = None,
+        make_current: bool = False,
     ) -> Dict[str, Any]:
         variant = self._variant(variant_id)
         created_at = now_iso()
@@ -402,7 +417,8 @@ class SkillHubStore:
             created_at=created_at,
         )
         self.data.variant_versions.append(version)
-        variant.current_version_ref = version.id
+        if make_current:
+            variant.current_version_ref = version.id
         return {"variant": to_jsonable(variant), "variant_version": to_jsonable(version)}
 
     def record_eval_run(
@@ -430,9 +446,11 @@ class SkillHubStore:
             finished_at=created_at,
         )
         self.data.eval_runs.append(run)
-        for case_ref in eval_set.case_refs:
-            passed = bool(results.get(case_ref, False))
-            self.data.case_results.append(CaseResult(run_ref=run.id, case_ref=case_ref, passed=passed, score=1 if passed else 0))
+        for case_version_ref in eval_set.case_version_refs:
+            passed = bool(results.get(case_version_ref, False))
+            self.data.case_results.append(
+                CaseResult(run_ref=run.id, case_version_ref=case_version_ref, passed=passed, score=1 if passed else 0)
+            )
         return {"eval_run": to_jsonable(run), "result_counts": self.result_counts(variant_version_id, eval_set_version_id)}
 
     def latest_eval_set_for_skill(self, skill_id: str) -> EvalSetVersion:
@@ -449,17 +467,17 @@ class SkillHubStore:
 
     def aggregate_score(self, variant_version_id: str, eval_set_version_id: str) -> Optional[float]:
         eval_set = self._eval_set_version(eval_set_version_id)
-        if not eval_set.case_refs:
+        if not eval_set.case_version_refs:
             return None
-        scores = [self.case_result(variant_version_id, eval_set_version_id, case_ref) for case_ref in eval_set.case_refs]
+        scores = [self.case_result(variant_version_id, eval_set_version_id, case_ref) for case_ref in eval_set.case_version_refs]
         if any(item is None for item in scores):
             return None
         return sum(1 if item and item["passed"] else 0 for item in scores) / len(scores)
 
     def result_counts(self, variant_version_id: str, eval_set_version_id: str) -> Dict[str, int]:
         eval_set = self._eval_set_version(eval_set_version_id)
-        counts = {"passed": 0, "failed": 0, "missing": 0, "total": len(eval_set.case_refs)}
-        for case_ref in eval_set.case_refs:
+        counts = {"passed": 0, "failed": 0, "missing": 0, "total": len(eval_set.case_version_refs)}
+        for case_ref in eval_set.case_version_refs:
             result = self.case_result(variant_version_id, eval_set_version_id, case_ref)
             if result is None:
                 counts["missing"] += 1
@@ -469,11 +487,14 @@ class SkillHubStore:
                 counts["failed"] += 1
         return counts
 
-    def case_result(self, variant_version_id: str, eval_set_version_id: str, case_id: str) -> Optional[Dict[str, Any]]:
+    def case_result(self, variant_version_id: str, eval_set_version_id: str, case_version_id: str) -> Optional[Dict[str, Any]]:
         latest_run = self._latest_run(variant_version_id, eval_set_version_id)
         if latest_run is None:
             return None
-        result = next((item for item in self.data.case_results if item.run_ref == latest_run.id and item.case_ref == case_id), None)
+        result = next(
+            (item for item in self.data.case_results if item.run_ref == latest_run.id and item.case_version_ref == case_version_id),
+            None,
+        )
         return to_jsonable(result) if result else None
 
     def _verification_runs(self, variant: Variant, version: VariantVersion) -> List[Dict[str, Any]]:
@@ -482,7 +503,7 @@ class SkillHubStore:
         eval_sets.sort(key=lambda item: item.version, reverse=True)
         return [
             {
-                "eval_set_version": to_jsonable(eval_set),
+                "eval_set_version": self._eval_set_payload(eval_set),
                 "eval_run": to_jsonable(self._latest_run(version.id, eval_set.id)),
                 "score": self.aggregate_score(version.id, eval_set.id),
                 "result_counts": self.result_counts(version.id, eval_set.id),
@@ -500,11 +521,25 @@ class SkillHubStore:
             return None
         return sorted(runs, key=lambda run: run.started_at)[-1]
 
-    def _case_detail(self, eval_case: EvalCase) -> Dict[str, Any]:
+    def _eval_set_payload(self, eval_set: EvalSetVersion) -> Dict[str, Any]:
+        payload = to_jsonable(eval_set)
+        payload["case_refs"] = list(eval_set.case_version_refs)
+        return payload
+
+    def _case_detail(self, case_version: EvalCaseVersion) -> Dict[str, Any]:
+        eval_case = self._eval_case(case_version.case_ref)
         return {
             **to_jsonable(eval_case),
-            "input": self._artifact(eval_case.input_artifact_ref).content,
-            "expected_output": self._artifact(eval_case.expectation_artifact_ref).content,
+            "id": case_version.id,
+            "case_ref": eval_case.id,
+            "case_version": to_jsonable(case_version),
+            "input_artifact_ref": case_version.input_artifact_ref,
+            "expectation_artifact_ref": case_version.expectation_artifact_ref,
+            "grader_ref": case_version.grader_ref,
+            "expectation": case_version.expectation,
+            "created_at": case_version.created_at,
+            "input": self._artifact(case_version.input_artifact_ref).content,
+            "expected_output": self._artifact(case_version.expectation_artifact_ref).content,
         }
 
     def _skill(self, skill_id: str):
@@ -536,6 +571,12 @@ class SkillHubStore:
         if eval_case is None:
             raise KeyError("Unknown eval case %s" % case_id)
         return eval_case
+
+    def _eval_case_version(self, case_version_id: str):
+        case_version = next((item for item in self.data.eval_case_versions if item.id == case_version_id), None)
+        if case_version is None:
+            raise KeyError("Unknown eval case version %s" % case_version_id)
+        return case_version
 
     def _corpus_for_skill(self, skill_id: str):
         corpus = next((item for item in self.data.eval_corpora if item.skill_ref == skill_id), None)

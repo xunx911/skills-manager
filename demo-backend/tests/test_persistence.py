@@ -29,7 +29,7 @@ class PersistenceTest(unittest.TestCase):
             detail = loaded_store.skill_detail(created["skill"]["id"])
             self.assertEqual(detail["skill"]["slug"], "api-reviewer")
             self.assertEqual(detail["variants"][0]["id"], created["variant"]["id"])
-            self.assertEqual(detail["eval_set_version"]["case_refs"], [])
+            self.assertEqual(detail["eval_set_version"]["case_version_refs"], [])
 
     def test_missing_file_uses_seed_fallback(self):
         with tempfile.TemporaryDirectory() as tmpdir:

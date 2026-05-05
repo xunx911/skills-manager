@@ -23,7 +23,7 @@ from skillhub_demo.store import SkillHubStore
 class SqliteStoreTest(unittest.TestCase):
     def test_initialize_records_schema_version(self):
         connection = connect()
-        self.assertEqual(current_schema_version(connection), 2)
+        self.assertEqual(current_schema_version(connection), 3)
 
     def test_newer_schema_version_is_rejected(self):
         connection = connect()
@@ -40,7 +40,7 @@ class SqliteStoreTest(unittest.TestCase):
         self.assertEqual(counts["skills"], len(data.skills))
         self.assertEqual(counts["variants"], len(data.variants))
         self.assertEqual(counts["variant_versions"], len(data.variant_versions))
-        self.assertEqual(counts["eval_set_cases"], len(data.eval_set_versions[0].case_refs))
+        self.assertEqual(counts["eval_set_cases"], len(data.eval_set_versions[0].case_version_refs))
         self.assertEqual(counts["case_results"], len(data.case_results))
 
         self.assertEqual(
@@ -53,7 +53,8 @@ class SqliteStoreTest(unittest.TestCase):
         import_app_data(connection, create_seed_data())
 
         cases = list(eval_set_case_details(connection, "evalset-v1"))
-        self.assertEqual(cases[0]["id"], "case-null")
+        self.assertEqual(cases[0]["id"], "casever-null-v1")
+        self.assertEqual(cases[0]["case_ref"], "case-null")
         self.assertEqual(cases[0]["source_type"], "manual")
         self.assertIn("nickname.toUpperCase", cases[0]["input"])
         self.assertIn("toUpperCase", cases[0]["expected_output"])
@@ -87,9 +88,9 @@ class SqliteStoreTest(unittest.TestCase):
         )
         data.case_results.extend(
             [
-                CaseResult(run_ref="run-a-v1-later", case_ref="case-null", passed=False, score=0),
-                CaseResult(run_ref="run-a-v1-later", case_ref="case-auth", passed=False, score=0),
-                CaseResult(run_ref="run-a-v1-later", case_ref="case-noise", passed=False, score=0),
+                CaseResult(run_ref="run-a-v1-later", case_version_ref="casever-null-v1", passed=False, score=0),
+                CaseResult(run_ref="run-a-v1-later", case_version_ref="casever-auth-v1", passed=False, score=0),
+                CaseResult(run_ref="run-a-v1-later", case_version_ref="casever-noise-v1", passed=False, score=0),
             ]
         )
         connection = connect()

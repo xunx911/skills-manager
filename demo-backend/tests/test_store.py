@@ -44,7 +44,7 @@ class StoreTest(unittest.TestCase):
         self.assertEqual(skill["default_variant_ref"], variant["id"])
         detail = self.store.skill_detail(skill["id"])
         self.assertEqual(detail["eval_set_version"]["version"], "v1")
-        self.assertEqual(detail["eval_set_version"]["case_refs"], [])
+        self.assertEqual(detail["eval_set_version"]["case_version_refs"], [])
         self.assertEqual(len(detail["variants"]), 1)
 
     def test_eval_cases_are_scoped_to_their_skill_corpus(self):
@@ -68,9 +68,9 @@ class StoreTest(unittest.TestCase):
         code_detail = self.store.skill_detail("skill-code-reviewer")
         security_detail = self.store.skill_detail(created["skill"]["id"])
         self.assertEqual(code_detail["eval_set_version"]["id"], "evalset-v1")
-        self.assertEqual(code_detail["eval_set_version"]["case_refs"], ["case-null", "case-auth", "case-noise"])
+        self.assertEqual(code_detail["eval_set_version"]["case_version_refs"], ["casever-null-v1", "casever-auth-v1", "casever-noise-v1"])
         self.assertEqual(security_detail["eval_set_version"]["id"], result["eval_set_version"]["id"])
-        self.assertEqual(security_detail["eval_set_version"]["case_refs"], [result["eval_case"]["id"]])
+        self.assertEqual(security_detail["eval_set_version"]["case_version_refs"], [result["eval_case_version"]["id"]])
 
     def test_create_variant_registers_tag_set_and_initial_version(self):
         result = self.store.create_variant(
@@ -154,7 +154,7 @@ class StoreTest(unittest.TestCase):
             self.store.import_skill_bundle(name="broken", files={"references/checklist.md": "missing"})
 
     def test_publish_variant_version_moves_current_pointer(self):
-        result = self.store.publish_variant_version("variant-a", "加强 token 泄露审查")
+        result = self.store.publish_variant_version("variant-a", "加强 token 泄露审查", make_current=True)
         self.assertEqual(result["variant_version"]["version"], "v3")
         page = self.store.variant_page("variant-a", None, "evalset-v1")
         self.assertEqual(page["variant_version"]["id"], result["variant_version"]["id"])
@@ -190,9 +190,16 @@ class StoreTest(unittest.TestCase):
         run = self.store.record_eval_run(
             variant_version_id=version_id,
             eval_set_version_id="evalset-v1",
-            results={"case-null": True, "case-auth": False, "case-noise": True},
+            results={"casever-null-v1": True, "casever-auth-v1": False, "casever-noise-v1": True},
         )
         self.assertEqual(run["result_counts"], {"passed": 2, "failed": 1, "missing": 0, "total": 3})
+
+    def test_publish_variant_version_can_leave_current_pointer_unchanged(self):
+        result = self.store.publish_variant_version("variant-a", "候选版本")
+        self.assertEqual(result["variant_version"]["version"], "v3")
+        self.assertEqual(result["variant"]["current_version_ref"], "version-a-v1")
+        page = self.store.variant_page("variant-a", None, "evalset-v1")
+        self.assertEqual(page["variant_version"]["id"], "version-a-v1")
 
     def test_record_eval_run_requires_same_skill_for_variant_version_and_eval_set(self):
         created = self.store.create_skill(
