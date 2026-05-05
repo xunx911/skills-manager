@@ -24,6 +24,9 @@ from sqlalchemy.dialects.postgresql import JSONB
 
 metadata = MetaData()
 
+# This metadata backs application queries and fast SQLite repository tests.
+# PostgreSQL migrations still execute schema.sql as the authoritative DDL.
+
 
 def timestamp_column(name: str = "created_at") -> Column[DateTime]:
     return Column(name, DateTime(timezone=True), nullable=False, server_default=text("now()"))
@@ -49,10 +52,9 @@ tag_sets = Table(
     "tag_sets",
     metadata,
     Column("id", Text, primary_key=True),
-    Column("tags", ARRAY(Text), nullable=False),
+    Column("tags", ARRAY(Text).with_variant(JSON(), "sqlite"), nullable=False),
     Column("normalized_hash", Text, nullable=False, unique=True),
     timestamp_column(),
-    CheckConstraint("cardinality(tags) > 0", name="tag_sets_tags_not_empty"),
 )
 
 skills = Table(
@@ -205,7 +207,7 @@ eval_runs = Table(
     Column("eval_set_version_id", Text, nullable=False),
     Column("strategy", Text, nullable=False),
     Column("status", Text, nullable=False),
-    Column("summary", JSONB().with_variant(JSON(), "sqlite"), nullable=False, server_default=text("'{}'::jsonb")),
+    Column("summary", JSONB().with_variant(JSON(), "sqlite"), nullable=False, server_default=text("'{}'")),
     Column("result_artifact_id", Text, ForeignKey("artifacts.id")),
     timestamp_column(),
     Column("created_by", Text, nullable=False),
@@ -270,7 +272,7 @@ audit_events = Table(
     Column("action", Text, nullable=False),
     Column("resource_type", Text, nullable=False),
     Column("resource_id", Text, nullable=False),
-    Column("payload", JSONB().with_variant(JSON(), "sqlite"), nullable=False, server_default=text("'{}'::jsonb")),
+    Column("payload", JSONB().with_variant(JSON(), "sqlite"), nullable=False, server_default=text("'{}'")),
     timestamp_column(),
 )
 

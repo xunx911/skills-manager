@@ -28,6 +28,14 @@ class SqlAlchemyMetadataTest(unittest.TestCase):
             },
         )
 
+    def test_metadata_can_create_sqlite_test_schema(self):
+        from sqlalchemy import create_engine
+
+        engine = create_engine("sqlite:///:memory:")
+        metadata.create_all(engine)
+        with engine.connect() as connection:
+            self.assertTrue(engine.dialect.has_table(connection, "skills"))
+
     def test_eval_run_same_skill_composite_foreign_keys_are_mapped(self):
         self.assert_foreign_key(
             "eval_runs",
