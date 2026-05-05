@@ -5,6 +5,7 @@ from datetime import datetime
 
 from sqlalchemy import Engine, insert, select, update
 
+from skillhub.domain.errors import InvariantError, NotFoundError
 from skillhub.domain.models import ContentRef, digest_text, new_id, normalize_tags, utc_now
 from skillhub.infrastructure.db import tables
 
@@ -17,6 +18,14 @@ class CreateSkillResult:
     tag_set_id: str
     variant_id: str
     variant_version_id: str
+
+
+@dataclass(frozen=True)
+class CreateVariantVersionResult:
+    skill_id: str
+    variant_id: str
+    variant_version_id: str
+    version_number: int
 
 
 class SqlSkillRepository:
@@ -138,6 +147,61 @@ class SqlSkillRepository:
             variant_version_id=variant_version_id,
         )
 
+    def create_variant_version(
+        self,
+        *,
+        variant_id: str,
+        content_ref: ContentRef,
+        change_summary: str,
+        actor: str,
+        make_current: bool,
+    ) -> CreateVariantVersionResult:
+        created_at = utc_now()
+        variant_version_id = new_id("varver")
+
+        with self.engine.begin() as connection:
+            variant = self._variant_row(connection, variant_id)
+            version_number = self._next_variant_version_number(connection, variant_id)
+            connection.execute(
+                insert(tables.variant_versions).values(
+                    id=variant_version_id,
+                    skill_id=variant["skill_id"],
+                    variant_id=variant_id,
+                    version_number=version_number,
+                    content_ref=self._content_ref_payload(content_ref),
+                    content_digest=content_ref.digest,
+                    change_summary=change_summary,
+                    created_at=created_at,
+                    created_by=actor,
+                )
+            )
+            if make_current:
+                connection.execute(
+                    update(tables.variants)
+                    .where(tables.variants.c.id == variant_id)
+                    .values(current_version_id=variant_version_id, updated_at=created_at)
+                )
+
+        return CreateVariantVersionResult(
+            skill_id=variant["skill_id"],
+            variant_id=variant_id,
+            variant_version_id=variant_version_id,
+            version_number=version_number,
+        )
+
+    def promote_variant_version(self, *, variant_id: str, version_id: str) -> None:
+        updated_at = utc_now()
+        with self.engine.begin() as connection:
+            variant = self._variant_row(connection, variant_id)
+            version = self._variant_version_row(connection, version_id)
+            if version["variant_id"] != variant_id:
+                raise InvariantError("Variant current_version_id must point to its own version.")
+            connection.execute(
+                update(tables.variants)
+                .where(tables.variants.c.id == variant_id)
+                .values(current_version_id=version_id, updated_at=updated_at)
+            )
+
     def _get_or_create_tag_set(
         self,
         connection,
@@ -161,6 +225,32 @@ class SqlSkillRepository:
             )
         )
         return tag_set_id
+
+    def _variant_row(self, connection, variant_id: str):
+        row = (
+            connection.execute(select(tables.variants).where(tables.variants.c.id == variant_id))
+            .mappings()
+            .one_or_none()
+        )
+        if row is None:
+            raise NotFoundError(f"Variant not found: {variant_id}")
+        return row
+
+    def _variant_version_row(self, connection, version_id: str):
+        row = (
+            connection.execute(select(tables.variant_versions).where(tables.variant_versions.c.id == version_id))
+            .mappings()
+            .one_or_none()
+        )
+        if row is None:
+            raise NotFoundError(f"VariantVersion not found: {version_id}")
+        return row
+
+    def _next_variant_version_number(self, connection, variant_id: str) -> int:
+        version_numbers = connection.execute(
+            select(tables.variant_versions.c.version_number).where(tables.variant_versions.c.variant_id == variant_id)
+        ).scalars()
+        return 1 + max(version_numbers, default=0)
 
     def _content_ref_payload(self, content_ref: ContentRef) -> dict[str, str]:
         payload = {

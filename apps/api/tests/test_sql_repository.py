@@ -2,6 +2,7 @@ import unittest
 
 from sqlalchemy import create_engine, event, select
 
+from skillhub.domain.errors import InvariantError, NotFoundError
 from skillhub.domain.models import ContentRef
 from skillhub.infrastructure.db.repositories import SqlSkillRepository
 from skillhub.infrastructure.db.tables import (
@@ -82,6 +83,91 @@ class SqlSkillRepositoryTest(unittest.TestCase):
 
         self.assertEqual(first.tag_set_id, second.tag_set_id)
         self.assertEqual(len(tag_set_count), 1)
+
+    def test_candidate_variant_version_does_not_move_current_pointer(self):
+        skill = self.create_skill()
+
+        candidate = self.repository.create_variant_version(
+            variant_id=skill.variant_id,
+            content_ref=ContentRef(kind="skill_bundle", locator="memory:candidate", digest="digest-candidate"),
+            change_summary="Candidate version.",
+            actor="tester",
+            make_current=False,
+        )
+
+        with self.engine.connect() as connection:
+            variant = connection.execute(select(variants).where(variants.c.id == skill.variant_id)).mappings().one()
+            version = connection.execute(select(variant_versions).where(variant_versions.c.id == candidate.variant_version_id)).mappings().one()
+
+        self.assertEqual(candidate.version_number, 2)
+        self.assertEqual(variant["current_version_id"], skill.variant_version_id)
+        self.assertEqual(version["change_summary"], "Candidate version.")
+
+    def test_make_current_variant_version_moves_current_pointer(self):
+        skill = self.create_skill()
+
+        created = self.repository.create_variant_version(
+            variant_id=skill.variant_id,
+            content_ref=ContentRef(kind="skill_bundle", locator="memory:v2", digest="digest-v2"),
+            change_summary="Make current.",
+            actor="tester",
+            make_current=True,
+        )
+
+        with self.engine.connect() as connection:
+            variant = connection.execute(select(variants).where(variants.c.id == skill.variant_id)).mappings().one()
+
+        self.assertEqual(variant["current_version_id"], created.variant_version_id)
+
+    def test_promote_variant_version_moves_current_pointer_to_existing_version(self):
+        skill = self.create_skill()
+        candidate = self.repository.create_variant_version(
+            variant_id=skill.variant_id,
+            content_ref=ContentRef(kind="skill_bundle", locator="memory:candidate", digest="digest-candidate"),
+            change_summary="Candidate version.",
+            actor="tester",
+            make_current=False,
+        )
+
+        self.repository.promote_variant_version(variant_id=skill.variant_id, version_id=candidate.variant_version_id)
+
+        with self.engine.connect() as connection:
+            variant = connection.execute(select(variants).where(variants.c.id == skill.variant_id)).mappings().one()
+
+        self.assertEqual(variant["current_version_id"], candidate.variant_version_id)
+
+    def test_promote_rejects_version_from_another_variant(self):
+        first = self.create_skill(slug="code-reviewer", digest="digest-code")
+        second = self.create_skill(slug="security-reviewer", digest="digest-security")
+
+        with self.assertRaisesRegex(InvariantError, "own version"):
+            self.repository.promote_variant_version(
+                variant_id=first.variant_id,
+                version_id=second.variant_version_id,
+            )
+
+    def test_create_variant_version_requires_existing_variant(self):
+        with self.assertRaisesRegex(NotFoundError, "Variant not found"):
+            self.repository.create_variant_version(
+                variant_id="missing",
+                content_ref=ContentRef(kind="skill_bundle", locator="memory:v2", digest="digest-v2"),
+                change_summary="Missing variant.",
+                actor="tester",
+                make_current=False,
+            )
+
+    def create_skill(self, *, slug: str = "code-reviewer", digest: str = "digest-bundle"):
+        return self.repository.create_skill(
+            slug=slug,
+            owner_ref="skillhub-lab",
+            variant_name="Variant A",
+            variant_label="Baseline",
+            variant_summary="Baseline maintained answer.",
+            tags=["codex"],
+            content_ref=ContentRef(kind="skill_bundle", locator=f"memory:{slug}", digest=digest),
+            change_summary="Initial version.",
+            actor="tester",
+        )
 
 
 if __name__ == "__main__":
