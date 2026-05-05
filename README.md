@@ -69,6 +69,13 @@ cd apps/api
 uv run python -m unittest discover -s tests
 ```
 
+Run the formal API locally:
+
+```bash
+cd apps/api
+uv run uvicorn skillhub.api.main:app --reload
+```
+
 Formal API Alembic migrations live under `apps/api/migrations`; the first migration executes
 `apps/api/skillhub/infrastructure/db/schema.sql`.
 
