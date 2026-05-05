@@ -115,5 +115,6 @@ python -m skillhub_demo.external_runner \
 - [Storage adapter contract](docs/storage-adapter-contract.md)
 - [Formal tech stack](docs/formal-tech-stack.md)
 - [Formal architecture v0.1](docs/formal-architecture-v0.1.md)
+- [Formal UI design v0.1](docs/formal-ui-design.md)
 - [Roadmap](docs/roadmap.md)
 - [1.0 architecture review](docs/architecture-review-1.0.md)

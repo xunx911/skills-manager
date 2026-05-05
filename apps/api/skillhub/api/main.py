@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import asdict
+from dataclasses import asdict, is_dataclass
 from typing import Any
 
 from fastapi import Depends, FastAPI, Request
@@ -89,6 +89,25 @@ def create_app(engine: Engine | None = None) -> FastAPI:
     @app.get("/health")
     def health() -> dict[str, bool]:
         return {"ok": True}
+
+    @app.get("/api/skills")
+    def list_skills(repository: SqlSkillRepository = Depends(repository_dependency)):
+        return result_payload(repository.list_skills())
+
+    @app.get("/api/skills/{skill_id}")
+    def skill_detail(skill_id: str, repository: SqlSkillRepository = Depends(repository_dependency)):
+        return result_payload(repository.skill_detail(skill_id))
+
+    @app.get("/api/eval-set-versions/{eval_set_version_id}")
+    def eval_set_version_detail(
+        eval_set_version_id: str,
+        repository: SqlSkillRepository = Depends(repository_dependency),
+    ):
+        return result_payload(repository.eval_set_version_detail(eval_set_version_id))
+
+    @app.get("/api/eval-runs/{eval_run_id}")
+    def eval_run_detail(eval_run_id: str, repository: SqlSkillRepository = Depends(repository_dependency)):
+        return result_payload(repository.eval_run_detail(eval_run_id))
 
     @app.post("/api/skills")
     def create_skill(payload: CreateSkillPayload, repository: SqlSkillRepository = Depends(repository_dependency)):
@@ -195,8 +214,10 @@ def content_ref(payload: ContentRefPayload) -> ContentRef:
     return ContentRef(kind=payload.kind, locator=payload.locator, digest=payload.digest, path=payload.path)  # type: ignore[arg-type]
 
 
-def result_payload(result: Any) -> dict[str, Any]:
-    return asdict(result)
+def result_payload(result: Any) -> Any:
+    if is_dataclass(result):
+        return asdict(result)
+    return result
 
 
 app = create_app()

@@ -337,6 +337,106 @@ class SqlSkillRepositoryTest(unittest.TestCase):
                 actor="tester",
             )
 
+    def test_list_skills_returns_default_variant_and_latest_verified_run(self):
+        skill = self.create_skill()
+        case = self.repository.create_eval_case(
+            skill_id=skill.skill_id,
+            title="PR: missing owner check",
+            input_text="input",
+            expected_output="expected",
+            actor="tester",
+        )
+        run = self.repository.record_eval_run(
+            variant_version_id=skill.variant_version_id,
+            eval_set_version_id=case.eval_set_version_id,
+            strategy="manual_pass_fail",
+            results={case.eval_case_version_id: True},
+            actor="tester",
+        )
+
+        summaries = self.repository.list_skills()
+
+        self.assertEqual(len(summaries), 1)
+        self.assertEqual(summaries[0]["skill"]["slug"], "code-reviewer")
+        self.assertEqual(summaries[0]["default_variant"]["id"], skill.variant_id)
+        self.assertEqual(summaries[0]["default_variant"]["tags"], ["codex"])
+        self.assertEqual(summaries[0]["primary_eval_set"]["current_version"]["id"], case.eval_set_version_id)
+        self.assertEqual(summaries[0]["latest_accepted_eval_run"]["id"], run.eval_run_id)
+
+    def test_skill_detail_returns_variants_history_eval_sets_and_latest_runs(self):
+        skill = self.create_skill()
+        candidate = self.repository.create_variant_version(
+            variant_id=skill.variant_id,
+            content_ref=ContentRef(kind="skill_bundle", locator="memory:v2", digest="digest-v2"),
+            change_summary="Candidate.",
+            actor="tester",
+            make_current=False,
+        )
+        case = self.repository.create_eval_case(
+            skill_id=skill.skill_id,
+            title="PR: token leak",
+            input_text="input",
+            expected_output="expected",
+            actor="tester",
+        )
+        run = self.repository.record_eval_run(
+            variant_version_id=candidate.variant_version_id,
+            eval_set_version_id=case.eval_set_version_id,
+            strategy="manual_pass_fail",
+            results={case.eval_case_version_id: False},
+            actor="tester",
+        )
+
+        detail = self.repository.skill_detail(skill.skill_id)
+
+        self.assertEqual(detail["skill"]["id"], skill.skill_id)
+        self.assertEqual(detail["variants"][0]["current_version"]["id"], skill.variant_version_id)
+        self.assertEqual([version["version_number"] for version in detail["variants"][0]["versions"]], [2, 1])
+        self.assertEqual(detail["eval_sets"][0]["current_version"]["id"], case.eval_set_version_id)
+        self.assertEqual(detail["latest_eval_runs"][0]["id"], run.eval_run_id)
+
+    def test_eval_set_version_detail_returns_exact_case_versions_and_artifact_refs(self):
+        skill = self.create_skill()
+        case = self.repository.create_eval_case(
+            skill_id=skill.skill_id,
+            title="PR: missing owner check",
+            input_text="input",
+            expected_output="expected",
+            actor="tester",
+        )
+
+        detail = self.repository.eval_set_version_detail(case.eval_set_version_id)
+
+        self.assertEqual(detail.eval_set_version["id"], case.eval_set_version_id)
+        self.assertEqual(detail.cases[0]["case"]["title"], "PR: missing owner check")
+        self.assertEqual(detail.cases[0]["case_version"]["id"], case.eval_case_version_id)
+        self.assertEqual(detail.cases[0]["case_version"]["input_artifact"]["id"], case.input_artifact_id)
+        self.assertEqual(detail.cases[0]["case_version"]["expected_output_artifact"]["id"], case.expected_output_artifact_id)
+
+    def test_eval_run_detail_returns_case_level_pass_fail_results(self):
+        skill = self.create_skill()
+        case = self.repository.create_eval_case(
+            skill_id=skill.skill_id,
+            title="PR: missing owner check",
+            input_text="input",
+            expected_output="expected",
+            actor="tester",
+        )
+        run = self.repository.record_eval_run(
+            variant_version_id=skill.variant_version_id,
+            eval_set_version_id=case.eval_set_version_id,
+            strategy="manual_pass_fail",
+            results={case.eval_case_version_id: True},
+            actor="tester",
+        )
+
+        detail = self.repository.eval_run_detail(run.eval_run_id)
+
+        self.assertEqual(detail.eval_run["id"], run.eval_run_id)
+        self.assertEqual(detail.variant_version["id"], skill.variant_version_id)
+        self.assertEqual(detail.case_results[0]["case"]["title"], "PR: missing owner check")
+        self.assertTrue(detail.case_results[0]["result"]["passed"])
+
     def create_skill(self, *, slug: str = "code-reviewer", digest: str = "digest-bundle"):
         return self.repository.create_skill(
             slug=slug,
