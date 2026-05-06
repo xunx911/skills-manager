@@ -28,6 +28,7 @@ This starts:
 - Web: `http://127.0.0.1:3000/skills`
 
 The script uses `uv` for the Python API and installs `apps/web` npm dependencies when `node_modules` is missing. It does not write to your global Python environment.
+Local API data is persisted to `.data/skillhub.sqlite3` by default. Override with `SKILLHUB_DATABASE_URL` or `SKILLHUB_DATA_DIR`.
 
 ### Manual run
 
@@ -35,6 +36,8 @@ Terminal 1:
 
 ```bash
 cd apps/api
+mkdir -p ../../.data
+SKILLHUB_DATABASE_URL=sqlite:///$PWD/../../.data/skillhub.sqlite3 \
 uv run uvicorn skillhub.api.main:app --host 127.0.0.1 --port 8000
 ```
 

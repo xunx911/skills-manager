@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import asdict, is_dataclass
+from os import environ
 from typing import Any
 
 from fastapi import Depends, FastAPI, Request
@@ -114,7 +115,7 @@ def create_app(engine: Engine | None = None) -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
-    app.state.engine = engine or create_local_sqlite_engine()
+    app.state.engine = engine or create_sqlite_engine(environ.get("SKILLHUB_DATABASE_URL", "sqlite:///:memory:"))
     metadata.create_all(app.state.engine)
 
     @app.exception_handler(NotFoundError)
@@ -325,11 +326,18 @@ def create_app(engine: Engine | None = None) -> FastAPI:
 
 
 def create_local_sqlite_engine() -> Engine:
-    engine = create_engine(
-        "sqlite:///:memory:",
-        connect_args={"check_same_thread": False},
-        poolclass=StaticPool,
-    )
+    return create_sqlite_engine("sqlite:///:memory:")
+
+
+def create_sqlite_engine(database_url: str) -> Engine:
+    if database_url == "sqlite:///:memory:":
+        engine = create_engine(
+            database_url,
+            connect_args={"check_same_thread": False},
+            poolclass=StaticPool,
+        )
+    else:
+        engine = create_engine(database_url, connect_args={"check_same_thread": False})
     event.listen(engine, "connect", enable_sqlite_foreign_keys)
     return engine
 

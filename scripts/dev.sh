@@ -4,6 +4,8 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 API_PORT="${SKILLHUB_API_PORT:-8000}"
 WEB_PORT="${SKILLHUB_WEB_PORT:-3000}"
+DATA_DIR="${SKILLHUB_DATA_DIR:-$ROOT_DIR/.data}"
+DATABASE_URL="${SKILLHUB_DATABASE_URL:-sqlite:///$DATA_DIR/skillhub.sqlite3}"
 export UV_CACHE_DIR="${UV_CACHE_DIR:-$ROOT_DIR/.uv-cache}"
 
 cleanup() {
@@ -17,9 +19,10 @@ cleanup() {
 trap cleanup EXIT INT TERM
 
 echo "Starting SkillHub API on http://127.0.0.1:${API_PORT}"
+mkdir -p "$DATA_DIR"
 (
   cd "$ROOT_DIR/apps/api"
-  uv run uvicorn skillhub.api.main:app --host 127.0.0.1 --port "$API_PORT"
+  SKILLHUB_DATABASE_URL="$DATABASE_URL" uv run uvicorn skillhub.api.main:app --host 127.0.0.1 --port "$API_PORT"
 ) &
 API_PID=$!
 
