@@ -121,6 +121,70 @@ class ApiCommandTest(unittest.TestCase):
         self.assertEqual(response.status_code, 404)
         self.assertIn("Variant not found", response.json()["detail"])
 
+    def test_management_flow_updates_variant_and_cases(self):
+        skill = self.create_skill("reviewer-ops")
+
+        update_skill = self.client.patch(
+            f"/api/skills/{skill['skill_id']}",
+            json={"slug": "reviewer-ops-v2", "owner_ref": "platform-team"},
+        )
+        self.assertEqual(update_skill.status_code, 200)
+        self.assertEqual(update_skill.json()["slug"], "reviewer-ops-v2")
+
+        variant = self.client.post(
+            "/api/variants",
+            json={
+                "skill_id": skill["skill_id"],
+                "name": "Long context",
+                "label": "Long context",
+                "summary": "Optimized for long review prompts.",
+                "tags": ["codex", "long-context"],
+                "content_ref": {
+                    "kind": "skill_bundle",
+                    "locator": "memory:long-context",
+                    "digest": "digest-long-context",
+                },
+                "change_summary": "Add long context variant.",
+                "actor": "tester",
+                "make_default": True,
+            },
+        )
+        self.assertEqual(variant.status_code, 200)
+
+        case = self.client.post(
+            "/api/eval-cases",
+            json={
+                "skill_id": skill["skill_id"],
+                "title": "PR: noisy rename",
+                "input_text": "rename local variable",
+                "expected_output": "No finding",
+                "actor": "tester",
+            },
+        ).json()
+        revised = self.client.patch(
+            f"/api/eval-cases/{case['eval_case_id']}",
+            json={
+                "case_id": case["eval_case_id"],
+                "title": "PR: harmless rename",
+                "input_text": "rename local variable only",
+                "expected_output": "Should not report a bug.",
+                "actor": "tester",
+                "make_current": True,
+            },
+        )
+        self.assertEqual(revised.status_code, 200)
+
+        archived_case = self.client.delete(f"/api/eval-cases/{case['eval_case_id']}")
+        self.assertEqual(archived_case.status_code, 200)
+        eval_set = self.client.get(f"/api/eval-set-versions/{archived_case.json()['eval_set_version_id']}")
+        self.assertEqual(eval_set.status_code, 200)
+        self.assertEqual(eval_set.json()["cases"], [])
+
+        archive_skill = self.client.delete(f"/api/skills/{skill['skill_id']}")
+        self.assertEqual(archive_skill.status_code, 200)
+        archived_detail = self.client.get(f"/api/skills/{skill['skill_id']}")
+        self.assertEqual(archived_detail.json()["skill"]["lifecycle_status"], "archived")
+
     def create_skill(self, slug: str, digest: str = "digest-code"):
         response = self.client.post(
             "/api/skills",

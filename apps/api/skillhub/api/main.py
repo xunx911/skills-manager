@@ -4,6 +4,7 @@ from dataclasses import asdict, is_dataclass
 from typing import Any
 
 from fastapi import Depends, FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 from sqlalchemy import Engine, create_engine, event
@@ -42,9 +43,30 @@ class CreateVariantVersionPayload(BaseModel):
     make_current: bool = False
 
 
+class CreateVariantPayload(BaseModel):
+    skill_id: str
+    name: str
+    label: str
+    summary: str
+    tags: list[str] = Field(min_length=1)
+    content_ref: ContentRefPayload
+    change_summary: str
+    actor: str = "system"
+    make_default: bool = False
+
+
 class PromoteVariantVersionPayload(BaseModel):
     variant_id: str
     version_id: str
+
+
+class UpdateSkillPayload(BaseModel):
+    slug: str
+    owner_ref: str
+
+
+class ArchivePayload(BaseModel):
+    actor: str = "system"
 
 
 class CreateEvalCasePayload(BaseModel):
@@ -58,6 +80,7 @@ class CreateEvalCasePayload(BaseModel):
 
 class CreateEvalCaseVersionPayload(BaseModel):
     case_id: str
+    title: str | None = None
     input_text: str
     expected_output: str
     actor: str = "system"
@@ -75,6 +98,13 @@ class RecordEvalRunPayload(BaseModel):
 
 def create_app(engine: Engine | None = None) -> FastAPI:
     app = FastAPI(title="SkillHub API", version="0.1.0")
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["http://127.0.0.1:3000", "http://localhost:3000"],
+        allow_credentials=False,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
     app.state.engine = engine or create_local_sqlite_engine()
     metadata.create_all(app.state.engine)
 
@@ -140,12 +170,41 @@ def create_app(engine: Engine | None = None) -> FastAPI:
             )
         )
 
+    @app.post("/api/variants")
+    def create_variant(payload: CreateVariantPayload, repository: SqlSkillRepository = Depends(repository_dependency)):
+        return result_payload(
+            repository.create_variant(
+                skill_id=payload.skill_id,
+                name=payload.name,
+                label=payload.label,
+                summary=payload.summary,
+                tags=payload.tags,
+                content_ref=content_ref(payload.content_ref),
+                change_summary=payload.change_summary,
+                actor=payload.actor,
+                make_default=payload.make_default,
+            )
+        )
+
     @app.post("/api/variants/promotions")
     def promote_variant_version(
         payload: PromoteVariantVersionPayload,
         repository: SqlSkillRepository = Depends(repository_dependency),
     ):
         repository.promote_variant_version(variant_id=payload.variant_id, version_id=payload.version_id)
+        return {"ok": True}
+
+    @app.patch("/api/skills/{skill_id}")
+    def update_skill(
+        skill_id: str,
+        payload: UpdateSkillPayload,
+        repository: SqlSkillRepository = Depends(repository_dependency),
+    ):
+        return result_payload(repository.update_skill(skill_id=skill_id, slug=payload.slug, owner_ref=payload.owner_ref))
+
+    @app.delete("/api/skills/{skill_id}")
+    def archive_skill(skill_id: str, repository: SqlSkillRepository = Depends(repository_dependency)):
+        repository.archive_skill(skill_id=skill_id)
         return {"ok": True}
 
     @app.post("/api/eval-cases")
@@ -166,6 +225,8 @@ def create_app(engine: Engine | None = None) -> FastAPI:
         payload: CreateEvalCaseVersionPayload,
         repository: SqlSkillRepository = Depends(repository_dependency),
     ):
+        if payload.title is not None:
+            repository.update_eval_case_title(case_id=payload.case_id, title=payload.title)
         return result_payload(
             repository.create_eval_case_version(
                 case_id=payload.case_id,
@@ -176,6 +237,33 @@ def create_app(engine: Engine | None = None) -> FastAPI:
                 make_current=payload.make_current,
             )
         )
+
+    @app.patch("/api/eval-cases/{case_id}")
+    def update_eval_case(
+        case_id: str,
+        payload: CreateEvalCaseVersionPayload,
+        repository: SqlSkillRepository = Depends(repository_dependency),
+    ):
+        if payload.title is not None:
+            repository.update_eval_case_title(case_id=case_id, title=payload.title)
+        return result_payload(
+            repository.create_eval_case_version(
+                case_id=case_id,
+                input_text=payload.input_text,
+                expected_output=payload.expected_output,
+                actor=payload.actor,
+                notes=payload.notes,
+                make_current=payload.make_current,
+            )
+        )
+
+    @app.delete("/api/eval-cases/{case_id}")
+    def archive_eval_case(
+        case_id: str,
+        payload: ArchivePayload | None = None,
+        repository: SqlSkillRepository = Depends(repository_dependency),
+    ):
+        return result_payload(repository.archive_eval_case(case_id=case_id, actor=payload.actor if payload else "system"))
 
     @app.post("/api/eval-runs")
     def record_eval_run(payload: RecordEvalRunPayload, repository: SqlSkillRepository = Depends(repository_dependency)):

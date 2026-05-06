@@ -6,6 +6,7 @@ create table artifacts (
   digest text not null,
   media_type text not null,
   size_bytes bigint not null default 0,
+  content_text text,
   created_at timestamptz not null default now(),
   created_by text not null,
   constraint artifacts_size_bytes_non_negative check (size_bytes >= 0),

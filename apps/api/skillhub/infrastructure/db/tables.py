@@ -42,6 +42,7 @@ artifacts = Table(
     Column("digest", Text, nullable=False),
     Column("media_type", Text, nullable=False),
     Column("size_bytes", BigInteger, nullable=False, server_default=text("0")),
+    Column("content_text", Text),
     timestamp_column(),
     Column("created_by", Text, nullable=False),
     CheckConstraint("size_bytes >= 0", name="artifacts_size_bytes_non_negative"),

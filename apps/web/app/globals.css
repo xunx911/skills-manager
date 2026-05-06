@@ -1265,6 +1265,383 @@ h2 {
   gap: 8px;
 }
 
+.productWorkbench {
+  gap: 28px;
+}
+
+.screenNav {
+  position: sticky;
+  top: 12px;
+  z-index: 10;
+  display: flex;
+  max-width: 1480px;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--ink);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.92);
+  padding: 8px;
+  backdrop-filter: blur(18px);
+  box-shadow: 6px 6px 0 rgba(17, 17, 17, 0.16);
+}
+
+.screenNav a,
+.screenNav span {
+  display: inline-flex;
+  min-height: 34px;
+  align-items: center;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 1000;
+  padding: 0 12px;
+}
+
+.screenNav a {
+  border: 1px solid var(--ink);
+  background: var(--field);
+}
+
+.screenNav span {
+  margin-left: auto;
+  background: var(--ink);
+  color: #f5f5f0;
+}
+
+.notice {
+  border: 1px solid var(--ink);
+  border-radius: 6px;
+  font-weight: 900;
+  padding: 14px 16px;
+}
+
+.notice-good {
+  background: var(--mint-soft);
+}
+
+.notice-bad {
+  background: var(--coral-soft);
+}
+
+.notice-neutral {
+  background: var(--field);
+}
+
+.productScreen {
+  display: grid;
+  gap: 18px;
+  min-height: calc(100vh - 120px);
+  align-content: start;
+  scroll-margin-top: 82px;
+}
+
+.screenIntro {
+  border: 1px solid var(--ink);
+  border-radius: 6px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(244, 246, 244, 0.94));
+  padding: 26px;
+  box-shadow: 8px 8px 0 var(--ink);
+}
+
+.screenIntro h1 {
+  max-width: 980px;
+  margin-bottom: 10px;
+}
+
+.screenIntro p:last-child {
+  max-width: 840px;
+  margin-bottom: 0;
+  color: var(--muted);
+  line-height: 1.68;
+}
+
+.distributionGrid {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.62fr) minmax(0, 1.38fr);
+  gap: 18px;
+}
+
+.selectedPaneLarge {
+  min-height: 620px;
+}
+
+.proofStrip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.proofMetric {
+  display: grid;
+  gap: 8px;
+  min-height: 98px;
+  border: 1px solid var(--ink);
+  border-radius: 5px;
+  background: var(--field);
+  padding: 14px;
+}
+
+.proofMetric span {
+  color: var(--quiet);
+  font-size: 11px;
+  font-weight: 1000;
+  text-transform: uppercase;
+}
+
+.proofMetric strong {
+  overflow-wrap: anywhere;
+  font-family: "Iowan Old Style", Georgia, serif;
+  font-size: 25px;
+  line-height: 1.04;
+}
+
+.proofMetric-good {
+  background: var(--mint-soft);
+}
+
+.proofMetric-bad {
+  background: var(--coral-soft);
+}
+
+.opsGrid {
+  display: grid;
+  gap: 14px;
+}
+
+.opsGridTwo {
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+}
+
+.opsCard {
+  display: grid;
+  gap: 10px;
+  border: 1px solid var(--ink);
+  border-radius: 6px;
+  background: var(--field);
+  padding: 16px;
+}
+
+.opsCardStrong {
+  background: var(--gold-soft);
+}
+
+.opsCard h3 {
+  margin: 0 0 4px;
+  font-family: "Iowan Old Style", Georgia, serif;
+  font-size: 24px;
+  line-height: 1.05;
+}
+
+.opsCard p {
+  margin-bottom: 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.opsCard input,
+.opsCard select,
+.opsCard textarea {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--ink);
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.86);
+  color: var(--ink);
+  padding: 10px 11px;
+}
+
+.opsCard textarea {
+  min-height: 86px;
+  resize: vertical;
+}
+
+.opsCard button,
+.dangerButton {
+  min-height: 40px;
+  border: 1px solid var(--ink);
+  border-radius: 4px;
+  background: var(--mint);
+  color: var(--ink);
+  cursor: pointer;
+  font-weight: 1000;
+  padding: 0 12px;
+  box-shadow: 3px 3px 0 var(--ink);
+}
+
+.opsCard button:disabled,
+.dangerButton:disabled,
+.workbenchButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.dangerButton {
+  background: var(--coral-soft);
+}
+
+.formActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.checkLine,
+.passToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.checkLine input,
+.passToggle input {
+  width: auto;
+}
+
+.variantOpsGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(340px, 0.85fr);
+  gap: 18px;
+}
+
+.variantLedger {
+  display: grid;
+  gap: 12px;
+}
+
+.variantLedgerRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 16px;
+  border: 1px solid var(--ink);
+  border-radius: 6px;
+  background: var(--field);
+  padding: 17px;
+  box-shadow: var(--shadow-tight);
+}
+
+.variantLedgerRow span,
+.caseCard span {
+  color: var(--quiet);
+  font-size: 11px;
+  font-weight: 1000;
+  text-transform: uppercase;
+}
+
+.variantLedgerRow strong,
+.caseCard strong {
+  display: block;
+  margin: 6px 0;
+  font-family: "Iowan Old Style", Georgia, serif;
+  font-size: 28px;
+  line-height: 1.06;
+}
+
+.variantLedgerRow p,
+.caseCard p {
+  margin-bottom: 0;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.variantLedgerRow small {
+  display: block;
+  margin-top: 10px;
+  color: var(--muted);
+}
+
+.evalGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(360px, 0.75fr);
+  gap: 18px;
+}
+
+.caseWorkbench,
+.evalOps {
+  display: grid;
+  align-content: start;
+  gap: 14px;
+}
+
+.caseWorkbench {
+  border: 1px solid var(--ink);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.94);
+  padding: 16px;
+  box-shadow: var(--shadow-tight);
+}
+
+.caseList {
+  display: grid;
+  gap: 12px;
+}
+
+.caseCard {
+  display: grid;
+  gap: 13px;
+  border: 1px solid var(--ink);
+  border-radius: 6px;
+  background: var(--field);
+  padding: 15px;
+}
+
+.casePreview {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.casePreview pre {
+  overflow: auto;
+  max-height: 160px;
+  min-height: 92px;
+  margin: 0;
+  border: 1px solid var(--line-dark);
+  border-radius: 4px;
+  background: #111;
+  color: #f4f6f4;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.55;
+  padding: 11px;
+  white-space: pre-wrap;
+}
+
+.caseActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.passToggle {
+  border: 1px solid var(--ink);
+  border-radius: 999px;
+  background: var(--mint-soft);
+  color: #075f46;
+  padding: 8px 11px;
+}
+
+.emptyState {
+  border: 1px dashed var(--ink);
+  border-radius: 6px;
+  background: var(--field-2);
+  color: var(--muted);
+  font-weight: 900;
+  padding: 18px;
+}
+
+.runCard {
+  background: var(--ink);
+  color: #f5f5f0;
+}
+
+.runCard p {
+  color: rgba(245, 245, 240, 0.68);
+}
+
 @media (max-width: 1040px) {
   .shell {
     grid-template-columns: 1fr;
@@ -1333,14 +1710,26 @@ h2 {
 
   .workbenchMasthead,
   .workbenchFrame,
+  .distributionGrid,
+  .evalGrid,
+  .opsGridTwo,
   .selectedHero,
   .variantBrief,
+  .variantOpsGrid,
   .bundlePreview {
     grid-template-columns: 1fr;
   }
 
   .workbenchStats {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .proofStrip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .casePreview {
+    grid-template-columns: 1fr;
   }
 
   .bundleTree {
@@ -1391,6 +1780,19 @@ h2 {
 
   .workbenchStats {
     grid-template-columns: 1fr;
+  }
+
+  .proofStrip {
+    grid-template-columns: 1fr;
+  }
+
+  .screenNav {
+    position: static;
+    flex-wrap: wrap;
+  }
+
+  .screenNav span {
+    margin-left: 0;
   }
 
   .selectedActions,

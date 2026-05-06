@@ -30,6 +30,14 @@ class CreateVariantVersionResult:
 
 
 @dataclass(frozen=True)
+class CreateVariantResult:
+    skill_id: str
+    tag_set_id: str
+    variant_id: str
+    variant_version_id: str
+
+
+@dataclass(frozen=True)
 class CreateEvalCaseResult:
     skill_id: str
     eval_set_id: str
@@ -240,6 +248,147 @@ class SqlSkillRepository:
                 .where(tables.variants.c.id == variant_id)
                 .values(current_version_id=version_id, updated_at=updated_at)
             )
+
+    def create_variant(
+        self,
+        *,
+        skill_id: str,
+        name: str,
+        label: str,
+        summary: str,
+        tags: list[str],
+        content_ref: ContentRef,
+        change_summary: str,
+        actor: str,
+        make_default: bool,
+    ) -> CreateVariantResult:
+        normalized_tags = normalize_tags(tags)
+        normalized_hash = digest_text("\n".join(normalized_tags))
+        created_at = utc_now()
+        variant_id = new_id("variant")
+        variant_version_id = new_id("varver")
+
+        with self.engine.begin() as connection:
+            self._skill_row(connection, skill_id)
+            tag_set_id = self._get_or_create_tag_set(
+                connection,
+                tags=normalized_tags,
+                normalized_hash=normalized_hash,
+                created_at=created_at,
+            )
+            connection.execute(
+                insert(tables.variants).values(
+                    id=variant_id,
+                    skill_id=skill_id,
+                    name=name,
+                    label=label,
+                    summary=summary,
+                    tag_set_id=tag_set_id,
+                    current_version_id=None,
+                    lifecycle_status="active",
+                    created_at=created_at,
+                    updated_at=created_at,
+                )
+            )
+            connection.execute(
+                insert(tables.variant_versions).values(
+                    id=variant_version_id,
+                    skill_id=skill_id,
+                    variant_id=variant_id,
+                    version_number=1,
+                    content_ref=self._content_ref_payload(content_ref),
+                    content_digest=content_ref.digest,
+                    change_summary=change_summary,
+                    created_at=created_at,
+                    created_by=actor,
+                )
+            )
+            connection.execute(
+                update(tables.variants)
+                .where(tables.variants.c.id == variant_id)
+                .values(current_version_id=variant_version_id, updated_at=created_at)
+            )
+            if make_default:
+                connection.execute(
+                    update(tables.skills)
+                    .where(tables.skills.c.id == skill_id)
+                    .values(default_variant_id=variant_id, updated_at=created_at)
+                )
+
+        return CreateVariantResult(
+            skill_id=skill_id,
+            tag_set_id=tag_set_id,
+            variant_id=variant_id,
+            variant_version_id=variant_version_id,
+        )
+
+    def update_skill(self, *, skill_id: str, slug: str, owner_ref: str) -> dict[str, Any]:
+        updated_at = utc_now()
+        with self.engine.begin() as connection:
+            self._skill_row(connection, skill_id)
+            connection.execute(
+                update(tables.skills)
+                .where(tables.skills.c.id == skill_id)
+                .values(slug=slug, owner_ref=owner_ref, updated_at=updated_at)
+            )
+            return self._row_dict(self._skill_row(connection, skill_id))
+
+    def archive_skill(self, *, skill_id: str) -> None:
+        updated_at = utc_now()
+        with self.engine.begin() as connection:
+            self._skill_row(connection, skill_id)
+            connection.execute(
+                update(tables.skills)
+                .where(tables.skills.c.id == skill_id)
+                .values(lifecycle_status="archived", updated_at=updated_at)
+            )
+
+    def update_eval_case_title(self, *, case_id: str, title: str) -> dict[str, Any]:
+        updated_at = utc_now()
+        with self.engine.begin() as connection:
+            self._eval_case_row(connection, case_id)
+            connection.execute(
+                update(tables.eval_cases)
+                .where(tables.eval_cases.c.id == case_id)
+                .values(title=title, updated_at=updated_at)
+            )
+            return self._row_dict(self._eval_case_row(connection, case_id))
+
+    def archive_eval_case(self, *, case_id: str, actor: str) -> CreateEvalCaseResult:
+        updated_at = utc_now()
+        with self.engine.begin() as connection:
+            eval_case = self._eval_case_row(connection, case_id)
+            skill_id = eval_case["skill_id"]
+            eval_set = self._primary_eval_set_row(connection, skill_id)
+            current_eval_set_version = self._eval_set_version_row(connection, eval_set["current_version_id"])
+            connection.execute(
+                update(tables.eval_cases)
+                .where(tables.eval_cases.c.id == case_id)
+                .values(lifecycle_status="archived", updated_at=updated_at)
+            )
+            next_case_version_ids = [
+                case_version_id
+                for case_version_id in self._eval_set_case_version_ids(connection, current_eval_set_version["id"])
+                if self._eval_case_version_row(connection, case_version_id)["case_id"] != case_id
+            ]
+            eval_set_version_id = self._create_eval_set_version(
+                connection,
+                skill_id=skill_id,
+                eval_set_id=eval_set["id"],
+                case_version_ids=next_case_version_ids,
+                created_at=updated_at,
+                actor=actor,
+            )
+
+        return CreateEvalCaseResult(
+            skill_id=skill_id,
+            eval_set_id=eval_set["id"],
+            eval_set_version_id=eval_set_version_id,
+            eval_case_id=case_id,
+            eval_case_version_id=eval_case["current_version_id"],
+            input_artifact_id="",
+            expected_output_artifact_id="",
+        )
 
     def create_eval_case(
         self,
@@ -728,18 +877,19 @@ class SqlSkillRepository:
                 created_by=actor,
             )
         )
-        connection.execute(
-            insert(tables.eval_set_case_versions),
-            [
-                {
-                    "eval_set_version_id": eval_set_version_id,
-                    "skill_id": skill_id,
-                    "case_version_id": case_version_id,
-                    "position": position,
-                }
-                for position, case_version_id in enumerate(case_version_ids)
-            ],
-        )
+        if case_version_ids:
+            connection.execute(
+                insert(tables.eval_set_case_versions),
+                [
+                    {
+                        "eval_set_version_id": eval_set_version_id,
+                        "skill_id": skill_id,
+                        "case_version_id": case_version_id,
+                        "position": position,
+                    }
+                    for position, case_version_id in enumerate(case_version_ids)
+                ],
+            )
         connection.execute(
             update(tables.eval_sets)
             .where(tables.eval_sets.c.id == eval_set_id)
@@ -777,6 +927,7 @@ class SqlSkillRepository:
                 digest=content_digest,
                 media_type="text/plain",
                 size_bytes=len(content.encode("utf-8")),
+                content_text=content,
                 created_at=created_at,
                 created_by=actor,
             )

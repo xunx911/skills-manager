@@ -122,6 +122,7 @@ export type ArtifactRef = {
   digest: string;
   media_type: string;
   size_bytes: number;
+  content_text?: string | null;
   created_at?: string;
   created_by: string;
 };
