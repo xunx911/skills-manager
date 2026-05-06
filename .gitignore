@@ -16,3 +16,4 @@ apps/api/**/__pycache__/
 apps/api/**/*.pyc
 
 .DS_Store
+.superpowers/
