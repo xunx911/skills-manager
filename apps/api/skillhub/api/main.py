@@ -110,7 +110,7 @@ def create_app(engine: Engine | None = None) -> FastAPI:
     app = FastAPI(title="SkillHub API", version="0.1.0")
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["http://127.0.0.1:3000", "http://localhost:3000"],
+        allow_origin_regex=r"http://(127\.0\.0\.1|localhost):\d+",
         allow_credentials=False,
         allow_methods=["*"],
         allow_headers=["*"],

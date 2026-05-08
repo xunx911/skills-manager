@@ -296,6 +296,18 @@ class ApiCommandTest(unittest.TestCase):
         self.assertEqual(duplicate.status_code, 400)
         self.assertIn("already exists", duplicate.json()["detail"])
 
+    def test_cors_allows_localhost_development_ports(self):
+        response = self.client.options(
+            "/api/skill-imports",
+            headers={
+                "origin": "http://127.0.0.1:3011",
+                "access-control-request-method": "POST",
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.headers["access-control-allow-origin"], "http://127.0.0.1:3011")
+
     def create_skill(self, slug: str, digest: str = "digest-code"):
         response = self.client.post(
             "/api/skills",

@@ -172,6 +172,14 @@ export function DecisionWorkbench({ skills: initialSkills, featuredSkill }: Deci
     const folderInput = event.currentTarget.elements.namedItem("folder_files") as HTMLInputElement | null;
     const zipFile = zipInput?.files?.[0];
     const folderFiles = Array.from(folderInput?.files ?? []);
+    if ((!zipFile || zipFile.size === 0) && folderFiles.length === 0) {
+      setNotice({ tone: "bad", message: "请选择包含 SKILL.md 的文件夹，或上传一个 zip。" });
+      return;
+    }
+    if (zipFile && zipFile.size > 0 && folderFiles.length > 0) {
+      setNotice({ tone: "bad", message: "文件夹和 zip 只能选择一种来源。" });
+      return;
+    }
     await runCommand("Skill bundle 已导入。", async () => {
       const source = zipFile && zipFile.size > 0
         ? {
