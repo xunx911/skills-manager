@@ -17,6 +17,8 @@ apps/api/**/*.pyc
 
 apps/web/.next/
 apps/web/.next-dev/
+apps/web/playwright-report/
+apps/web/test-results/
 
 .data/
 .uv-cache/

@@ -158,7 +158,8 @@ export function DecisionWorkbench({ skills: initialSkills, featuredSkill }: Deci
 
   async function createSkill(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const form = new FormData(event.currentTarget);
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
     const slug = textValue(form, "slug");
     await runCommand("Skill 已创建。", async () => {
       const summary = textValue(form, "summary");
@@ -183,15 +184,16 @@ export function DecisionWorkbench({ skills: initialSkills, featuredSkill }: Deci
       setSelectedSkillId(result.skill_id);
       setCatalogQuery("");
       chooseAction("skill");
-      event.currentTarget.reset();
+      formElement.reset();
     });
   }
 
   async function importSkill(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const form = new FormData(event.currentTarget);
-    const zipInput = event.currentTarget.elements.namedItem("zip_file") as HTMLInputElement | null;
-    const folderInput = event.currentTarget.elements.namedItem("folder_files") as HTMLInputElement | null;
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
+    const zipInput = formElement.elements.namedItem("zip_file") as HTMLInputElement | null;
+    const folderInput = formElement.elements.namedItem("folder_files") as HTMLInputElement | null;
     const zipFile = zipInput?.files?.[0];
     const folderFiles = Array.from(folderInput?.files ?? []);
     if ((!zipFile || zipFile.size === 0) && folderFiles.length === 0) {
@@ -233,7 +235,7 @@ export function DecisionWorkbench({ skills: initialSkills, featuredSkill }: Deci
       setCatalogQuery("");
       chooseAction("skill");
       setImportPreview(null);
-      event.currentTarget.reset();
+      formElement.reset();
       return `已导入 ${result.slug}，包含 ${result.file_count} 个文件。`;
     });
   }
@@ -295,7 +297,8 @@ export function DecisionWorkbench({ skills: initialSkills, featuredSkill }: Deci
 
   async function createVariant(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const form = new FormData(event.currentTarget);
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
     await runCommand("Variant 已创建。", async () => {
       const label = textValue(form, "label");
       const summary = textValue(form, "summary");
@@ -317,13 +320,14 @@ export function DecisionWorkbench({ skills: initialSkills, featuredSkill }: Deci
           make_default: form.get("make_default") === "on",
         },
       });
-      event.currentTarget.reset();
+      formElement.reset();
     });
   }
 
   async function createVariantVersion(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const form = new FormData(event.currentTarget);
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
     await runCommand("Variant 版本已创建。", async () => {
       const variantId = textValue(form, "variant_id");
       const content = textValue(form, "content");
@@ -341,13 +345,14 @@ export function DecisionWorkbench({ skills: initialSkills, featuredSkill }: Deci
           make_current: form.get("make_current") === "on",
         },
       });
-      event.currentTarget.reset();
+      formElement.reset();
     });
   }
 
   async function createCase(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const form = new FormData(event.currentTarget);
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
     await runCommand("测试用例已加入当前评测集。", async () => {
       const result = await apiSend<{ eval_case_id: string }>("/api/eval-cases", {
         method: "POST",
@@ -361,7 +366,7 @@ export function DecisionWorkbench({ skills: initialSkills, featuredSkill }: Deci
         },
       });
       setSelectedCaseId(result.eval_case_id);
-      event.currentTarget.reset();
+      formElement.reset();
     });
   }
 

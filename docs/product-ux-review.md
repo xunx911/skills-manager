@@ -9,6 +9,7 @@ Last updated: 2026-05-08
 - The API persists local data to `.data/skillhub.sqlite3` through `scripts/dev.sh`.
 - Empty databases show a real first-run state with import/new-skill actions instead of pretending sample data is persisted workspace data.
 - Manual eval runs require every case to be explicitly marked pass or fail before submission.
+- A Playwright browser test covers the critical loop: import a standard folder, create a variant, add a case, mark pass, and record an eval run.
 
 ## Borrowed Product Patterns
 
@@ -23,7 +24,7 @@ Last updated: 2026-05-08
 3. Case editing creates a new case version, but the workbench does not yet show per-case version history inline.
 4. Manual eval runs are explicit and safer, but the user cannot yet filter or compare historical runs in a table.
 5. Import preview works for folders; zip preview still waits for backend validation because browser-side zip parsing is not implemented.
-6. Visual QA is still mostly build/HTTP verified. A real browser interaction suite should cover import, create variant, add/edit/archive case, and record run.
+6. Browser interaction coverage exists for the happy path, but still needs negative states: failed import, disabled submit, archive confirmation, and mobile layout.
 
 ## Next Optimization Queue
 
@@ -31,4 +32,4 @@ Last updated: 2026-05-08
 2. Add bundle version diff: compare current vs previous variant version at file level, with changed/added/removed markers.
 3. Add inline eval case history: each case row should expose previous versions and the eval set versions that included them.
 4. Add a run history table: filter by variant version, eval set version, result, strategy, and created date.
-5. Add browser-level interaction tests for the critical product loop.
+5. Expand browser-level interaction tests for failed import, edit/archive case, and responsive layout.

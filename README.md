@@ -85,6 +85,8 @@ uv run pytest
 cd apps/web
 npm run typecheck
 npm run build
+npx playwright install chromium
+npm run e2e
 ```
 
 Smoke-check the running app:
