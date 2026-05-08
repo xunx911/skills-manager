@@ -45,6 +45,63 @@ test("operator can import a skill, add a variant, add a case, and record manual 
   await expect(page.getByText("已记录 1/1 通过。")).toBeVisible();
 });
 
+test("operator can import a zipped standard skill bundle", async ({ page }) => {
+  const skillName = `zip-reviewing-${Date.now()}`;
+  const bundleDir = await mkdtemp(join(tmpdir(), "skillhub-zip-bundle-"));
+  const zipPath = join(bundleDir, "zip-reviewing.zip");
+
+  await writeFile(
+    zipPath,
+    createStoredZip([
+      {
+        path: "zip-reviewing/SKILL.md",
+        content: [
+          "---",
+          `name: ${skillName}`,
+          "description: Review zipped skills through the same import path.",
+          "---",
+          "",
+          "# Zip Reviewing",
+          "Use this skill to verify zipped bundle import.",
+          "",
+        ].join("\n"),
+      },
+      {
+        path: "zip-reviewing/references/checklist.md",
+        content: "Check archive import and file tree normalization.\n",
+      },
+    ]),
+  );
+
+  try {
+    await page.goto("/skills");
+    await page.getByRole("button", { name: "导入 bundle" }).click();
+    await page.getByPlaceholder("skillhub-lab").fill("skillhub-e2e");
+    await page.getByPlaceholder("codex, gpt5.4").fill("codex, zip");
+    await page.locator('input[name="zip_file"]').setInputFiles(zipPath);
+
+    await expect(page.getByText("zip-reviewing.zip")).toBeVisible();
+    await page.getByRole("button", { name: "导入并创建 skill" }).click();
+
+    await expect(page.getByRole("heading", { name: skillName })).toBeVisible();
+    await expect(page.getByText("Review zipped skills through the same import path.", { exact: true })).toBeVisible();
+  } finally {
+    await rm(bundleDir, { force: true, recursive: true });
+  }
+});
+
+test("keyboard users can open primary inspector actions", async ({ page }) => {
+  await page.goto("/skills");
+
+  await page.getByRole("button", { name: "导入", exact: true }).focus();
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("heading", { name: "导入标准 Skill" })).toBeVisible();
+
+  await page.getByRole("button", { name: "新建 skill" }).focus();
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("heading", { name: "添加 skill" })).toBeVisible();
+});
+
 test("operator can edit and archive eval cases", async ({ page }) => {
   await importSkillBundle(page, `case-management-${Date.now()}`);
   await addEvalCase(page, "PR: stale title");
@@ -120,4 +177,78 @@ async function addEvalCase(page: Page, title: string) {
   await page.getByRole("button", { name: "加入评测集" }).click();
 
   await expect(page.getByText(title)).toBeVisible();
+}
+
+function createStoredZip(entries: Array<{ path: string; content: string }>) {
+  const localChunks: Buffer[] = [];
+  const centralChunks: Buffer[] = [];
+  let offset = 0;
+
+  for (const entry of entries) {
+    const name = Buffer.from(entry.path, "utf8");
+    const data = Buffer.from(entry.content, "utf8");
+    const crc = crc32(data);
+
+    const local = Buffer.alloc(30);
+    local.writeUInt32LE(0x04034b50, 0);
+    local.writeUInt16LE(20, 4);
+    local.writeUInt16LE(0, 6);
+    local.writeUInt16LE(0, 8);
+    local.writeUInt16LE(0, 10);
+    local.writeUInt16LE(0, 12);
+    local.writeUInt32LE(crc, 14);
+    local.writeUInt32LE(data.length, 18);
+    local.writeUInt32LE(data.length, 22);
+    local.writeUInt16LE(name.length, 26);
+    local.writeUInt16LE(0, 28);
+
+    localChunks.push(local, name, data);
+
+    const central = Buffer.alloc(46);
+    central.writeUInt32LE(0x02014b50, 0);
+    central.writeUInt16LE(20, 4);
+    central.writeUInt16LE(20, 6);
+    central.writeUInt16LE(0, 8);
+    central.writeUInt16LE(0, 10);
+    central.writeUInt16LE(0, 12);
+    central.writeUInt16LE(0, 14);
+    central.writeUInt32LE(crc, 16);
+    central.writeUInt32LE(data.length, 20);
+    central.writeUInt32LE(data.length, 24);
+    central.writeUInt16LE(name.length, 28);
+    central.writeUInt16LE(0, 30);
+    central.writeUInt16LE(0, 32);
+    central.writeUInt16LE(0, 34);
+    central.writeUInt16LE(0, 36);
+    central.writeUInt32LE(0, 38);
+    central.writeUInt32LE(offset, 42);
+    centralChunks.push(central, name);
+
+    offset += local.length + name.length + data.length;
+  }
+
+  const centralStart = offset;
+  const centralSize = centralChunks.reduce((total, chunk) => total + chunk.length, 0);
+  const end = Buffer.alloc(22);
+  end.writeUInt32LE(0x06054b50, 0);
+  end.writeUInt16LE(0, 4);
+  end.writeUInt16LE(0, 6);
+  end.writeUInt16LE(entries.length, 8);
+  end.writeUInt16LE(entries.length, 10);
+  end.writeUInt32LE(centralSize, 12);
+  end.writeUInt32LE(centralStart, 16);
+  end.writeUInt16LE(0, 20);
+
+  return Buffer.concat([...localChunks, ...centralChunks, end]);
+}
+
+function crc32(data: Buffer) {
+  let crc = 0xffffffff;
+  for (const byte of data) {
+    crc ^= byte;
+    for (let bit = 0; bit < 8; bit += 1) {
+      crc = (crc >>> 1) ^ (0xedb88320 & -(crc & 1));
+    }
+  }
+  return (crc ^ 0xffffffff) >>> 0;
 }

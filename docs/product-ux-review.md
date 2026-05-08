@@ -9,7 +9,7 @@ Last updated: 2026-05-08
 - The API persists local data to `.data/skillhub.sqlite3` through `scripts/dev.sh`.
 - Empty databases show a real first-run state with import/new-skill actions instead of pretending sample data is persisted workspace data.
 - Manual eval runs require every case to be explicitly marked pass or fail before submission.
-- Playwright browser tests cover invalid folder import, the critical happy path, edit/archive case management, and a mobile viewport width check.
+- Playwright browser tests cover invalid folder import, zipped bundle import, the critical happy path, keyboard activation for primary inspector actions, edit/archive case management, and a mobile viewport width check.
 
 ## Borrowed Product Patterns
 
@@ -24,7 +24,7 @@ Last updated: 2026-05-08
 3. Case editing creates a new case version, but the workbench does not yet show per-case version history inline.
 4. Manual eval runs are explicit and safer, but the user cannot yet filter or compare historical runs in a table.
 5. Import preview works for folders; zip preview still waits for backend validation because browser-side zip parsing is not implemented.
-6. Browser interaction coverage now covers the highest-risk paths, but still lacks zip upload, keyboard navigation, and detailed visual regression screenshots.
+6. Browser interaction coverage now covers the highest-risk paths, but still lacks detailed visual regression screenshots and richer accessibility assertions.
 
 ## Next Optimization Queue
 
@@ -32,4 +32,4 @@ Last updated: 2026-05-08
 2. Add bundle version diff: compare current vs previous variant version at file level, with changed/added/removed markers.
 3. Add inline eval case history: each case row should expose previous versions and the eval set versions that included them.
 4. Add a run history table: filter by variant version, eval set version, result, strategy, and created date.
-5. Expand browser-level interaction tests for zip upload, keyboard navigation, and visual screenshot regression.
+5. Expand browser-level interaction tests with visual screenshot regression and richer accessibility assertions.
