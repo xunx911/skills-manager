@@ -4,6 +4,7 @@ import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 
 import { passRate } from "@/lib/api";
+import { emptySkillDetail } from "@/lib/empty-state";
 import { percent, shortId } from "@/lib/format";
 import type { BundleFile, EvalRunRecord, EvalSetVersionDetail, SkillDetail, SkillSummary, VariantDetail } from "@/lib/types";
 import { Badge } from "./chrome";
@@ -41,7 +42,7 @@ export function DecisionWorkbench({ skills: initialSkills, featuredSkill }: Deci
   const [evalSetDetail, setEvalSetDetail] = useState<EvalSetVersionDetail | null>(null);
   const [caseResults, setCaseResults] = useState<Record<string, boolean | null>>({});
   const [mode, setMode] = useState<Mode>("overview");
-  const [actionMode, setActionMode] = useState<ActionMode>("skill");
+  const [actionMode, setActionMode] = useState<ActionMode>(initialSkills.length > 0 ? "skill" : "import-skill");
   const [catalogQuery, setCatalogQuery] = useState("");
   const [selectedCaseId, setSelectedCaseId] = useState<string | null>(null);
   const [importPreview, setImportPreview] = useState<ImportPreview>(null);
@@ -70,6 +71,7 @@ export function DecisionWorkbench({ skills: initialSkills, featuredSkill }: Deci
   const passedDraft = cases.filter((item) => caseResults[item.case_version.id] === true).length;
   const failedDraft = cases.filter((item) => caseResults[item.case_version.id] === false).length;
   const confirmedDraft = passedDraft + failedDraft;
+  const hasPersistedSkill = selectedDetail.skill.lifecycle_status !== "empty";
 
   useEffect(() => {
     void loadSkill(selectedSkillId);
@@ -102,14 +104,26 @@ export function DecisionWorkbench({ skills: initialSkills, featuredSkill }: Deci
   async function loadSkills(nextSelectedId = selectedSkillId) {
     const nextSkills = await apiGet<SkillSummary[]>("/api/skills");
     setSkills(nextSkills);
+    if (nextSkills.length === 0) {
+      setSelectedSkillId(emptySkillDetail.skill.id);
+      setSelectedDetail(emptySkillDetail);
+      setEvalSetDetail(null);
+      setCaseResults({});
+      chooseAction("import-skill");
+      return;
+    }
     const nextId = nextSkills.some((item) => item.skill.id === nextSelectedId)
       ? nextSelectedId
-      : nextSkills[0]?.skill.id ?? featuredSkill.skill.id;
+      : nextSkills[0].skill.id;
     setSelectedSkillId(nextId);
     await loadSkill(nextId);
   }
 
   async function loadSkill(skillId: string) {
+    if (skillId === emptySkillDetail.skill.id) {
+      setSelectedDetail(emptySkillDetail);
+      return;
+    }
     try {
       setSelectedDetail(await apiGet<SkillDetail>(`/api/skills/${skillId}`));
     } catch {
@@ -454,7 +468,9 @@ export function DecisionWorkbench({ skills: initialSkills, featuredSkill }: Deci
               </button>
             );
           })}
-          {visibleSkills.length === 0 ? <div className="linearCatalogEmpty">没有匹配的 skill</div> : null}
+          {visibleSkills.length === 0 ? (
+            <div className="linearCatalogEmpty">{skills.length === 0 ? "还没有 skill。先导入 bundle 或新建一个。" : "没有匹配的 skill"}</div>
+          ) : null}
         </div>
       </aside>
 
@@ -537,6 +553,7 @@ export function DecisionWorkbench({ skills: initialSkills, featuredSkill }: Deci
           importPreview={importPreview}
           confirmedDraft={confirmedDraft}
           failedDraft={failedDraft}
+          hasPersistedSkill={hasPersistedSkill}
           passedDraft={passedDraft}
           recordEvalRun={recordEvalRun}
           refreshImportPreview={refreshImportPreview}
@@ -797,6 +814,7 @@ function Inspector({
   onSelectCase,
   importPreview,
   failedDraft,
+  hasPersistedSkill,
   passedDraft,
   recordEvalRun,
   refreshImportPreview,
@@ -823,6 +841,7 @@ function Inspector({
   onSelectCase: (caseId: string) => void;
   importPreview: ImportPreview;
   failedDraft: number;
+  hasPersistedSkill: boolean;
   passedDraft: number;
   recordEvalRun: () => void;
   refreshImportPreview: (event: FormEvent<HTMLFormElement>) => void;
@@ -860,6 +879,7 @@ function Inspector({
         ].map(([value, label]) => (
           <button
             className={actionMode === value ? "actionMenuActive" : ""}
+            disabled={!hasPersistedSkill && value !== "new-skill" && value !== "import-skill"}
             key={value}
             onClick={() => onAction(value as ActionMode)}
             type="button"

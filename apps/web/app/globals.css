@@ -2239,6 +2239,11 @@ h2 {
   color: var(--workbench-accent);
 }
 
+.actionMenu button:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
+}
+
 .inspectorForm input,
 .inspectorForm select,
 .inspectorForm textarea {

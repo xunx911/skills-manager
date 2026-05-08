@@ -1,4 +1,5 @@
-import { codeReviewerDetail, evalRunDetail, evalSetVersionDetail, skillSummaries } from "./mock-data";
+import { emptySkillDetail } from "./empty-state";
+import { codeReviewerDetail, evalRunDetail, evalSetVersionDetail } from "./mock-data";
 import type { EvalRunDetail, EvalSetVersionDetail, SkillDetail, SkillSummary, VariantDetail } from "./types";
 
 const API_BASE_URL = process.env.SKILLHUB_API_URL ?? "http://127.0.0.1:8000";
@@ -19,11 +20,11 @@ async function getJson<T>(path: string, fallback: T): Promise<T> {
 }
 
 export async function listSkills(): Promise<SkillSummary[]> {
-  const result = await getJson("/api/skills", skillSummaries);
-  return result.length > 0 ? result : skillSummaries;
+  return getJson("/api/skills", []);
 }
 
 export async function getSkillDetail(skillId: string): Promise<SkillDetail> {
+  if (skillId === emptySkillDetail.skill.id) return emptySkillDetail;
   const fallback = skillId === codeReviewerDetail.skill.id ? codeReviewerDetail : codeReviewerDetail;
   return getJson(`/api/skills/${skillId}`, fallback);
 }

@@ -20,10 +20,9 @@ export function AppShell({ children }: { children: ReactNode }) {
           <nav className="nav" aria-label="Main navigation">
             <span className="navLabel">Browse</span>
             <Link href="/skills">Skill Hub</Link>
-            <Link href="/skills/skill-code-reviewer">默认变体</Link>
             <span className="navLabel">Evidence</span>
-            <Link href="/eval-set-versions/evalsetver-code-v3">测评集</Link>
-            <Link href="/eval-runs/evalrun-code-v2-primary">测评结果</Link>
+            <Link href="/skills">测评集</Link>
+            <Link href="/skills">测评结果</Link>
           </nav>
         </div>
         <div className="sidebarFooter">
