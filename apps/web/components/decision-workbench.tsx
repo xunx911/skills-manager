@@ -371,6 +371,7 @@ export function DecisionWorkbench({ skills: initialSkills, featuredSkill }: Deci
         },
       });
       setSelectedCaseId(result.eval_case_id);
+      chooseAction("run");
       formElement.reset();
     });
   }
@@ -502,6 +503,7 @@ export function DecisionWorkbench({ skills: initialSkills, featuredSkill }: Deci
         {mode === "overview" ? (
           <OverviewPane
             defaultVariant={defaultVariant}
+            hasPersistedSkill={hasPersistedSkill}
             latestRun={latestRun}
             onAction={chooseAction}
             primaryEvalSetVersion={currentEvalSetVersion?.version_number}
@@ -535,9 +537,10 @@ export function DecisionWorkbench({ skills: initialSkills, featuredSkill }: Deci
             onRecord={recordEvalRun}
             onSelectCase={setSelectedCaseId}
             onSetAll={setAllCases}
-            onToggle={(caseVersionId, passed) =>
-              setCaseResults((current) => ({ ...current, [caseVersionId]: passed }))
-            }
+            onToggle={(caseVersionId, passed) => {
+              setCaseResults((current) => ({ ...current, [caseVersionId]: passed }));
+              setActionMode("run");
+            }}
             passedDraft={passedDraft}
             selectedCaseId={selectedCase?.case.id ?? null}
           />
@@ -580,6 +583,7 @@ export function DecisionWorkbench({ skills: initialSkills, featuredSkill }: Deci
 
 function OverviewPane({
   defaultVariant,
+  hasPersistedSkill,
   latestRun,
   onAction,
   primaryEvalSetVersion,
@@ -587,6 +591,7 @@ function OverviewPane({
   selectedDetail,
 }: {
   defaultVariant: VariantDetail | null;
+  hasPersistedSkill: boolean;
   latestRun: EvalRunRecord | null;
   onAction: (mode: ActionMode) => void;
   primaryEvalSetVersion?: number;
@@ -597,6 +602,34 @@ function OverviewPane({
   const bundleFiles = bundleFilesFromVariant(defaultVariant);
   const skillMd = fileContent(bundleFiles, "SKILL.md") ?? formatBundlePreview(defaultVariant);
   const tags = defaultVariant?.tags ?? [];
+
+  if (!hasPersistedSkill) {
+    return (
+      <div className="linearPane overviewPane">
+        <section className="emptySkillStudio">
+          <div>
+            <span>First run</span>
+            <h2>把第一个标准 Skill 接进来</h2>
+            <p>
+              正式版首页仍然是普通 SkillHub 的入口；工作台只在选中 skill 后展开。现在先导入包含 SKILL.md 的 bundle，
+              或创建一个草稿 skill，然后补 variant、case 和手工测评结果。
+            </p>
+            <div className="emptyStudioActions">
+              <button aria-label="从空状态导入 bundle" onClick={() => onAction("import-skill")} type="button">导入 bundle</button>
+              <button aria-label="从空状态新建 skill" onClick={() => onAction("new-skill")} type="button">新建 skill</button>
+            </div>
+          </div>
+          <div className="emptyStudioChecklist">
+            <strong>闭环路径</strong>
+            <span>1. Skill = default variant 引用</span>
+            <span>2. Variant = current version 引用</span>
+            <span>3. EvalSetVersion = case version 快照</span>
+            <span>4. EvalRun = exact variant version + exact eval set version</span>
+          </div>
+        </section>
+      </div>
+    );
+  }
 
   return (
     <div className="linearPane overviewPane">
@@ -760,47 +793,76 @@ function EvalsPane({
         </div>
       </div>
 
-      <div className="caseReviewList">
-        {cases.map((item) => {
-          const passed = caseResults[item.case_version.id];
-          const isSelected = selectedCaseId === item.case.id;
-          return (
-            <article
-              className={`caseReviewCard ${isSelected ? "caseReviewCardActive" : ""}`}
-              key={item.case_version.id}
-              onClick={() => onSelectCase(item.case.id)}
-            >
-              <div className="caseReviewHeader">
-                <div>
-                  <span>case v{item.case_version.version_number}</span>
+      <div className="evalReviewGrid">
+        <section className="evalCaseRail">
+          <div className="evalCaseRailHead">
+            <strong>Cases</strong>
+            <span>{cases.length} snapshots</span>
+          </div>
+          <div className="caseReviewList">
+            {cases.map((item) => {
+              const passed = caseResults[item.case_version.id];
+              const isSelected = selectedCaseId === item.case.id;
+              return (
+                <article
+                  className={`caseReviewCard ${isSelected ? "caseReviewCardActive" : ""}`}
+                  key={item.case_version.id}
+                  onClick={() => onSelectCase(item.case.id)}
+                >
+                  <div className="caseReviewHeader">
+                    <div>
+                      <span>case v{item.case_version.version_number}</span>
+                      <strong>{item.case.title}</strong>
+                    </div>
+                    <div className="resultSwitch" aria-label={`${item.case.title} result`}>
+                      <button className={passed === true ? "resultOn" : ""} onClick={() => onToggle(item.case_version.id, true)} type="button">通过</button>
+                      <button className={passed === false ? "resultOff" : ""} onClick={() => onToggle(item.case_version.id, false)} type="button">不通过</button>
+                    </div>
+                  </div>
+                  <div className="caseReviewFooter">
+                    <small>{item.case_version.notes || "No notes"}</small>
+                    <div className="caseRowActions">
+                    <button onClick={() => onEditCase(item.case.id)} type="button">编辑</button>
+                    <button onClick={() => onArchiveCase(item.case.id)} type="button">归档</button>
+                    </div>
+                  </div>
+                </article>
+              );
+            })}
+            {cases.length === 0 ? <div className="linearEmpty">还没有测试用例。先从右侧添加一个 case。</div> : null}
+          </div>
+        </section>
+
+        <section className="evalCaseDetail">
+          {cases.map((item) => {
+            const isSelected = selectedCaseId === item.case.id || (!selectedCaseId && item.position === 0);
+            if (!isSelected) return null;
+            return (
+              <div key={item.case_version.id}>
+                <div className="evalCaseDetailHead">
+                  <span>Selected case</span>
                   <strong>{item.case.title}</strong>
                 </div>
-                <div className="resultSwitch" aria-label={`${item.case.title} result`}>
-                  <button className={passed === true ? "resultOn" : ""} onClick={() => onToggle(item.case_version.id, true)} type="button">通过</button>
-                  <button className={passed === false ? "resultOff" : ""} onClick={() => onToggle(item.case_version.id, false)} type="button">不通过</button>
+                <div className="caseIOGrid">
+                  <div>
+                    <span>Input</span>
+                    <pre>{item.case_version.input_artifact.content_text ?? item.case_version.input_artifact.digest}</pre>
+                  </div>
+                  <div>
+                    <span>Expected output</span>
+                    <pre>{item.case_version.expected_output_artifact.content_text ?? item.case_version.expected_output_artifact.digest}</pre>
+                  </div>
                 </div>
               </div>
-              <div className="caseIOGrid">
-                <div>
-                  <span>Input</span>
-                  <pre>{item.case_version.input_artifact.content_text ?? item.case_version.input_artifact.digest}</pre>
-                </div>
-                <div>
-                  <span>Expected output</span>
-                  <pre>{item.case_version.expected_output_artifact.content_text ?? item.case_version.expected_output_artifact.digest}</pre>
-                </div>
-              </div>
-              <div className="caseReviewFooter">
-                <small>{item.case_version.notes || "No notes"}</small>
-                <div className="caseRowActions">
-                <button onClick={() => onEditCase(item.case.id)} type="button">编辑</button>
-                <button onClick={() => onArchiveCase(item.case.id)} type="button">归档</button>
-                </div>
-              </div>
-            </article>
-          );
-        })}
-        {cases.length === 0 ? <div className="linearEmpty">还没有测试用例。先从右侧添加一个 case。</div> : null}
+            );
+          })}
+          {cases.length === 0 ? (
+            <div className="evalCaseDetailEmpty">
+              <strong>等待 case</strong>
+              <span>添加测试用例后，这里会固定展示 input 和 expected output，左侧只负责快速确认通过/不通过。</span>
+            </div>
+          ) : null}
+        </section>
       </div>
     </div>
   );
@@ -900,7 +962,7 @@ function Inspector({
       </div>
 
       {actionMode === "skill" ? (
-        <form className="inspectorForm" onSubmit={updateSkill}>
+        <form className="inspectorForm" key={selectedDetail.skill.id} onSubmit={updateSkill}>
           <h3>编辑 skill</h3>
           <input name="slug" defaultValue={selectedDetail.skill.slug} required />
           <input name="owner_ref" defaultValue={selectedDetail.skill.owner_ref} required />

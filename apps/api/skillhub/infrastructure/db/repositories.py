@@ -645,7 +645,11 @@ class SqlSkillRepository:
     def list_skills(self) -> list[dict[str, Any]]:
         with self.engine.connect() as connection:
             skill_rows = (
-                connection.execute(select(tables.skills).order_by(tables.skills.c.slug))
+                connection.execute(
+                    select(tables.skills)
+                    .where(tables.skills.c.lifecycle_status == "active")
+                    .order_by(tables.skills.c.slug)
+                )
                 .mappings()
                 .all()
             )

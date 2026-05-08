@@ -187,6 +187,9 @@ class ApiCommandTest(unittest.TestCase):
         self.assertEqual(archive_skill.status_code, 200)
         archived_detail = self.client.get(f"/api/skills/{skill['skill_id']}")
         self.assertEqual(archived_detail.json()["skill"]["lifecycle_status"], "archived")
+        hub = self.client.get("/api/skills")
+        self.assertEqual(hub.status_code, 200)
+        self.assertEqual(hub.json(), [])
 
     def test_import_skill_from_file_tree_uses_skill_md_frontmatter(self):
         response = self.client.post(

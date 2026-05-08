@@ -3141,3 +3141,642 @@ h2 {
     justify-content: flex-start;
   }
 }
+
+/* Formal product workbench v2: restrained Linear-style operating surface. */
+body {
+  background:
+    linear-gradient(180deg, #fafbfc 0, #f2f4f7 100%);
+}
+
+.main {
+  padding: 16px;
+}
+
+.sidebar {
+  min-height: 52px;
+  border-bottom-color: #e6e9ee;
+  background: rgba(255, 255, 255, 0.88);
+}
+
+.brandMark {
+  background: #111827;
+  border-color: #111827;
+  border-radius: 6px;
+}
+
+.workspacePill {
+  background: #f8fafc;
+  border-color: #dfe4ea;
+}
+
+.nav a {
+  border-radius: 6px;
+  padding-inline: 11px;
+}
+
+.linearWorkbench {
+  grid-template-columns: minmax(244px, 0.56fr) minmax(560px, 1.62fr) minmax(334px, 0.82fr);
+  height: calc(100vh - 84px);
+  border-color: #dce2ea;
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow:
+    0 24px 70px rgba(15, 23, 42, 0.08),
+    0 1px 0 rgba(255, 255, 255, 0.85) inset;
+}
+
+.linearWorkbench h1,
+.linearWorkbench h2,
+.linearWorkbench h3,
+.linearWorkbench strong {
+  font-family: Aptos, "Segoe UI", "Helvetica Neue", sans-serif;
+  letter-spacing: 0;
+}
+
+.linearCatalog,
+.linearInspector {
+  background: #f6f7f9;
+}
+
+.linearCatalog {
+  padding: 12px;
+}
+
+.linearCatalogTop {
+  min-height: 46px;
+}
+
+.linearCatalogTop span {
+  color: #111827;
+  font-size: 14px;
+}
+
+.linearCatalogTop small {
+  color: #7a8493;
+}
+
+.linearCatalogTop button,
+.linearToolbar button,
+.evalRunBar button,
+.inspectorForm button,
+.actionMenu button,
+.sectionActions a,
+.sectionActions button,
+.emptyStudioActions button {
+  border-radius: 7px;
+  box-shadow: none;
+}
+
+.linearCatalogTop button {
+  min-height: 34px;
+}
+
+.catalogTopActions button:first-child {
+  background: #ffffff;
+}
+
+.catalogTopActions button:last-child {
+  background: #111827;
+  color: #ffffff;
+}
+
+.linearSearch span {
+  color: #818b98;
+}
+
+.linearSearch input {
+  min-height: 38px;
+  border-color: #dde3eb;
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+}
+
+.linearSkillItem {
+  border-radius: 8px;
+  padding: 10px;
+}
+
+.linearSkillItem:hover {
+  background: #ffffff;
+}
+
+.linearSkillItemActive {
+  border-color: #cfd6e2;
+  background: #ffffff;
+  box-shadow:
+    inset 3px 0 0 #111827,
+    0 8px 18px rgba(15, 23, 42, 0.05);
+}
+
+.linearMain {
+  background:
+    linear-gradient(180deg, #ffffff 0, #fbfcfd 74px, #f8fafc 100%);
+}
+
+.linearHeader {
+  min-height: 76px;
+  border-bottom-color: #e4e9f0;
+  background: rgba(255, 255, 255, 0.94);
+  padding: 16px 20px 13px;
+}
+
+.linearHeader p {
+  color: #667085;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+}
+
+.linearHeader h1 {
+  color: #111827;
+  font-size: 27px;
+  font-weight: 800;
+}
+
+.linearTabs {
+  border-color: #dfe4ec;
+  background: #f4f6f8;
+}
+
+.linearTabs button {
+  color: #5f6b7a;
+}
+
+.linearTabs .linearTabActive {
+  color: #111827;
+  box-shadow: 0 1px 5px rgba(15, 23, 42, 0.09);
+}
+
+.linearPane {
+  gap: 14px;
+  padding: 16px;
+}
+
+.emptySkillStudio {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 0.52fr);
+  gap: 18px;
+  min-height: 520px;
+  align-items: stretch;
+  border: 1px solid #dfe5ee;
+  border-radius: 12px;
+  background:
+    linear-gradient(135deg, rgba(17, 24, 39, 0.045), transparent 46%),
+    #ffffff;
+  padding: 24px;
+}
+
+.emptySkillStudio > div:first-child {
+  display: grid;
+  align-content: center;
+  gap: 14px;
+}
+
+.emptySkillStudio span,
+.emptyStudioChecklist span,
+.evalCaseRailHead span,
+.evalCaseDetailHead span {
+  color: #7b8493;
+  font-size: 11px;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.emptySkillStudio h2 {
+  max-width: 620px;
+  margin: 0;
+  color: #111827;
+  font-size: 42px;
+  line-height: 1.05;
+}
+
+.emptySkillStudio p {
+  max-width: 660px;
+  margin: 0;
+  color: #4b5563;
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+.emptyStudioActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.emptyStudioActions button {
+  min-height: 38px;
+  border: 1px solid #cfd7e3;
+  background: #ffffff;
+  color: #111827;
+  cursor: pointer;
+  font-weight: 900;
+  padding: 0 13px;
+}
+
+.emptyStudioActions button:first-child {
+  border-color: #111827;
+  background: #111827;
+  color: #ffffff;
+}
+
+.emptyStudioChecklist {
+  display: grid;
+  align-content: center;
+  gap: 10px;
+  border: 1px solid #e1e7ef;
+  border-radius: 10px;
+  background: #f8fafc;
+  padding: 18px;
+}
+
+.emptyStudioChecklist strong {
+  color: #111827;
+  font-size: 16px;
+}
+
+.emptyStudioChecklist span {
+  display: block;
+  border: 1px solid #e1e7ef;
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 11px;
+  text-transform: none;
+}
+
+.productHero,
+.linearMetric,
+.linearSection,
+.variantMapCard,
+.evalRunBar,
+.caseReviewCard,
+.evalCaseRail,
+.evalCaseDetail,
+.inspectorCard,
+.inspectorForm {
+  border-color: #dde4ed;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+}
+
+.productHero {
+  grid-template-columns: minmax(0, 1fr) minmax(210px, 0.28fr);
+  border-radius: 12px;
+  padding: 18px;
+}
+
+.productHero h2 {
+  font-size: 32px;
+  font-weight: 780;
+}
+
+.heroScore {
+  border-left-color: #e6ebf2;
+}
+
+.heroScore strong {
+  font-size: 44px;
+  font-weight: 820;
+}
+
+.linearMetrics {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.linearMetric {
+  min-height: 82px;
+  border-radius: 10px;
+}
+
+.linearMetric strong {
+  color: #111827;
+  font-weight: 780;
+}
+
+.linearMetric-good {
+  background: #edf8f3;
+}
+
+.linearMetric-bad {
+  background: #fff1ef;
+}
+
+.linearSection {
+  border-radius: 12px;
+}
+
+.linearSectionHeader {
+  min-height: 58px;
+  border-bottom-color: #e6ebf2;
+  padding: 13px 15px;
+}
+
+.linearSectionHeader h3 {
+  color: #111827;
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.sectionActions a,
+.sectionActions button {
+  min-height: 32px;
+  border-color: #d6dde8;
+}
+
+.sectionActions a:hover,
+.sectionActions button:hover,
+.emptyStudioActions button:hover {
+  border-color: #b9c4d3;
+  background: #f8fafc;
+}
+
+.linearBundle {
+  min-height: 285px;
+}
+
+.bundleFileList {
+  background: #f7f9fb;
+}
+
+.bundleFileList .bundleFileActive {
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+}
+
+.skillMdPane,
+.linearBundle pre,
+.caseIOGrid pre {
+  background: #0d1117;
+}
+
+.linearToolbar {
+  align-items: center;
+  border: 1px solid #dde4ed;
+  border-radius: 12px;
+  background: #ffffff;
+  padding: 14px 16px;
+}
+
+.linearToolbar h2 {
+  margin: 0 0 5px;
+  color: #111827;
+  font-size: 22px;
+}
+
+.linearToolbar p {
+  color: #667085;
+  font-size: 13px;
+}
+
+.variantMapCanvas {
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.variantMapCard {
+  border-radius: 12px;
+}
+
+.evalRunBar {
+  top: 0;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+}
+
+.evalProgress i {
+  background: linear-gradient(90deg, #111827, #0a7a55);
+}
+
+.evalRunActions button {
+  min-height: 34px;
+  border-color: #d6dde8;
+}
+
+.evalRunActions .primaryAction {
+  border-color: #111827;
+  background: #111827;
+}
+
+.evalReviewGrid {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.42fr) minmax(0, 1fr);
+  gap: 12px;
+  min-height: 0;
+}
+
+.evalCaseRail,
+.evalCaseDetail {
+  min-width: 0;
+  border: 1px solid #dde4ed;
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.evalCaseRail {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  overflow: hidden;
+}
+
+.evalCaseRailHead,
+.evalCaseDetailHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 48px;
+  border-bottom: 1px solid #e6ebf2;
+  padding: 12px;
+}
+
+.evalCaseRailHead strong,
+.evalCaseDetailHead strong {
+  color: #111827;
+  font-size: 15px;
+}
+
+.evalCaseRail .caseReviewList {
+  overflow: auto;
+  padding: 10px;
+}
+
+.caseReviewCard {
+  gap: 10px;
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.caseReviewCard:hover {
+  border-color: #b9c4d3;
+}
+
+.caseReviewCardActive {
+  border-color: #111827;
+  box-shadow: inset 3px 0 0 #111827;
+}
+
+.caseReviewHeader strong {
+  color: #111827;
+}
+
+.caseReviewFooter {
+  align-items: center;
+}
+
+.resultSwitch {
+  border-color: #d6dde8;
+  border-radius: 8px;
+}
+
+.resultSwitch button {
+  min-height: 30px;
+  border-radius: 6px;
+}
+
+.evalCaseDetail {
+  overflow: hidden;
+}
+
+.evalCaseDetail .caseIOGrid {
+  padding: 12px;
+}
+
+.evalCaseDetailEmpty {
+  display: grid;
+  min-height: 360px;
+  place-content: center;
+  gap: 8px;
+  color: #667085;
+  padding: 24px;
+  text-align: center;
+}
+
+.evalCaseDetailEmpty strong {
+  color: #111827;
+  font-size: 20px;
+}
+
+.evalCaseDetailEmpty span {
+  max-width: 420px;
+  line-height: 1.55;
+}
+
+.linearInspector {
+  padding: 12px;
+}
+
+.inspectorStack {
+  gap: 12px;
+}
+
+.inspectorEvidence {
+  border-color: #111827;
+  background:
+    linear-gradient(145deg, #111827, #0f172a);
+}
+
+.actionMenu {
+  gap: 6px;
+}
+
+.actionMenu button {
+  min-height: 36px;
+  border-color: #dce2ea;
+  background: #ffffff;
+}
+
+.actionMenu .actionMenuActive {
+  border-color: #b9c4d3;
+  background: #eef2ff;
+  color: #1e3a8a;
+}
+
+.inspectorForm {
+  gap: 11px;
+  border-radius: 12px;
+}
+
+.inspectorForm h3 {
+  color: #111827;
+  font-size: 17px;
+}
+
+.inspectorForm input,
+.inspectorForm select,
+.inspectorForm textarea {
+  min-height: 40px;
+  border-color: #dce2ea;
+  background: #fbfcfd;
+}
+
+.inspectorForm textarea {
+  min-height: 116px;
+}
+
+.inspectorForm input:focus,
+.inspectorForm select:focus,
+.inspectorForm textarea:focus,
+.linearSearch input:focus {
+  border-color: #94a3b8;
+  background: #ffffff;
+}
+
+.inspectorForm button:first-of-type {
+  min-height: 38px;
+  border-color: #111827;
+  background: #111827;
+  color: #ffffff;
+}
+
+.runSummary span {
+  border-color: #dce2ea;
+  background: #ffffff;
+}
+
+@media (max-width: 1180px) {
+  .linearWorkbench {
+    grid-template-columns: minmax(220px, 0.55fr) minmax(0, 1fr);
+    height: auto;
+    min-height: calc(100vh - 84px);
+  }
+
+  .linearInspector {
+    grid-column: 1 / -1;
+    border-top: 1px solid #dce2ea;
+    border-left: 0;
+  }
+
+  .inspectorStack {
+    grid-template-columns: minmax(260px, 0.48fr) minmax(0, 1fr);
+    align-items: start;
+  }
+}
+
+@media (max-width: 900px) {
+  .main {
+    padding: 12px;
+  }
+
+  .linearWorkbench,
+  .emptySkillStudio,
+  .productHero,
+  .linearMetrics,
+  .evalReviewGrid,
+  .caseIOGrid,
+  .inspectorStack {
+    grid-template-columns: 1fr;
+  }
+
+  .linearWorkbench {
+    border-radius: 12px;
+  }
+
+  .heroScore {
+    border-top: 1px solid #e6ebf2;
+  }
+
+  .emptySkillStudio {
+    min-height: 0;
+  }
+
+  .emptySkillStudio h2 {
+    font-size: 34px;
+  }
+}
