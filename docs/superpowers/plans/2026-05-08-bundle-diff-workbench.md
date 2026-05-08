@@ -123,7 +123,7 @@ git diff --check
 
 Expected: all pass.
 
-- [ ] **Step 3: Commit and push**
+- [x] **Step 3: Commit and push**
 
 Commit a runnable state to `main` and push.
 
