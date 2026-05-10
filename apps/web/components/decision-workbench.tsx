@@ -9,6 +9,7 @@ import { percent, shortId } from "@/lib/format";
 import { CommandMenu, type CommandMenuItem } from "@/components/command-menu/command-menu";
 import { QuickAddCases, type QuickEvalCaseDraft } from "@/components/eval-cases/quick-add-cases";
 import { EvalReviewControls, type EvalReviewFilter } from "@/components/eval-cases/eval-review-controls";
+import { CandidateVerificationBanner } from "@/components/eval-cases/candidate-verification-banner";
 import { GlobalCommandButton } from "@/components/command-menu/global-command-button";
 import { PromotionReviewPane } from "@/components/promotion-review/promotion-review-pane";
 import { RunComparisonPanel } from "@/components/run-comparison/run-comparison-panel";
@@ -57,7 +58,13 @@ type ImportPreview = {
   title: string;
   detail: string;
 } | null;
-type CommandResult = string | void | { message?: string; selectedSkillId?: string };
+type CommandResult = string | void | {
+  actionMode?: ActionMode;
+  evalTargetVersionId?: string;
+  message?: string;
+  mode?: Mode;
+  selectedSkillId?: string;
+};
 type RunFilters = {
   variant_version_id: string;
   eval_set_version_id: string;
@@ -145,8 +152,9 @@ export function DecisionWorkbench({ skills: initialSkills, featuredSkill }: Deci
       ),
     [selectedDetail.variants],
   );
+  const evalTargetOption = variantVersionOptions.find((item) => item.version.id === evalTargetVersionId) ?? null;
   const evalTargetVersion =
-    variantVersionOptions.find((item) => item.version.id === evalTargetVersionId)?.version ??
+    evalTargetOption?.version ??
     defaultVariant?.current_version ??
     variantVersionOptions[0]?.version ??
     null;
@@ -208,6 +216,12 @@ export function DecisionWorkbench({ skills: initialSkills, featuredSkill }: Deci
     }
     setEvalTargetVersionId(defaultVariant?.current_version?.id ?? variantVersionOptions[0].version.id);
   }, [defaultVariant?.current_version?.id, evalTargetVersionId, variantVersionOptions]);
+
+  function selectEvalTargetVersion(versionId: string) {
+    setEvalTargetVersionId(versionId);
+    setCaseResults(Object.fromEntries(cases.map((item) => [item.case_version.id, null])));
+    setActionMode("run");
+  }
 
   useEffect(() => {
     if (!currentEvalSetVersion) {
@@ -504,6 +518,9 @@ export function DecisionWorkbench({ skills: initialSkills, featuredSkill }: Deci
       const nextSelectedId = typeof result === "object" && result?.selectedSkillId ? result.selectedSkillId : selectedSkillId;
       const resultMessage = typeof result === "string" ? result : typeof result === "object" ? result?.message : undefined;
       await loadSkills(nextSelectedId);
+      if (typeof result === "object" && result?.evalTargetVersionId) selectEvalTargetVersion(result.evalTargetVersionId);
+      if (typeof result === "object" && result?.mode) setMode(result.mode);
+      if (typeof result === "object" && result?.actionMode) setActionMode(result.actionMode);
       setNotice({ tone: "good", message: resultMessage || message });
       return true;
     } catch (error) {
@@ -692,7 +709,8 @@ export function DecisionWorkbench({ skills: initialSkills, featuredSkill }: Deci
       const source = hasBundleSource
         ? await sourceFromSelectedBundle({ folderFiles, zipFile })
         : null;
-      await apiSend("/api/variant-versions", {
+      const makeCurrent = form.get("make_current") === "on";
+      const result = await apiSend<{ variant_version_id: string; version_number: number }>("/api/variant-versions", {
         method: "POST",
         body: {
           variant_id: variantId,
@@ -707,10 +725,18 @@ export function DecisionWorkbench({ skills: initialSkills, featuredSkill }: Deci
               }),
           change_summary: textValue(form, "change_summary"),
           actor: ACTOR,
-          make_current: form.get("make_current") === "on",
+          make_current: makeCurrent,
         },
       });
       formElement.reset();
+      if (!makeCurrent) {
+        return {
+          actionMode: "run",
+          evalTargetVersionId: result.variant_version_id,
+          message: `Variant 版本已创建。已切到候选 v${result.version_number} 测评。`,
+          mode: "evals",
+        };
+      }
     });
   }
 
@@ -970,6 +996,7 @@ export function DecisionWorkbench({ skills: initialSkills, featuredSkill }: Deci
             confirmedDraft={confirmedDraft}
             currentEvalSetVersion={currentEvalSetVersion?.version_number}
             evalTargetVersionId={evalTargetVersion?.id ?? ""}
+            evalTargetOption={evalTargetOption}
             evalTargetVersions={variantVersionOptions}
             failedDraft={failedDraft}
             onCreateCases={createCases}
@@ -981,9 +1008,10 @@ export function DecisionWorkbench({ skills: initialSkills, featuredSkill }: Deci
               chooseAction("edit-case");
             }}
             onHistoryCase={loadCaseHistory}
+            onPromotionReview={openPromotionReview}
             onRecord={recordEvalRun}
             onSelectCase={setSelectedCaseId}
-            onSelectEvalTargetVersion={setEvalTargetVersionId}
+            onSelectEvalTargetVersion={selectEvalTargetVersion}
             onToggle={(caseVersionId, passed) => {
               setCaseResults((current) => ({ ...current, [caseVersionId]: passed }));
               setActionMode("run");
@@ -1601,6 +1629,7 @@ function EvalsPane({
   confirmedDraft,
   currentEvalSetVersion,
   evalTargetVersionId,
+  evalTargetOption,
   evalTargetVersions,
   failedDraft,
   onAction,
@@ -1609,6 +1638,7 @@ function EvalsPane({
   onCreateCases,
   onEditCase,
   onHistoryCase,
+  onPromotionReview,
   onRecord,
   onSelectCase,
   onSelectEvalTargetVersion,
@@ -1625,6 +1655,12 @@ function EvalsPane({
   confirmedDraft: number;
   currentEvalSetVersion?: number;
   evalTargetVersionId: string;
+  evalTargetOption: {
+    variant: VariantDetail;
+    version: VariantVersion;
+    label: string;
+    isCurrent: boolean;
+  } | null;
   evalTargetVersions: Array<{
     variant: VariantDetail;
     version: VariantVersion;
@@ -1638,6 +1674,7 @@ function EvalsPane({
   onCreateCases: (cases: QuickEvalCaseDraft[]) => Promise<boolean>;
   onEditCase: (caseId: string) => void;
   onHistoryCase: (caseId: string) => void;
+  onPromotionReview: (variantId: string, candidateVersionId: string) => void;
   onRecord: () => void;
   onSelectCase: (caseId: string) => void;
   onSelectEvalTargetVersion: (versionId: string) => void;
@@ -1755,6 +1792,14 @@ function EvalsPane({
         </label>
         <span>测评结果会绑定到 exact VariantVersion，候选版本也可以先测再上架。</span>
       </div>
+
+      {evalTargetOption && !evalTargetOption.isCurrent ? (
+        <CandidateVerificationBanner
+          onPromotionReview={onPromotionReview}
+          variant={evalTargetOption.variant}
+          version={evalTargetOption.version}
+        />
+      ) : null}
 
       <QuickAddCases busy={busy} onCreateCases={onCreateCases} />
 

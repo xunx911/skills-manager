@@ -47,5 +47,12 @@
     "priority": 7,
     "passes": true,
     "spec": ".agent/tasks/TASK-007.json"
+  },
+  {
+    "id": "008",
+    "title": "打通候选版本验证交接",
+    "priority": 8,
+    "passes": true,
+    "spec": ".agent/tasks/TASK-008.json"
   }
 ]

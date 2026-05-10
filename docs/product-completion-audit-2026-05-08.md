@@ -2,7 +2,7 @@
 
 日期：2026-05-10
 
-状态：尚未达到“成熟产品完成”。当前已经是一个强的正式垂直切片：标准 Skill bundle 导入、variant/version、eval set version、manual eval review queue、历史查看、run-to-run comparison、accepted verification、bundle diff、candidate promotion review、上下文命令菜单和快速添加 case 都能闭环。但距离成熟产品还缺少更完整的权限、多用户协作、自动测评策略和更深的可访问性验证。
+状态：尚未达到“成熟产品完成”。当前已经是一个强的正式垂直切片：标准 Skill bundle 导入、variant/version、candidate verification handoff、eval set version、manual eval review queue、历史查看、run-to-run comparison、accepted verification、bundle diff、candidate promotion review、上下文命令菜单和快速添加 case 都能闭环。但距离成熟产品还缺少更完整的权限、多用户协作、自动测评策略和更深的可访问性验证。
 
 ## 目标拆解
 
@@ -33,6 +33,7 @@
 | 新建 skill | `POST /api/skills`；右侧 inspector `新建 skill`；键盘 smoke 能打开入口。 | 基础完成 |
 | 新建 variant | `POST /api/variants`；E2E 创建 `Strict reviewer`。 | 完成 |
 | 追加 candidate version | `POST /api/variant-versions` 支持 `make_current=false`；E2E 创建候选版本并保持 current 不变。 | 完成 |
+| Candidate 验证交接 | E2E 覆盖追加 candidate 后自动切到测评页、自动选择新版本、清空旧草稿，并从 banner 进入 promotion review。 | 完成 |
 | Eval case 新增 | `POST /api/eval-cases`；E2E `addEvalCase`。 | 完成 |
 | Eval case 批量新增 | `POST /api/eval-cases/batch`；Repository/API 测试验证一次批量只生成一个 `EvalSetVersion`；E2E 覆盖批量粘贴后记录 run。 | 完成 |
 | Eval case 编辑/版本化 | `PATCH /api/eval-cases/{case_id}`；E2E 覆盖编辑；后端测试验证生成新 eval set snapshot。 | 完成 |
@@ -72,7 +73,7 @@ cd apps/web && npm run e2e
 
 - Web typecheck：通过。
 - Web production build：通过。
-- Playwright E2E：21 passed。
+- Playwright E2E：22 passed。
 - API pytest：71 passed。
 
 本轮新增视觉资产：
@@ -85,11 +86,12 @@ cd apps/web && npm run e2e
 - `apps/web/e2e/visual-workbench.spec.ts-snapshots/mobile-empty-workbench-chromium-darwin.png`
 - `.agent/screenshots/promotion-review-ready-2026-05-10.png`
 - `.agent/screenshots/TASK-007-1.png`
+- `.agent/screenshots/TASK-008-1.png`
 
 ## 仍然阻塞“成熟产品完成”的风险
 
 1. **权限和多用户协作还没实现。** 当前仍是单用户工作台；没有 owner/maintainer/evaluator/viewer 的 scoped role enforcement。
-2. **部分操作仍偏表单。** case 新增和记录 run 已进入主内容区队列流，但追加版本、导入后引导还可以更连续。
+2. **部分操作仍偏表单。** case 新增、记录 run 和 candidate 验证已进入主内容区连续流，但导入后引导还可以更连续。
 3. **自动测评策略还没产品化。** 当前支持手工 pass/fail 和外部结果导入，但还没有内置 strategy registry、runner 调度和自动优化流水线。
 4. **Run matrix / saved view 还没做。** 现在能比较两次 run，但不能把筛选保存成团队视图，也没有 case × variant/version 的多维矩阵。
 5. **Case restore 还没做。** 可以查看 case 历史，但不能从旧版本一键生成恢复版本。
@@ -102,7 +104,7 @@ cd apps/web && npm run e2e
 
 下一轮最有价值的方向：
 
-1. 把追加版本和导入后引导做成更短路径，减少用户在 inspector、测评页、历史页之间来回跳转。
+1. 把导入后引导做成更短路径，减少用户在 inspector、测评页、历史页之间来回跳转。
 2. 开始权限模型和 scoped role assignment，尤其是 accepted verification / promotion 权限。
 3. 做 run matrix / saved view，让团队能查询更多维度的测评证据。
 4. 把 eval strategy / runner registry 产品化。

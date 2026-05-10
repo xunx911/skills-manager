@@ -5040,6 +5040,47 @@ body {
   text-align: right;
 }
 
+.candidateVerificationBanner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  border: 1px solid rgba(37, 99, 235, 0.2);
+  border-radius: 10px;
+  background: #f7fbff;
+  padding: 12px 14px;
+}
+
+.candidateVerificationBanner span {
+  display: block;
+  color: #2563eb;
+  font-size: 11px;
+  font-weight: 1000;
+  text-transform: uppercase;
+}
+
+.candidateVerificationBanner strong {
+  display: block;
+  margin-top: 3px;
+  color: #111827;
+  font-size: 16px;
+}
+
+.candidateVerificationBanner p {
+  margin: 4px 0 0;
+  color: #475569;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.candidateVerificationBanner button {
+  flex: 0 0 auto;
+  min-height: 36px;
+  border-color: #2563eb;
+  background: #ffffff;
+  color: #1d4ed8;
+}
+
 .promotionPane {
   align-content: start;
 }
@@ -5722,6 +5763,11 @@ body {
 
   .evalTargetBar > span {
     text-align: left;
+  }
+
+  .candidateVerificationBanner {
+    align-items: stretch;
+    flex-direction: column;
   }
 
   .promotionHeroActions {

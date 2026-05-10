@@ -1,0 +1,27 @@
+{
+  "id": "008",
+  "title": "打通候选版本验证交接",
+  "priority": 8,
+  "area": "frontend-ux",
+  "spec": "docs/superpowers/specs/2026-05-10-candidate-verification-handoff-design.md",
+  "goal": "让追加 candidate VariantVersion 后自动进入候选版本测评上下文，并能从测评页直接进入 promotion review。",
+  "requirements": [
+    "创建 make_current=false 的 VariantVersion 后必须自动切到测评页。",
+    "测评目标版本必须自动选中新创建的 candidate version。",
+    "切换测评目标版本必须清空本地 pass/fail 草稿，避免跨版本复用。",
+    "测评页必须在目标为 candidate 时显示 candidate verification banner。",
+    "banner 必须提供进入设为当前版本评审的入口。",
+    "现有 current version 追加、版本比较、promotion review 和 manual eval queue 不得回归。"
+  ],
+  "tests": [
+    "Playwright 覆盖追加 candidate 后自动选中 v2 candidate 并清空旧草稿。",
+    "Playwright 覆盖 candidate run 记录后从 banner 进入 promotion review。"
+  ],
+  "verification": [
+    "cd apps/api && uv run pytest",
+    "cd apps/web && npm run typecheck",
+    "cd apps/web && npm run build",
+    "cd apps/web && npm run e2e",
+    "git diff --check"
+  ]
+}

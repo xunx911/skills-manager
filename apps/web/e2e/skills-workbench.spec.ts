@@ -229,6 +229,40 @@ test("operator can compare standard bundle versions", async ({ page }) => {
   await expect(page.getByText("Prioritize missing tenant filters.")).toBeVisible();
 });
 
+test("candidate version handoff selects the new version for verification", async ({ page }) => {
+  const skillName = `candidate-handoff-${Date.now()}`;
+  await importSkillBundle(page, skillName);
+  await addEvalCase(page, "PR: missing tenant scope");
+
+  await page
+    .locator(".caseReviewCard")
+    .filter({ hasText: "PR: missing tenant scope" })
+    .getByRole("button", { name: "不通过", exact: true })
+    .click();
+  await page.getByTestId("eval-run-bar").getByRole("button", { name: "记录本次测评" }).click();
+  await expect(page.getByText("已记录 0/1 通过。")).toBeVisible();
+
+  await appendSkillBundleVersion(page, skillName, { makeCurrent: false });
+
+  await expect(page.getByRole("button", { name: "测评", exact: true })).toHaveClass(/linearTabActive/);
+  await expect(page.getByLabel("测评目标版本")).toHaveValue(/varver_/);
+  await expect(page.locator(".candidateVerificationBanner")).toContainText("v2");
+  await expect(page.getByRole("button", { name: "进入设为当前版本评审" })).toBeVisible();
+  await expect(page.getByTestId("eval-run-bar").getByRole("button", { name: "记录本次测评" })).toBeDisabled();
+
+  await page
+    .locator(".caseReviewCard")
+    .filter({ hasText: "PR: missing tenant scope" })
+    .getByRole("button", { name: "通过", exact: true })
+    .click();
+  await page.getByTestId("eval-run-bar").getByRole("button", { name: "记录本次测评" }).click();
+  await expect(page.getByText("已记录 1/1 通过。")).toBeVisible();
+
+  await page.getByRole("button", { name: "进入设为当前版本评审" }).click();
+  await expect(page.getByRole("heading", { name: "设为当前版本评审" })).toBeVisible();
+  await expect(page.locator(".promotionReadiness").getByText("可设为当前版本")).toBeVisible();
+});
+
 test("operator can review a candidate version before promoting it", async ({ page }) => {
   const skillName = `promotion-reviewing-${Date.now()}`;
   await importSkillBundle(page, skillName);

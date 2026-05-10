@@ -10,6 +10,14 @@
 
 ## Session Log
 
+### 2026-05-10 16:30 CST - TASK-008 候选版本验证交接
+
+- 追加 `make_current=false` 的候选版本后，工作台自动切到 `测评`，并选中新建 candidate 作为 exact 测评目标。
+- 切换测评目标会清空本地 pass/fail 草稿，避免把 current run 的判断误带到 candidate。
+- 新增 candidate verification banner，可从测评页直接进入 `设为当前版本评审`。
+- 验证：`uv run pytest` 71 passed；`npm run typecheck` passed；`npm run build` passed；`npm run e2e` 22 passed。
+- 截图：`.agent/screenshots/TASK-008-1.png`。
+
 ### 2026-05-10 16:11 CST - TASK-007 手工测评执行队列
 
 - 将测评页 pass/fail 区升级为 review queue，支持全部/未确认/通过/不通过筛选、点击结果后自动前进、未确认批量标为通过、清空草稿和键盘 `p/f/j/k`。
