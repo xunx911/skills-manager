@@ -16,6 +16,7 @@
 - 工作台内可以查看 bundle 文件内容、版本 diff、run 历史、run-to-run 比较、accepted verification、case 版本历史和 promotion review。
 - 工作台支持 `Cmd/Ctrl+K` 上下文命令菜单，可搜索并执行导入、创建、测评、历史、差异等高频动作。
 - `测评` 页支持单条快速添加和批量粘贴 case；批量写入会生成一个新的 `EvalSetVersion`，避免逐条添加制造版本噪音。
+- `测评` 页的手工确认区是 review queue：可按全部/未确认/通过/不通过筛选，点击通过/不通过后自动前进到下一条未确认 case，并支持把未确认项批量标为通过。
 
 ## 快速开始
 
@@ -62,10 +63,11 @@ npm run dev -- --hostname 127.0.0.1 --port 3000
 2. 用左侧 catalog 切换 skill。
 3. 用右侧 inspector 或 `Cmd/Ctrl+K` 命令菜单创建 skill、导入标准 Skill bundle、创建 variant、添加测试用例、编辑 case version，并记录手工通过/不通过测评。
 4. 在 `测评` 页可以直接用快速添加面板录入单条 case，或切到 `批量` 后粘贴多行 `title | input | expected output | notes`。
-5. 在 `导入 bundle` 中上传以下任一来源：
+5. 在 `测评` 页用 `未确认` 筛选处理剩余 case；点击 `通过` / `不通过` 会自动选中下一条未确认 case，也可以用 `未确认标为通过` 快速完成低风险批次。
+6. 在 `导入 bundle` 中上传以下任一来源：
    - 根目录包含 `SKILL.md` 的文件夹，或
    - 根目录文件夹包含 `SKILL.md` 的 zip。
-6. `SKILL.md` 必须以 frontmatter 开头：
+7. `SKILL.md` 必须以 frontmatter 开头：
 
 ```markdown
 ---

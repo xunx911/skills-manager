@@ -3344,6 +3344,74 @@ h2 {
   color: #ffffff;
 }
 
+.evalQueueControls {
+  grid-template-columns: minmax(150px, 0.28fr) minmax(0, 1fr);
+  align-items: start;
+}
+
+.evalFilterTabs,
+.evalQueueActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.evalFilterTabs button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 34px;
+  border: 1px solid #d6dde8;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #475569;
+  cursor: pointer;
+  font-weight: 950;
+  padding: 0 10px;
+}
+
+.evalFilterTabs button:hover {
+  border-color: #9aa8bb;
+  color: #111827;
+}
+
+.evalFilterTabs strong {
+  min-width: 22px;
+  border-radius: 999px;
+  background: #eef2f7;
+  color: #111827;
+  font-size: 12px;
+  line-height: 22px;
+  text-align: center;
+}
+
+.evalFilterTabs .evalFilterActive {
+  border-color: #111827;
+  background: #111827;
+  color: #ffffff;
+}
+
+.evalFilterTabs .evalFilterActive strong {
+  background: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+}
+
+.evalQueueActions {
+  grid-column: 1 / -1;
+  justify-content: flex-end;
+}
+
+.evalQueueActions button {
+  min-height: 34px;
+  border-color: #d6dde8;
+}
+
+.evalQueueActions .primaryAction {
+  border-color: #111827;
+  background: #111827;
+  color: #ffffff;
+}
+
 .caseReviewList {
   display: grid;
   gap: 10px;
@@ -3512,7 +3580,8 @@ h2 {
     padding-top: 14px;
   }
 
-  .evalRunActions {
+  .evalRunActions,
+  .evalQueueActions {
     justify-content: flex-start;
   }
 }
@@ -3980,6 +4049,20 @@ body {
 
 .caseReviewCard:hover {
   border-color: #b9c4d3;
+}
+
+.caseReviewCardPending {
+  background: #ffffff;
+}
+
+.caseReviewCardDone {
+  border-color: rgba(10, 122, 85, 0.28);
+  background: #f7fcfa;
+}
+
+.caseReviewCardFailed {
+  border-color: rgba(180, 35, 24, 0.3);
+  background: #fff8f7;
 }
 
 .caseReviewCardActive {

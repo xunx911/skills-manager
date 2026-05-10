@@ -8,6 +8,7 @@
 - 工作台支持 `Cmd/Ctrl+K` 上下文命令菜单，用户可以搜索并执行导入、创建、测评、历史、差异等高频动作；可见的 `Cmd K` 按钮也能打开同一个入口。
 - 用户可以创建 skill、导入标准 Skill 文件夹或 zip、创建 variant、追加 bundle version、添加/编辑/归档 eval case，并记录手工通过/不通过测评。
 - `测评` 页支持单条快速添加和批量粘贴 case；批量写入只产生一个新的 `EvalSetVersion`，不会把一次整理工作拆成多段版本噪音。
+- `测评` 页的手工确认区已变成 review queue：支持按状态筛选、点击结果后自动前进、未确认项批量标为通过、清空本地草稿和键盘确认。
 - 手工测评现在可以选择 `测评目标版本`，因此候选 `VariantVersion` 可以先被测评，再决定是否成为 current。
 - `变体` 页会列出每个 variant 的历史版本。current 版本显示 `Current`，非 current 版本提供 `设为当前版本评审`。
 - `差异` 页在 current -> candidate 比较时也提供 `设为当前版本评审` 入口。
@@ -28,7 +29,10 @@
 - **Linear Command Menu:** 同一动作可以通过按钮、快捷键、上下文菜单和命令菜单触发；SkillHub 第一版把“导入/创建/测评/历史/差异”收进 `Cmd/Ctrl+K`，让新手可发现、熟手少移动鼠标。
 - **GitHub Command Palette:** 命令菜单兼具导航、搜索和运行命令能力；SkillHub 借鉴其 scope 思路，把菜单限定在当前 skill 工作区，避免全局搜索过早膨胀。
 - **TestRail quick outline:** 测试用例管理工具会区分完整表单和快速 outline。SkillHub 借鉴“快速进入测试集”的速度，但不允许只填标题，仍要求 `input + expected output`，保证测评资产质量。
+- **TestRail Pass & Next / bulk result:** TestRail 在三栏执行视图里提供快速通过并进入下一条，也支持批量提交相同结果。SkillHub 适配为“通过/不通过后自动前进”和“仅把未确认项标为通过”，避免覆盖已发现的失败。
+- **TestRail hotkeys:** TestRail 为 run/test 导航和结果提交提供快捷键。SkillHub 适配为 `p/f` 标记当前 case、`j/k` 或方向键移动；快捷键不会在输入框中触发。
 - **Airtable 多行粘贴:** 表格型产品允许复制多行记录并一次粘贴创建。SkillHub 借鉴这个批量输入体验，用 tab 或 `|` 分隔的文本把已有 PR/backlog 表格转成多个 eval case。
+- **Airtable record filtering:** Airtable 的表格体验强调在大量记录中筛选和移动。SkillHub 适配为全部/未确认/通过/不通过四种状态筛选，让测评执行从“扫整页”变成“处理队列”。
 - **GitHub / VS Code diff:** 版本变化用文件列表 + 行级 additions/removals 展示，而不是只给 change summary。Skill 本质上是文件夹，必须让用户看到真实文件变化。
 - **GitHub protected branch / release review:** “设为当前版本”不是普通字段更新，而是有证据的指针移动。promotion review 借鉴 release 前检查，把测试结果、diff、风险说明合在一起。
 - **GitHub Actions / LangSmith:** eval run history 以状态、策略、分数、exact binding 为核心，先扫全局，再进入单个 run 的 case 结果；run-to-run comparison 借鉴实验对比视图，只允许同 eval set snapshot 比较，避免把测试集变化误判成 skill 提升。
@@ -45,11 +49,12 @@
 5. 以前 history 只能读单次 run；现在可以比较两次同快照 run，并把候选 run 接受为验证依据。
 6. 以前高频动作散落在 inspector 和 tab 中；现在 `Cmd/Ctrl+K` 可以直接跳到添加 case、导入 bundle、记录测评等动作。
 7. 以前扩充测评集只能逐条走右侧表单；现在可以在测评页直接单条快加或批量粘贴，批量写入也只生成一个 eval set snapshot。
-8. 以前只有手工测试主路径；现在 happy path、risky path、run comparison path、command menu path、batch case path 都有 E2E 覆盖，并新增 promotion review 视觉基线。
+8. 以前记录 run 前要手动扫完整 case 列表；现在可以筛选未确认、结果后自动前进、批量通过未确认项，并用键盘连续确认。
+9. 以前只有手工测试主路径；现在 happy path、risky path、run comparison path、command menu path、batch case path、manual eval queue path 都有 E2E 覆盖，并新增 promotion review 视觉基线。
 
 ## 仍然存在的摩擦
 
-1. 右侧 inspector 仍然偏表单化。新增 case 已经有主内容区快加入口，但记录 run、追加版本、导入后引导仍可以继续压缩成更连续的维护流。
+1. 右侧 inspector 仍然偏表单化。新增 case 和记录 run 已经变得更顺，但追加版本、导入后引导仍可以继续压缩成更连续的维护流。
 2. Promotion review 已经展示 case impact 和 diff，但还没有把具体 diff hunk 关联到具体 eval case。
 3. Run history 还没有 saved view / 多维表格查询；现在能比较两条 run，但还不能保存筛选视图或批量分析。
 4. Case history 仍然是 read-only。用户可以查看旧版本，但不能一键 restore。
@@ -58,7 +63,7 @@
 
 ## 下一轮优化队列
 
-1. 优化记录 eval 和追加版本：把“补 case -> 标记 pass/fail -> 记录 run -> 进入历史/评审”做成更连续的维护流。
+1. 优化追加版本和导入后引导：把“导入 bundle -> 补 case -> 记录 run -> 进入历史/评审”做成更连续的维护流。
 2. 做 saved view / 多维 run matrix：让用户按 variant、eval set、case、strategy 自由查询。
 3. 把 accepted verification 接入 Hub 文案和权限模型：明确谁能接受、谁只能查看。
 4. 做 case restore：从 case history 恢复旧版本，但仍生成新的 case version。

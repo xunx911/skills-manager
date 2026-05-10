@@ -146,6 +146,55 @@ test("operator can batch paste eval cases and record a run", async ({ page }) =>
   await expect(page.getByText("已记录 1/2 通过。")).toBeVisible();
 });
 
+test("manual eval queue filters unresolved cases and bulk-passes remaining cases", async ({ page }) => {
+  await importSkillBundle(page, `manual-eval-queue-${Date.now()}`);
+
+  await page.getByRole("button", { name: "测评", exact: true }).click();
+  await page.getByRole("button", { name: "批量", exact: true }).click();
+  await page.getByLabel("批量 case 文本").fill(
+    [
+      "PR: missing tenant scope | Project.all() | Flag missing tenant scope.",
+      "PR: token logging | console.log(token) | Flag token logging.",
+      "PR: broad update | Project.update_all({ archived: true }) | Flag broad update without where clause.",
+    ].join("\n"),
+  );
+  await page.getByRole("button", { name: "批量加入评测集" }).click();
+
+  await page.getByRole("button", { name: "未确认 3" }).click();
+  await page
+    .locator(".caseReviewCard")
+    .filter({ hasText: "PR: missing tenant scope" })
+    .getByRole("button", { name: "通过", exact: true })
+    .click();
+
+  await expect(page.locator(".caseReviewCardActive").filter({ hasText: "PR: token logging" })).toBeVisible();
+  await page.getByRole("button", { name: "未确认标为通过" }).click();
+  await page.getByTestId("eval-run-bar").getByRole("button", { name: "记录本次测评" }).click();
+  await expect(page.getByText("已记录 3/3 通过。")).toBeVisible();
+});
+
+test("manual eval queue supports keyboard pass and fail", async ({ page }) => {
+  await importSkillBundle(page, `manual-eval-keyboard-${Date.now()}`);
+
+  await page.getByRole("button", { name: "测评", exact: true }).click();
+  await page.getByRole("button", { name: "批量", exact: true }).click();
+  await page.getByLabel("批量 case 文本").fill(
+    [
+      "PR: missing tenant scope | Project.all() | Flag missing tenant scope.",
+      "PR: token logging | console.log(token) | Flag token logging.",
+    ].join("\n"),
+  );
+  await page.getByRole("button", { name: "批量加入评测集" }).click();
+
+  await page.locator(".caseReviewCard").filter({ hasText: "PR: missing tenant scope" }).click();
+  await page.keyboard.press("p");
+  await expect(page.locator(".caseReviewCardActive").filter({ hasText: "PR: token logging" })).toBeVisible();
+  await page.keyboard.press("f");
+
+  await page.getByTestId("eval-run-bar").getByRole("button", { name: "记录本次测评" }).click();
+  await expect(page.getByText("已记录 1/2 通过。")).toBeVisible();
+});
+
 test("operator can edit and archive eval cases", async ({ page }) => {
   await importSkillBundle(page, `case-management-${Date.now()}`);
   await addEvalCase(page, "PR: stale title");

@@ -40,5 +40,12 @@
     "priority": 6,
     "passes": true,
     "spec": ".agent/tasks/TASK-006.json"
+  },
+  {
+    "id": "007",
+    "title": "优化手工测评执行队列",
+    "priority": 7,
+    "passes": true,
+    "spec": ".agent/tasks/TASK-007.json"
   }
 ]

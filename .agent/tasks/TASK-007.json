@@ -1,0 +1,27 @@
+{
+  "id": "007",
+  "title": "优化手工测评执行队列",
+  "priority": 7,
+  "area": "frontend-ux",
+  "spec": "docs/superpowers/specs/2026-05-10-manual-eval-queue-design.md",
+  "goal": "把测评页的 pass/fail 操作升级成顺手的 review queue，支持状态筛选、自动前进、批量处理未确认和键盘确认。",
+  "requirements": [
+    "测评页必须支持全部、未确认、通过、不通过四种 case 状态筛选。",
+    "点击通过或不通过后必须自动选择下一条未确认 case。",
+    "必须提供只把未确认 case 标为通过的批量操作，不能覆盖已标记为不通过的草稿。",
+    "必须提供清空本地测评草稿的操作。",
+    "键盘 p/f 必须能标记当前 case，j/k 或方向键必须能切换 case，且不能在输入框中触发。",
+    "记录 EvalRun 仍必须要求所有 case 都已确认。"
+  ],
+  "tests": [
+    "Playwright 覆盖筛选未确认、点击通过后自动前进、未确认批量标为通过并记录 run。",
+    "Playwright 覆盖键盘 p/f 连续确认两条 case 并记录混合结果 run。"
+  ],
+  "verification": [
+    "cd apps/api && uv run pytest",
+    "cd apps/web && npm run typecheck",
+    "cd apps/web && npm run build",
+    "cd apps/web && npm run e2e",
+    "git diff --check"
+  ]
+}

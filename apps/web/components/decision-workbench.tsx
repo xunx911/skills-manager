@@ -8,6 +8,7 @@ import { emptySkillDetail } from "@/lib/empty-state";
 import { percent, shortId } from "@/lib/format";
 import { CommandMenu, type CommandMenuItem } from "@/components/command-menu/command-menu";
 import { QuickAddCases, type QuickEvalCaseDraft } from "@/components/eval-cases/quick-add-cases";
+import { EvalReviewControls, type EvalReviewFilter } from "@/components/eval-cases/eval-review-controls";
 import { GlobalCommandButton } from "@/components/command-menu/global-command-button";
 import { PromotionReviewPane } from "@/components/promotion-review/promotion-review-pane";
 import { RunComparisonPanel } from "@/components/run-comparison/run-comparison-panel";
@@ -806,8 +807,8 @@ export function DecisionWorkbench({ skills: initialSkills, featuredSkill }: Deci
     });
   }
 
-  function setAllCases(passed: boolean) {
-    setCaseResults(Object.fromEntries(cases.map((item) => [item.case_version.id, passed])));
+  function clearCaseResults() {
+    setCaseResults({});
   }
 
   return (
@@ -974,6 +975,7 @@ export function DecisionWorkbench({ skills: initialSkills, featuredSkill }: Deci
             onCreateCases={createCases}
             onAction={chooseAction}
             onArchiveCase={archiveCase}
+            onClearDraft={clearCaseResults}
             onEditCase={(caseId) => {
               setSelectedCaseId(caseId);
               chooseAction("edit-case");
@@ -982,7 +984,6 @@ export function DecisionWorkbench({ skills: initialSkills, featuredSkill }: Deci
             onRecord={recordEvalRun}
             onSelectCase={setSelectedCaseId}
             onSelectEvalTargetVersion={setEvalTargetVersionId}
-            onSetAll={setAllCases}
             onToggle={(caseVersionId, passed) => {
               setCaseResults((current) => ({ ...current, [caseVersionId]: passed }));
               setActionMode("run");
@@ -1604,13 +1605,13 @@ function EvalsPane({
   failedDraft,
   onAction,
   onArchiveCase,
+  onClearDraft,
   onCreateCases,
   onEditCase,
   onHistoryCase,
   onRecord,
   onSelectCase,
   onSelectEvalTargetVersion,
-  onSetAll,
   onToggle,
   passedDraft,
   selectedCaseId,
@@ -1633,17 +1634,96 @@ function EvalsPane({
   failedDraft: number;
   onAction: (mode: ActionMode) => void;
   onArchiveCase: (caseId: string) => void;
+  onClearDraft: () => void;
   onCreateCases: (cases: QuickEvalCaseDraft[]) => Promise<boolean>;
   onEditCase: (caseId: string) => void;
   onHistoryCase: (caseId: string) => void;
   onRecord: () => void;
   onSelectCase: (caseId: string) => void;
   onSelectEvalTargetVersion: (versionId: string) => void;
-  onSetAll: (passed: boolean) => void;
   onToggle: (caseVersionId: string, passed: boolean) => void;
   passedDraft: number;
   selectedCaseId: string | null;
 }) {
+  const [reviewFilter, setReviewFilter] = useState<EvalReviewFilter>("all");
+  const pendingCases = useMemo(
+    () => cases.filter((item) => typeof caseResults[item.case_version.id] !== "boolean"),
+    [caseResults, cases],
+  );
+  const visibleCases = useMemo(
+    () => cases.filter((item) => {
+      const passed = caseResults[item.case_version.id];
+      if (reviewFilter === "pending") return typeof passed !== "boolean";
+      if (reviewFilter === "passed") return passed === true;
+      if (reviewFilter === "failed") return passed === false;
+      return true;
+    }),
+    [caseResults, cases, reviewFilter],
+  );
+
+  function nextPendingCase(afterCaseVersionId?: string) {
+    if (pendingCases.length === 0) return null;
+    const startIndex = Math.max(0, cases.findIndex((item) => item.case_version.id === afterCaseVersionId));
+    for (let offset = 1; offset <= cases.length; offset += 1) {
+      const candidate = cases[(startIndex + offset) % cases.length];
+      if (candidate.case_version.id !== afterCaseVersionId && typeof caseResults[candidate.case_version.id] !== "boolean") {
+        return candidate;
+      }
+    }
+    return null;
+  }
+
+  function toggleAndAdvance(item: EvalSetVersionDetail["cases"][number], passed: boolean) {
+    onToggle(item.case_version.id, passed);
+    const nextCase = nextPendingCase(item.case_version.id);
+    onSelectCase(nextCase?.case.id ?? item.case.id);
+  }
+
+  function selectCaseByOffset(offset: number) {
+    const reviewCases = visibleCases.length > 0 ? visibleCases : cases;
+    if (reviewCases.length === 0) return;
+    const selectedIndex = reviewCases.findIndex((item) => item.case.id === selectedCaseId);
+    const currentIndex = selectedIndex >= 0 ? selectedIndex : 0;
+    const nextIndex = (currentIndex + offset + reviewCases.length) % reviewCases.length;
+    onSelectCase(reviewCases[nextIndex].case.id);
+  }
+
+  function jumpPending() {
+    const target = pendingCases[0];
+    if (target) onSelectCase(target.case.id);
+  }
+
+  function markPendingPassed() {
+    for (const item of pendingCases) onToggle(item.case_version.id, true);
+    if (pendingCases[0]) onSelectCase(pendingCases[0].case.id);
+  }
+
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.metaKey || event.ctrlKey || event.altKey) return;
+      if (isTextEntryTarget(event.target)) return;
+      const key = event.key.toLowerCase();
+      const selected = cases.find((item) => item.case.id === selectedCaseId) ?? cases[0];
+
+      if (key === "j" || event.key === "ArrowDown") {
+        event.preventDefault();
+        selectCaseByOffset(1);
+      } else if (key === "k" || event.key === "ArrowUp") {
+        event.preventDefault();
+        selectCaseByOffset(-1);
+      } else if (key === "p" && selected) {
+        event.preventDefault();
+        toggleAndAdvance(selected, true);
+      } else if (key === "f" && selected) {
+        event.preventDefault();
+        toggleAndAdvance(selected, false);
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  });
+
   return (
     <div className="linearPane evalPane">
       <div className="linearToolbar">
@@ -1678,20 +1758,21 @@ function EvalsPane({
 
       <QuickAddCases busy={busy} onCreateCases={onCreateCases} />
 
-      <div className="evalRunBar" data-testid="eval-run-bar">
-        <div className="evalProgress">
-          <strong>{cases.length === 0 ? "0%" : percent(Math.round((confirmedDraft / cases.length) * 100))}</strong>
-          <span>confirmation coverage</span>
-          <i style={{ width: cases.length === 0 ? "0%" : `${Math.round((confirmedDraft / cases.length) * 100)}%` }} />
-        </div>
-        <div className="evalRunActions">
-          <button onClick={() => onSetAll(true)} type="button">全部通过</button>
-          <button onClick={() => onSetAll(false)} type="button">全部不通过</button>
-          <button className="primaryAction" disabled={busy || cases.length === 0 || confirmedDraft !== cases.length} onClick={onRecord} type="button">
-            记录本次测评
-          </button>
-        </div>
-      </div>
+      <EvalReviewControls
+        busy={busy}
+        canRecord={cases.length > 0 && confirmedDraft === cases.length}
+        confirmedCount={confirmedDraft}
+        failedCount={failedDraft}
+        filter={reviewFilter}
+        onClearDraft={onClearDraft}
+        onFilterChange={setReviewFilter}
+        onJumpPending={jumpPending}
+        onMarkPendingPassed={markPendingPassed}
+        onRecord={onRecord}
+        passedCount={passedDraft}
+        pendingCount={pendingCases.length}
+        totalCount={cases.length}
+      />
 
       <div className="evalReviewGrid">
         <section className="evalCaseRail">
@@ -1700,12 +1781,18 @@ function EvalsPane({
             <span>{cases.length} snapshots</span>
           </div>
           <div className="caseReviewList">
-            {cases.map((item) => {
+            {visibleCases.map((item) => {
               const passed = caseResults[item.case_version.id];
               const isSelected = selectedCaseId === item.case.id;
               return (
                 <article
-                  className={`caseReviewCard ${isSelected ? "caseReviewCardActive" : ""}`}
+                  className={[
+                    "caseReviewCard",
+                    isSelected ? "caseReviewCardActive" : "",
+                    passed === true ? "caseReviewCardDone" : "",
+                    passed === false ? "caseReviewCardFailed" : "",
+                    typeof passed !== "boolean" ? "caseReviewCardPending" : "",
+                  ].filter(Boolean).join(" ")}
                   key={item.case_version.id}
                   onClick={() => onSelectCase(item.case.id)}
                 >
@@ -1715,8 +1802,26 @@ function EvalsPane({
                       <strong>{item.case.title}</strong>
                     </div>
                     <div className="resultSwitch" aria-label={`${item.case.title} result`}>
-                      <button className={passed === true ? "resultOn" : ""} onClick={() => onToggle(item.case_version.id, true)} type="button">通过</button>
-                      <button className={passed === false ? "resultOff" : ""} onClick={() => onToggle(item.case_version.id, false)} type="button">不通过</button>
+                      <button
+                        className={passed === true ? "resultOn" : ""}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          toggleAndAdvance(item, true);
+                        }}
+                        type="button"
+                      >
+                        通过
+                      </button>
+                      <button
+                        className={passed === false ? "resultOff" : ""}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          toggleAndAdvance(item, false);
+                        }}
+                        type="button"
+                      >
+                        不通过
+                      </button>
                     </div>
                   </div>
                   <div className="caseReviewFooter">
@@ -1731,6 +1836,7 @@ function EvalsPane({
               );
             })}
             {cases.length === 0 ? <div className="linearEmpty">还没有测试用例。先从右侧添加一个 case。</div> : null}
+            {cases.length > 0 && visibleCases.length === 0 ? <div className="linearEmpty">当前筛选下没有 case。</div> : null}
           </div>
         </section>
 
@@ -1771,6 +1877,12 @@ function EvalsPane({
       </div>
     </div>
   );
+}
+
+function isTextEntryTarget(target: EventTarget | null) {
+  if (!(target instanceof HTMLElement)) return false;
+  const tagName = target.tagName.toLowerCase();
+  return tagName === "input" || tagName === "textarea" || tagName === "select" || target.isContentEditable;
 }
 
 function CaseHistoryPanel({ history, loading }: { history: EvalCaseHistory | null; loading: boolean }) {
