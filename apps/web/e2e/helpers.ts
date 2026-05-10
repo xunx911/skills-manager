@@ -99,8 +99,10 @@ export async function hideVolatileUi(page: Page) {
       "[data-nextjs-toast] { display: none !important; }",
       "nextjs-portal { display: none !important; }",
       ".bindingList b { visibility: hidden !important; }",
+      ".historyRunMain small { visibility: hidden !important; }",
       ".promotionScoreBox small { visibility: hidden !important; }",
       ".promotionBindingList b { visibility: hidden !important; }",
+      ".runCompareScoreBox small { visibility: hidden !important; }",
     ].join("\n"),
   });
 }

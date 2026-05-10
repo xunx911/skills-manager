@@ -62,6 +62,7 @@ erDiagram
   EvalSetVersion ||--o{ EvalRun : used_by
   EvalRun ||--o{ CaseResult : has
   EvalCaseVersion ||--o{ CaseResult : result_for
+  EvalRun ||--o| AcceptedVerification : accepted_as
 ```
 
 关键语义：
@@ -74,6 +75,7 @@ erDiagram
 - `EvalSetVersion` 是不可变 case version 列表快照。
 - `EvalRun` 是一次 exact `VariantVersion + EvalSetVersion` 的证据。
 - `CaseResult` 只记录该 run 下某个 case version 的最终结果。
+- `AcceptedVerification` 是一个显式验证指针，说明某个 `Variant + EvalSetVersion` 当前认可哪一次不可变 `EvalRun`。
 
 ## 4. 数据所有权
 
@@ -186,6 +188,7 @@ API 分两类：页面查询和命令写入。
 | `GET /api/variants/{variant_id}/versions/{version_id}` | 同一 Variant Page，选中历史版本 |
 | `GET /api/eval-sets/{eval_set_id}/versions/{version_id}` | Eval set version 详情和具体 case 内容 |
 | `GET /api/eval-runs/{run_id}` | Eval run 详情和逐 case 结果 |
+| `GET /api/eval-runs/compare` | 同一 EvalSetVersion 下两个 finished run 的修复/回退比较 |
 | `GET /api/artifacts/{artifact_id}` | artifact 元数据 |
 | `GET /api/artifacts/{artifact_id}/files` | skill bundle 文件树和内容 |
 | `GET /api/artifacts/diff` | 两个 bundle 的 diff |
@@ -204,6 +207,7 @@ API 分两类：页面查询和命令写入。
 | `POST /api/eval-cases` | 创建 case 和 case version，并生成新 eval set version |
 | `POST /api/eval-case-versions` | 修正 case 内容，生成新 case version 和 eval set version |
 | `POST /api/eval-runs` | 记录手工 pass/fail run |
+| `POST /api/eval-runs/accepted-verifications` | 把一次 finished run 接受为当前验证依据 |
 | `POST /api/eval-result-imports` | 导入外部标准结果 |
 | `POST /api/jobs` | 创建外部策略执行 job |
 | `POST /api/variants/{variant_id}/promotions` | 将 current_version_id 指向已有 version |

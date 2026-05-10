@@ -202,6 +202,24 @@ create table promotion_decisions (
   constraint promotion_decisions_baseline_run_skill_fkey foreign key (baseline_eval_run_id, skill_id) references eval_runs(id, skill_id)
 );
 
+create table accepted_verifications (
+  id text primary key,
+  skill_id text not null,
+  variant_id text not null,
+  variant_version_id text not null,
+  eval_set_version_id text not null,
+  eval_run_id text not null,
+  note text not null default '',
+  created_at timestamptz not null default now(),
+  created_by text not null,
+  constraint accepted_verifications_id_skill_unique unique (id, skill_id),
+  constraint accepted_verifications_variant_eval_set_unique unique (variant_id, eval_set_version_id),
+  constraint accepted_verifications_variant_skill_fkey foreign key (variant_id, skill_id) references variants(id, skill_id),
+  constraint accepted_verifications_variant_version_skill_fkey foreign key (variant_version_id, skill_id) references variant_versions(id, skill_id),
+  constraint accepted_verifications_eval_set_version_skill_fkey foreign key (eval_set_version_id, skill_id) references eval_set_versions(id, skill_id),
+  constraint accepted_verifications_eval_run_skill_fkey foreign key (eval_run_id, skill_id) references eval_runs(id, skill_id)
+);
+
 create table jobs (
   id text primary key,
   type text not null,
@@ -260,6 +278,8 @@ create index case_results_case_version_id_idx on case_results (case_version_id);
 create index promotion_decisions_variant_created_at_idx on promotion_decisions (variant_id, created_at desc);
 create index promotion_decisions_to_version_id_idx on promotion_decisions (to_version_id);
 create index promotion_decisions_evidence_eval_run_id_idx on promotion_decisions (evidence_eval_run_id);
+create index accepted_verifications_variant_eval_set_idx on accepted_verifications (variant_id, eval_set_version_id);
+create index accepted_verifications_eval_run_id_idx on accepted_verifications (eval_run_id);
 create index jobs_status_created_at_idx on jobs (status, created_at);
 create index role_assignments_resource_idx on role_assignments (resource_type, resource_id);
 create index audit_events_resource_idx on audit_events (resource_type, resource_id, created_at desc);

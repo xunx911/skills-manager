@@ -112,6 +112,12 @@ class RecordEvalRunPayload(BaseModel):
     actor: str = "system"
 
 
+class AcceptEvalRunVerificationPayload(BaseModel):
+    eval_run_id: str
+    note: str = ""
+    actor: str = "system"
+
+
 def create_app(engine: Engine | None = None) -> FastAPI:
     app = FastAPI(title="SkillHub API", version="0.1.0")
     app.add_middleware(
@@ -171,6 +177,19 @@ def create_app(engine: Engine | None = None) -> FastAPI:
         repository: SqlSkillRepository = Depends(repository_dependency),
     ):
         return result_payload(repository.eval_set_version_detail(eval_set_version_id))
+
+    @app.get("/api/eval-runs/compare")
+    def compare_eval_runs(
+        baseline_run_id: str,
+        candidate_run_id: str,
+        repository: SqlSkillRepository = Depends(repository_dependency),
+    ):
+        return result_payload(
+            repository.compare_eval_runs(
+                baseline_run_id=baseline_run_id,
+                candidate_run_id=candidate_run_id,
+            )
+        )
 
     @app.get("/api/eval-runs/{eval_run_id}")
     def eval_run_detail(eval_run_id: str, repository: SqlSkillRepository = Depends(repository_dependency)):
@@ -406,6 +425,18 @@ def create_app(engine: Engine | None = None) -> FastAPI:
                 actor=payload.actor,
             )
         )
+
+    @app.post("/api/eval-runs/accepted-verifications")
+    def accept_eval_run_verification(
+        payload: AcceptEvalRunVerificationPayload,
+        repository: SqlSkillRepository = Depends(repository_dependency),
+    ):
+        accepted = repository.accept_eval_run_verification(
+            eval_run_id=payload.eval_run_id,
+            note=payload.note,
+            actor=payload.actor,
+        )
+        return {"ok": True, "accepted_verification": accepted}
 
     return app
 

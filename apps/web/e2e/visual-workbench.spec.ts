@@ -86,6 +86,37 @@ test("visual baseline: promotion review", async ({ page }) => {
   });
 });
 
+test("visual baseline: run comparison", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await importSkillBundle(page, "visual-run-comparison");
+  await addEvalCase(page, "PR: comparison visual tenant guard");
+  await page
+    .locator(".caseReviewCard")
+    .filter({ hasText: "PR: comparison visual tenant guard" })
+    .getByRole("button", { name: "不通过", exact: true })
+    .click();
+  await page.getByTestId("eval-run-bar").getByRole("button", { name: "记录本次测评" }).click();
+  await expect(page.getByText("已记录 0/1 通过。")).toBeVisible();
+
+  await page
+    .locator(".caseReviewCard")
+    .filter({ hasText: "PR: comparison visual tenant guard" })
+    .getByRole("button", { name: "通过", exact: true })
+    .click();
+  await page.getByTestId("eval-run-bar").getByRole("button", { name: "记录本次测评" }).click();
+  await expect(page.getByText("已记录 1/1 通过。")).toBeVisible();
+
+  await page.getByLabel("Workbench modes").getByRole("button", { name: "历史" }).click();
+  await page.locator(".historyRunRow").filter({ hasText: "0/1" }).getByRole("button", { name: "对照" }).click();
+  await page.locator(".historyRunRow").filter({ hasText: "1/1" }).getByRole("button", { name: "候选" }).click();
+  await expect(page.getByTestId("run-comparison-panel")).toBeVisible();
+  await hideVolatileUi(page);
+
+  await expect(page.locator(".linearWorkbench")).toHaveScreenshot("run-comparison-ready.png", {
+    animations: "disabled",
+  });
+});
+
 test("visual baseline: mobile empty workbench", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/skills");

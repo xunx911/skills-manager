@@ -265,6 +265,38 @@ test("operator can review eval run history with filters", async ({ page }) => {
   await expect(page.getByText("PR: missing tenant scope")).toBeVisible();
 });
 
+test("operator can compare eval runs and accept a verification pointer", async ({ page }) => {
+  await importSkillBundle(page, `run-compare-${Date.now()}`);
+  await addEvalCase(page, "PR: missing tenant scope");
+  await page
+    .locator(".caseReviewCard")
+    .filter({ hasText: "PR: missing tenant scope" })
+    .getByRole("button", { name: "不通过", exact: true })
+    .click();
+  await page.getByTestId("eval-run-bar").getByRole("button", { name: "记录本次测评" }).click();
+  await expect(page.getByText("已记录 0/1 通过。")).toBeVisible();
+  await page
+    .locator(".caseReviewCard")
+    .filter({ hasText: "PR: missing tenant scope" })
+    .getByRole("button", { name: "通过", exact: true })
+    .click();
+  await page.getByTestId("eval-run-bar").getByRole("button", { name: "记录本次测评" }).click();
+  await expect(page.getByText("已记录 1/1 通过。")).toBeVisible();
+
+  await page.getByLabel("Workbench modes").getByRole("button", { name: "历史" }).click();
+  await page.locator(".historyRunRow").filter({ hasText: "0/1" }).getByRole("button", { name: "对照" }).click();
+  await page.locator(".historyRunRow").filter({ hasText: "1/1" }).getByRole("button", { name: "候选" }).click();
+
+  await expect(page.getByTestId("run-comparison-panel")).toBeVisible();
+  await expect(page.getByTestId("run-comparison-panel").getByText("+100%", { exact: true })).toBeVisible();
+  await expect(page.getByTestId("run-comparison-panel").getByText("修复 1")).toBeVisible();
+
+  await page.getByLabel("Accepted verification note").fill("Accepted as Primary verification.");
+  await page.getByRole("button", { name: "接受为验证依据" }).click();
+  await expect(page.getByText("候选 run 已接受为验证依据。")).toBeVisible();
+  await expect(page.locator(".historyRunRow").filter({ hasText: "1/1" }).getByText("Accepted")).toBeVisible();
+});
+
 test("operator can inspect eval case version history", async ({ page }) => {
   await importSkillBundle(page, `case-history-${Date.now()}`);
   await addEvalCase(page, "PR: stale case wording");

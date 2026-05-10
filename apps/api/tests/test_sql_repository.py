@@ -7,6 +7,7 @@ from skillhub.domain.errors import InvariantError, NotFoundError
 from skillhub.domain.models import ContentRef, digest_text
 from skillhub.infrastructure.db.repositories import SqlSkillRepository
 from skillhub.infrastructure.db.tables import (
+    accepted_verifications,
     artifacts,
     audit_events,
     case_results,
@@ -745,6 +746,195 @@ class SqlSkillRepositoryTest(unittest.TestCase):
         self.assertEqual(detail.variant_version["id"], skill.variant_version_id)
         self.assertEqual(detail.case_results[0]["case"]["title"], "PR: missing owner check")
         self.assertTrue(detail.case_results[0]["result"]["passed"])
+
+    def test_compare_eval_runs_returns_fixed_and_regressed_summary(self):
+        skill = self.create_skill()
+        first_case = self.repository.create_eval_case(
+            skill_id=skill.skill_id,
+            title="PR: missing tenant scope",
+            input_text="Project.all()",
+            expected_output="Flag missing tenant scope.",
+            actor="tester",
+        )
+        second_case = self.repository.create_eval_case(
+            skill_id=skill.skill_id,
+            title="PR: harmless rename",
+            input_text="rename local variable",
+            expected_output="No finding.",
+            actor="tester",
+        )
+        candidate = self.repository.create_variant_version(
+            variant_id=skill.variant_id,
+            content_ref=ContentRef(kind="skill_bundle", locator="memory:v2", digest="digest-v2"),
+            change_summary="Candidate.",
+            actor="tester",
+            make_current=False,
+        )
+        baseline_run = self.repository.record_eval_run(
+            variant_version_id=skill.variant_version_id,
+            eval_set_version_id=second_case.eval_set_version_id,
+            strategy="manual_pass_fail",
+            results={first_case.eval_case_version_id: False, second_case.eval_case_version_id: True},
+            actor="tester",
+        )
+        candidate_run = self.repository.record_eval_run(
+            variant_version_id=candidate.variant_version_id,
+            eval_set_version_id=second_case.eval_set_version_id,
+            strategy="manual_pass_fail",
+            results={first_case.eval_case_version_id: True, second_case.eval_case_version_id: False},
+            actor="tester",
+        )
+
+        comparison = self.repository.compare_eval_runs(
+            baseline_run_id=baseline_run.eval_run_id,
+            candidate_run_id=candidate_run.eval_run_id,
+        )
+
+        self.assertEqual(comparison["summary"]["baseline_pass_rate"], 50)
+        self.assertEqual(comparison["summary"]["candidate_pass_rate"], 50)
+        self.assertEqual(comparison["summary"]["delta"], 0)
+        self.assertEqual(comparison["summary"]["fixed"], 1)
+        self.assertEqual(comparison["summary"]["regressed"], 1)
+        self.assertEqual([case["change"] for case in comparison["case_comparisons"]], ["fixed", "regressed"])
+        self.assertEqual(comparison["case_comparisons"][0]["change_label"], "修复")
+        self.assertEqual(comparison["baseline"]["variant_version"]["id"], skill.variant_version_id)
+        self.assertEqual(comparison["candidate"]["variant_version"]["id"], candidate.variant_version_id)
+
+    def test_compare_eval_runs_rejects_different_eval_set_versions(self):
+        skill = self.create_skill()
+        first_case = self.repository.create_eval_case(
+            skill_id=skill.skill_id,
+            title="PR: owner scope",
+            input_text="Project.all()",
+            expected_output="Flag owner scope.",
+            actor="tester",
+        )
+        second_case = self.repository.create_eval_case(
+            skill_id=skill.skill_id,
+            title="PR: token leak",
+            input_text="console.log(token)",
+            expected_output="Flag token logging.",
+            actor="tester",
+        )
+        first_run = self.repository.record_eval_run(
+            variant_version_id=skill.variant_version_id,
+            eval_set_version_id=first_case.eval_set_version_id,
+            strategy="manual_pass_fail",
+            results={first_case.eval_case_version_id: True},
+            actor="tester",
+        )
+        second_run = self.repository.record_eval_run(
+            variant_version_id=skill.variant_version_id,
+            eval_set_version_id=second_case.eval_set_version_id,
+            strategy="manual_pass_fail",
+            results={first_case.eval_case_version_id: True, second_case.eval_case_version_id: True},
+            actor="tester",
+        )
+
+        with self.assertRaisesRegex(InvariantError, "same EvalSetVersion"):
+            self.repository.compare_eval_runs(
+                baseline_run_id=first_run.eval_run_id,
+                candidate_run_id=second_run.eval_run_id,
+            )
+
+    def test_accept_eval_run_verification_records_pointer_and_audit(self):
+        skill = self.create_skill()
+        case = self.repository.create_eval_case(
+            skill_id=skill.skill_id,
+            title="PR: owner scope",
+            input_text="Project.all()",
+            expected_output="Flag owner scope.",
+            actor="tester",
+        )
+        run = self.repository.record_eval_run(
+            variant_version_id=skill.variant_version_id,
+            eval_set_version_id=case.eval_set_version_id,
+            strategy="manual_pass_fail",
+            results={case.eval_case_version_id: True},
+            actor="tester",
+        )
+
+        accepted = self.repository.accept_eval_run_verification(
+            eval_run_id=run.eval_run_id,
+            note="Primary v2 verification accepted.",
+            actor="tester",
+        )
+
+        with self.engine.connect() as connection:
+            accepted_row = connection.execute(select(accepted_verifications)).mappings().one()
+            audit_row = connection.execute(select(audit_events)).mappings().one()
+
+        self.assertEqual(accepted["eval_run_id"], run.eval_run_id)
+        self.assertEqual(accepted_row["variant_id"], skill.variant_id)
+        self.assertEqual(accepted_row["variant_version_id"], skill.variant_version_id)
+        self.assertEqual(accepted_row["eval_set_version_id"], case.eval_set_version_id)
+        self.assertEqual(accepted_row["note"], "Primary v2 verification accepted.")
+        self.assertEqual(audit_row["action"], "eval_run.accepted_verification_set")
+        self.assertEqual(audit_row["payload"]["eval_run_id"], run.eval_run_id)
+
+    def test_accept_eval_run_verification_rejects_failed_run(self):
+        skill = self.create_skill()
+        case = self.repository.create_eval_case(
+            skill_id=skill.skill_id,
+            title="PR: owner scope",
+            input_text="Project.all()",
+            expected_output="Flag owner scope.",
+            actor="tester",
+        )
+        run = self.repository.record_eval_run(
+            variant_version_id=skill.variant_version_id,
+            eval_set_version_id=case.eval_set_version_id,
+            strategy="manual_pass_fail",
+            results={case.eval_case_version_id: True},
+            actor="tester",
+        )
+        with self.engine.begin() as connection:
+            connection.execute(eval_runs.update().where(eval_runs.c.id == run.eval_run_id).values(status="failed"))
+
+        with self.assertRaisesRegex(InvariantError, "finished"):
+            self.repository.accept_eval_run_verification(
+                eval_run_id=run.eval_run_id,
+                note="Should fail.",
+                actor="tester",
+            )
+
+    def test_skill_summary_prefers_accepted_verification_over_latest_finished_run(self):
+        skill = self.create_skill()
+        case = self.repository.create_eval_case(
+            skill_id=skill.skill_id,
+            title="PR: owner scope",
+            input_text="Project.all()",
+            expected_output="Flag owner scope.",
+            actor="tester",
+        )
+        accepted_run = self.repository.record_eval_run(
+            variant_version_id=skill.variant_version_id,
+            eval_set_version_id=case.eval_set_version_id,
+            strategy="manual_pass_fail",
+            results={case.eval_case_version_id: True},
+            actor="tester",
+        )
+        latest_run = self.repository.record_eval_run(
+            variant_version_id=skill.variant_version_id,
+            eval_set_version_id=case.eval_set_version_id,
+            strategy="manual_pass_fail",
+            results={case.eval_case_version_id: False},
+            actor="tester",
+        )
+        self.repository.accept_eval_run_verification(
+            eval_run_id=accepted_run.eval_run_id,
+            note="Accepted baseline.",
+            actor="tester",
+        )
+
+        summaries = self.repository.list_skills()
+        history = self.repository.list_eval_runs_for_skill(skill_id=skill.skill_id)
+
+        self.assertNotEqual(accepted_run.eval_run_id, latest_run.eval_run_id)
+        self.assertEqual(summaries[0]["latest_accepted_eval_run"]["id"], accepted_run.eval_run_id)
+        accepted_rows = [row for row in history["runs"] if row["accepted_verification"] is not None]
+        self.assertEqual(len(accepted_rows), 1)
+        self.assertEqual(accepted_rows[0]["eval_run"]["id"], accepted_run.eval_run_id)
 
     def create_skill(self, *, slug: str = "code-reviewer", digest: str = "digest-bundle"):
         return self.repository.create_skill(

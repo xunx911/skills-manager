@@ -1,0 +1,31 @@
+{
+  "id": "004",
+  "title": "实现 run-to-run comparison 和 accepted verification",
+  "priority": 4,
+  "area": "evidence",
+  "spec": "docs/superpowers/specs/2026-05-10-run-comparison-accepted-verification-design.md",
+  "goal": "允许用户比较同一 EvalSetVersion 下的两次 finished EvalRun，并把一次 run 接受为当前验证依据。",
+  "requirements": [
+    "新增 accepted_verifications 指针表，唯一约束为 variant_id + eval_set_version_id。",
+    "新增 GET /api/eval-runs/compare，只允许同 skill、同 EvalSetVersion、finished run 比较。",
+    "比较结果按 case version 输出 fixed、regressed、stable_pass、stable_fail、missing_baseline、missing_candidate。",
+    "新增 POST /api/eval-runs/accepted-verifications，只接受 finished run，并写入 audit_events。",
+    "Skill summary 优先显示 accepted verification run；没有 accepted 指针时保留 latest finished fallback。",
+    "History mode 中每条 run 可被选为对照或候选，右侧展示比较面板和接受验证依据入口。",
+    "文档必须用中文说明 run comparison 和 accepted verification 的语义。"
+  ],
+  "tests": [
+    "metadata 测试覆盖 accepted_verifications 表、索引、唯一约束和外键。",
+    "repository 测试覆盖修复/回退统计、跨 EvalSetVersion 拒绝、accepted pointer、summary 优先 accepted。",
+    "API 测试覆盖 compare endpoint 和 accepted verification command。",
+    "Playwright 覆盖记录两次 run、比较、接受验证依据和 Accepted badge。",
+    "视觉回归覆盖 run comparison 面板。"
+  ],
+  "verification": [
+    "cd apps/api && uv run pytest",
+    "cd apps/web && npm run typecheck",
+    "cd apps/web && npm run build",
+    "cd apps/web && UV_CACHE_DIR=/Users/xx/Documents/code/skills-manager/.uv-cache npm run e2e",
+    "git diff --check"
+  ]
+}

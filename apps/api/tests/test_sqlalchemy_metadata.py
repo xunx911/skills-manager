@@ -25,6 +25,7 @@ class SqlAlchemyMetadataTest(unittest.TestCase):
                 "jobs",
                 "role_assignments",
                 "promotion_decisions",
+                "accepted_verifications",
                 "audit_events",
             },
         )
@@ -84,6 +85,7 @@ class SqlAlchemyMetadataTest(unittest.TestCase):
             ("eval_runs", "eval_runs_eval_set_version_id_idx"),
             ("case_results", "case_results_case_version_id_idx"),
             ("promotion_decisions", "promotion_decisions_variant_created_at_idx"),
+            ("accepted_verifications", "accepted_verifications_variant_eval_set_idx"),
             ("jobs", "jobs_status_created_at_idx"),
         ]:
             self.assertIn(index_name, self.index_names(table_name))
@@ -107,6 +109,41 @@ class SqlAlchemyMetadataTest(unittest.TestCase):
             "promotion_decisions",
             "promotion_decisions_evidence_run_skill_fkey",
             ("evidence_eval_run_id", "skill_id"),
+            "eval_runs",
+            ("id", "skill_id"),
+        )
+
+    def test_accepted_verifications_link_to_exact_run_pointer(self):
+        self.assert_unique_constraint(
+            "accepted_verifications",
+            "accepted_verifications_variant_eval_set_unique",
+            ("variant_id", "eval_set_version_id"),
+        )
+        self.assert_foreign_key(
+            "accepted_verifications",
+            "accepted_verifications_variant_skill_fkey",
+            ("variant_id", "skill_id"),
+            "variants",
+            ("id", "skill_id"),
+        )
+        self.assert_foreign_key(
+            "accepted_verifications",
+            "accepted_verifications_variant_version_skill_fkey",
+            ("variant_version_id", "skill_id"),
+            "variant_versions",
+            ("id", "skill_id"),
+        )
+        self.assert_foreign_key(
+            "accepted_verifications",
+            "accepted_verifications_eval_set_version_skill_fkey",
+            ("eval_set_version_id", "skill_id"),
+            "eval_set_versions",
+            ("id", "skill_id"),
+        )
+        self.assert_foreign_key(
+            "accepted_verifications",
+            "accepted_verifications_eval_run_skill_fkey",
+            ("eval_run_id", "skill_id"),
             "eval_runs",
             ("id", "skill_id"),
         )

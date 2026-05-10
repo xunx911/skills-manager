@@ -260,6 +260,26 @@ promotion_decisions = Table(
     ForeignKeyConstraint(["baseline_eval_run_id", "skill_id"], ["eval_runs.id", "eval_runs.skill_id"], name="promotion_decisions_baseline_run_skill_fkey"),
 )
 
+accepted_verifications = Table(
+    "accepted_verifications",
+    metadata,
+    Column("id", Text, primary_key=True),
+    Column("skill_id", Text, nullable=False),
+    Column("variant_id", Text, nullable=False),
+    Column("variant_version_id", Text, nullable=False),
+    Column("eval_set_version_id", Text, nullable=False),
+    Column("eval_run_id", Text, nullable=False),
+    Column("note", Text, nullable=False, server_default=text("''")),
+    timestamp_column(),
+    Column("created_by", Text, nullable=False),
+    UniqueConstraint("id", "skill_id", name="accepted_verifications_id_skill_unique"),
+    UniqueConstraint("variant_id", "eval_set_version_id", name="accepted_verifications_variant_eval_set_unique"),
+    ForeignKeyConstraint(["variant_id", "skill_id"], ["variants.id", "variants.skill_id"], name="accepted_verifications_variant_skill_fkey"),
+    ForeignKeyConstraint(["variant_version_id", "skill_id"], ["variant_versions.id", "variant_versions.skill_id"], name="accepted_verifications_variant_version_skill_fkey"),
+    ForeignKeyConstraint(["eval_set_version_id", "skill_id"], ["eval_set_versions.id", "eval_set_versions.skill_id"], name="accepted_verifications_eval_set_version_skill_fkey"),
+    ForeignKeyConstraint(["eval_run_id", "skill_id"], ["eval_runs.id", "eval_runs.skill_id"], name="accepted_verifications_eval_run_skill_fkey"),
+)
+
 jobs = Table(
     "jobs",
     metadata,
@@ -324,6 +344,8 @@ Index("case_results_case_version_id_idx", case_results.c.case_version_id)
 Index("promotion_decisions_variant_created_at_idx", promotion_decisions.c.variant_id, promotion_decisions.c.created_at.desc())
 Index("promotion_decisions_to_version_id_idx", promotion_decisions.c.to_version_id)
 Index("promotion_decisions_evidence_eval_run_id_idx", promotion_decisions.c.evidence_eval_run_id)
+Index("accepted_verifications_variant_eval_set_idx", accepted_verifications.c.variant_id, accepted_verifications.c.eval_set_version_id)
+Index("accepted_verifications_eval_run_id_idx", accepted_verifications.c.eval_run_id)
 Index("jobs_status_created_at_idx", jobs.c.status, jobs.c.created_at)
 Index("role_assignments_resource_idx", role_assignments.c.resource_type, role_assignments.c.resource_id)
 Index("audit_events_resource_idx", audit_events.c.resource_type, audit_events.c.resource_id, audit_events.c.created_at.desc())

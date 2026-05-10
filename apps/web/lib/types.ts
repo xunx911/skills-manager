@@ -204,6 +204,18 @@ export type EvalRunRecord = {
   created_by: string;
 };
 
+export type AcceptedVerification = {
+  id: string;
+  skill_id: string;
+  variant_id: string;
+  variant_version_id: string;
+  eval_set_version_id: string;
+  eval_run_id: string;
+  note: string;
+  created_at?: string;
+  created_by: string;
+};
+
 export type EvalRunDetail = {
   eval_run: EvalRunRecord;
   skill: SkillSummary["skill"];
@@ -218,6 +230,7 @@ export type EvalRunHistoryRow = {
   variant_version: VariantVersion;
   eval_set: Omit<EvalSetSummary, "current_version" | "versions">;
   eval_set_version: EvalSetVersion;
+  accepted_verification: AcceptedVerification | null;
 };
 
 export type EvalRunHistory = {
@@ -254,6 +267,41 @@ export type CaseResultDetail = {
   };
   case: EvalSetCase["case"];
   case_version: EvalCaseVersionDetail;
+};
+
+export type EvalRunComparisonCase = {
+  case_id: string;
+  case_title: string;
+  case_version_id: string;
+  change: "fixed" | "regressed" | "stable_pass" | "stable_fail" | "missing_baseline" | "missing_candidate";
+  change_label: string;
+  baseline_passed: boolean | null;
+  candidate_passed: boolean | null;
+  input_text: string | null;
+  expected_output_text: string | null;
+};
+
+export type EvalRunComparison = {
+  skill: SkillSummary["skill"];
+  eval_set: Omit<EvalSetSummary, "current_version" | "versions">;
+  eval_set_version: EvalSetVersion;
+  baseline: {
+    eval_run: EvalRunRecord;
+    variant: Omit<VariantDetail, "current_version" | "versions"> & { tags: string[] };
+    variant_version: VariantVersion;
+  };
+  candidate: {
+    eval_run: EvalRunRecord;
+    variant: Omit<VariantDetail, "current_version" | "versions"> & { tags: string[] };
+    variant_version: VariantVersion;
+  };
+  summary: Record<EvalRunComparisonCase["change"], number> & {
+    baseline_pass_rate: number | null;
+    candidate_pass_rate: number | null;
+    delta: number | null;
+  };
+  case_comparisons: EvalRunComparisonCase[];
+  candidate_accepted_verification: AcceptedVerification | null;
 };
 
 export type PromotionReadiness = {

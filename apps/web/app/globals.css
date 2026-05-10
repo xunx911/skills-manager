@@ -4023,15 +4023,12 @@ body {
 
 .historyRunRow {
   display: grid;
-  grid-template-columns: minmax(72px, 0.22fr) minmax(0, 1fr) minmax(130px, 0.42fr);
-  gap: 10px;
-  align-items: center;
+  gap: 8px;
   min-height: 66px;
   border: 1px solid transparent;
   border-radius: 10px;
   background: transparent;
   color: #111827;
-  cursor: pointer;
   padding: 10px;
   text-align: left;
 }
@@ -4042,24 +4039,48 @@ body {
   background: #ffffff;
 }
 
-.historyRunRow span {
+.historyRunAccepted {
+  border-color: #b9dec9;
+  background: #f7fcf9;
+}
+
+.historyRunMain {
+  display: grid;
+  grid-template-columns: minmax(72px, 0.22fr) minmax(0, 1fr) minmax(130px, 0.42fr);
+  gap: 10px;
+  align-items: center;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  padding: 0;
+  text-align: left;
+}
+
+.historyRunRow span,
+.historyRunMain span {
   display: grid;
   gap: 3px;
   min-width: 0;
 }
 
 .historyRunRow strong,
-.historyRunRow b {
+.historyRunRow b,
+.historyRunMain strong,
+.historyRunMain b {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.historyRunRow strong {
+.historyRunRow strong,
+.historyRunMain strong {
   font-size: 20px;
 }
 
-.historyRunRow small {
+.historyRunRow small,
+.historyRunMain small {
   overflow: hidden;
   color: #667085;
   font-size: 11px;
@@ -4068,9 +4089,34 @@ body {
   white-space: nowrap;
 }
 
+.historyRunCompareActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.historyRunCompareActions button {
+  min-height: 26px;
+  border: 1px solid #d6dde8;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #475569;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 900;
+  padding: 0 9px;
+}
+
+.historyRunCompareActions .historyCompareActive {
+  border-color: #111827;
+  background: #111827;
+  color: #ffffff;
+}
+
 .historyRunDetail {
   display: grid;
-  grid-template-rows: auto auto minmax(0, 1fr);
+  grid-template-rows: auto auto auto minmax(0, 1fr);
   min-width: 0;
   min-height: 0;
 }
@@ -4171,6 +4217,206 @@ body {
   cursor: pointer;
   font-weight: 900;
   padding: 0 12px;
+}
+
+.runComparePanel {
+  display: grid;
+  gap: 10px;
+  border-bottom: 1px solid #e6ebf2;
+  background:
+    linear-gradient(135deg, rgba(10, 122, 85, 0.08), rgba(14, 71, 117, 0.04) 54%, transparent),
+    #ffffff;
+  padding: 12px;
+}
+
+.runCompareEmpty {
+  display: grid;
+  gap: 4px;
+  min-height: 82px;
+  place-content: center;
+  color: #667085;
+  text-align: center;
+}
+
+.runCompareEmpty strong,
+.runCompareHead strong,
+.runCompareAcceptBar strong,
+.runCompareCase strong {
+  color: #111827;
+}
+
+.runCompareHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.runCompareHead span,
+.runCompareScoreBox span,
+.runCompareCase span,
+.runCompareAcceptBar span {
+  color: #7b8493;
+  font-size: 11px;
+  font-weight: 950;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.runCompareHead strong {
+  display: block;
+  margin-top: 4px;
+  font-size: 20px;
+}
+
+.runCompareScoreGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.runCompareScoreBox {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  border: 1px solid #dfe7f0;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.82);
+  padding: 10px;
+}
+
+.runCompareScoreBox strong {
+  color: #111827;
+  font-size: 24px;
+  line-height: 1;
+}
+
+.runCompareScoreBox small {
+  overflow: hidden;
+  color: #667085;
+  font-size: 11px;
+  font-weight: 850;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.runCompareImpactChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.runCompareImpact {
+  border-radius: 999px;
+  background: #eef2f7;
+  color: #475569;
+  font-size: 11px;
+  font-weight: 900;
+  padding: 6px 8px;
+}
+
+.runCompareImpact-fixed,
+.runCompareImpact-stable_pass {
+  background: #e7f6ef;
+  color: #0a7a55;
+}
+
+.runCompareImpact-regressed,
+.runCompareImpact-stable_fail {
+  background: #fff0ed;
+  color: #b42318;
+}
+
+.runCompareCases {
+  display: grid;
+  gap: 6px;
+  max-height: 190px;
+  overflow: auto;
+}
+
+.runCompareCase {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  border: 1px solid #e1e7ef;
+  border-radius: 10px;
+  background: #ffffff;
+  padding: 9px;
+}
+
+.runCompareCase-fixed {
+  border-color: #b7dec8;
+}
+
+.runCompareCase-regressed {
+  border-color: #f0b8ad;
+}
+
+.runCompareCase strong {
+  display: block;
+  overflow: hidden;
+  margin-top: 3px;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.runCompareCaseResult {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(58px, auto));
+  gap: 6px;
+}
+
+.runCompareCaseResult b {
+  border-radius: 999px;
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 11px;
+  padding: 5px 7px;
+  text-align: center;
+}
+
+.runCompareAcceptBar {
+  display: grid;
+  grid-template-columns: minmax(180px, 0.38fr) minmax(180px, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.runCompareAcceptBar div {
+  display: grid;
+  gap: 3px;
+}
+
+.runCompareAcceptBar input {
+  min-height: 36px;
+  min-width: 0;
+  border: 1px solid #dce2ea;
+  border-radius: 9px;
+  background: #ffffff;
+  color: #111827;
+  padding: 0 10px;
+}
+
+.runCompareAcceptBar button {
+  min-height: 36px;
+  border: 1px solid #111827;
+  border-radius: 8px;
+  background: #111827;
+  color: #ffffff;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 950;
+  padding: 0 12px;
+  white-space: nowrap;
+}
+
+.runCompareAcceptBar button:disabled {
+  border-color: #d6dde8;
+  background: #eef2f7;
+  color: #98a2b3;
+  cursor: not-allowed;
 }
 
 .caseHistoryPanel {
@@ -4975,6 +5221,9 @@ body {
   .historyFilters,
   .historyGrid,
   .historyBindingGrid,
+  .historyRunMain,
+  .runCompareScoreGrid,
+  .runCompareAcceptBar,
   .evalReviewGrid,
   .caseIOGrid,
   .inspectorStack {

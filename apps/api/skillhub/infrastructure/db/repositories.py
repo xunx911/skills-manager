@@ -10,6 +10,7 @@ from sqlalchemy import Engine, desc, insert, select, update
 from sqlalchemy.exc import IntegrityError
 
 from skillhub.application.promotion_review import build_promotion_case_comparisons, build_promotion_readiness
+from skillhub.application.run_comparison import build_run_case_comparisons, build_run_comparison_summary
 from skillhub.domain.errors import InvariantError, NotFoundError
 from skillhub.domain.models import ContentRef, digest_text, new_id, normalize_tags, utc_now
 from skillhub.infrastructure.db import tables
@@ -895,6 +896,7 @@ class SqlSkillRepository:
                         "variant_version": self._row_dict(variant_version),
                         "eval_set": self._row_dict(eval_set),
                         "eval_set_version": self._row_dict(eval_set_version),
+                        "accepted_verification": self._accepted_verification_for_eval_run(connection, run["id"]),
                     }
                 )
 
@@ -902,6 +904,119 @@ class SqlSkillRepository:
             "skill": self._row_dict(skill),
             "runs": runs,
         }
+
+    def compare_eval_runs(self, *, baseline_run_id: str, candidate_run_id: str) -> dict[str, Any]:
+        with self.engine.connect() as connection:
+            baseline_run = self._eval_run_row(connection, baseline_run_id)
+            candidate_run = self._eval_run_row(connection, candidate_run_id)
+            if baseline_run["skill_id"] != candidate_run["skill_id"]:
+                raise InvariantError("Run comparison requires runs from the same skill.")
+            if baseline_run["eval_set_version_id"] != candidate_run["eval_set_version_id"]:
+                raise InvariantError("Run comparison requires the same EvalSetVersion.")
+            if baseline_run["status"] != "finished" or candidate_run["status"] != "finished":
+                raise InvariantError("Run comparison requires finished runs.")
+
+            skill = self._skill_row(connection, baseline_run["skill_id"])
+            eval_set_version = self._eval_set_version_row(connection, baseline_run["eval_set_version_id"])
+            eval_set = (
+                connection.execute(select(tables.eval_sets).where(tables.eval_sets.c.id == eval_set_version["eval_set_id"]))
+                .mappings()
+                .one()
+            )
+            baseline_version = self._variant_version_row(connection, baseline_run["variant_version_id"])
+            candidate_version = self._variant_version_row(connection, candidate_run["variant_version_id"])
+            baseline_variant = self._variant_row(connection, baseline_version["variant_id"])
+            candidate_variant = self._variant_row(connection, candidate_version["variant_id"])
+            baseline_results = self._case_results_by_case_version(connection, baseline_run["id"])
+            candidate_results = self._case_results_by_case_version(connection, candidate_run["id"])
+            case_comparisons, comparison_summary = build_run_case_comparisons(
+                eval_set_cases=self._eval_set_cases(connection, eval_set_version["id"]),
+                baseline_results=baseline_results,
+                candidate_results=candidate_results,
+            )
+
+            return {
+                "skill": self._row_dict(skill),
+                "eval_set": self._row_dict(eval_set),
+                "eval_set_version": self._row_dict(eval_set_version),
+                "baseline": {
+                    "eval_run": self._row_dict(baseline_run),
+                    "variant": {**self._row_dict(baseline_variant), "tags": self._tags_for_tag_set(connection, baseline_variant["tag_set_id"])},
+                    "variant_version": self._row_dict(baseline_version),
+                },
+                "candidate": {
+                    "eval_run": self._row_dict(candidate_run),
+                    "variant": {**self._row_dict(candidate_variant), "tags": self._tags_for_tag_set(connection, candidate_variant["tag_set_id"])},
+                    "variant_version": self._row_dict(candidate_version),
+                },
+                "summary": build_run_comparison_summary(
+                    baseline_summary=baseline_run["summary"],
+                    candidate_summary=candidate_run["summary"],
+                    comparison_summary=comparison_summary,
+                ),
+                "case_comparisons": case_comparisons,
+                "candidate_accepted_verification": self._accepted_verification_for_eval_run(connection, candidate_run["id"]),
+            }
+
+    def accept_eval_run_verification(self, *, eval_run_id: str, note: str, actor: str) -> dict[str, Any]:
+        accepted_at = utc_now()
+        with self.engine.begin() as connection:
+            eval_run = self._eval_run_row(connection, eval_run_id)
+            if eval_run["status"] != "finished":
+                raise InvariantError("Accepted verification requires a finished eval run.")
+            variant_version = self._variant_version_row(connection, eval_run["variant_version_id"])
+            variant = self._variant_row(connection, variant_version["variant_id"])
+            eval_set_version = self._eval_set_version_row(connection, eval_run["eval_set_version_id"])
+            if variant["skill_id"] != eval_run["skill_id"] or eval_set_version["skill_id"] != eval_run["skill_id"]:
+                raise InvariantError("Accepted verification requires same-skill records.")
+
+            clean_note = note.strip()
+            existing = self._accepted_verification_for_variant_eval_set(
+                connection,
+                variant_id=variant["id"],
+                eval_set_version_id=eval_set_version["id"],
+            )
+            values = {
+                "skill_id": eval_run["skill_id"],
+                "variant_id": variant["id"],
+                "variant_version_id": variant_version["id"],
+                "eval_set_version_id": eval_set_version["id"],
+                "eval_run_id": eval_run["id"],
+                "note": clean_note,
+                "created_at": accepted_at,
+                "created_by": actor,
+            }
+            if existing is None:
+                accepted_id = new_id("accepted")
+                connection.execute(insert(tables.accepted_verifications).values(id=accepted_id, **values))
+            else:
+                accepted_id = existing["id"]
+                connection.execute(
+                    update(tables.accepted_verifications)
+                    .where(tables.accepted_verifications.c.id == accepted_id)
+                    .values(**values)
+                )
+
+            connection.execute(
+                insert(tables.audit_events).values(
+                    id=new_id("audit"),
+                    actor_ref=actor,
+                    action="eval_run.accepted_verification_set",
+                    resource_type="eval_run",
+                    resource_id=eval_run["id"],
+                    payload={
+                        "accepted_verification_id": accepted_id,
+                        "eval_run_id": eval_run["id"],
+                        "variant_id": variant["id"],
+                        "variant_version_id": variant_version["id"],
+                        "eval_set_version_id": eval_set_version["id"],
+                    },
+                    created_at=accepted_at,
+                )
+            )
+            accepted = self._accepted_verification_row(connection, accepted_id)
+
+        return self._row_dict(accepted)
 
     def eval_case_history(self, case_id: str) -> dict[str, Any]:
         with self.engine.connect() as connection:
@@ -1258,6 +1373,44 @@ class SqlSkillRepository:
             raise NotFoundError(f"EvalRun not found: {eval_run_id}")
         return row
 
+    def _accepted_verification_row(self, connection, accepted_verification_id: str):
+        row = (
+            connection.execute(
+                select(tables.accepted_verifications).where(tables.accepted_verifications.c.id == accepted_verification_id)
+            )
+            .mappings()
+            .one_or_none()
+        )
+        if row is None:
+            raise NotFoundError(f"AcceptedVerification not found: {accepted_verification_id}")
+        return row
+
+    def _accepted_verification_for_eval_run(self, connection, eval_run_id: str) -> dict[str, Any] | None:
+        row = (
+            connection.execute(select(tables.accepted_verifications).where(tables.accepted_verifications.c.eval_run_id == eval_run_id))
+            .mappings()
+            .one_or_none()
+        )
+        return self._row_dict(row) if row is not None else None
+
+    def _accepted_verification_for_variant_eval_set(
+        self,
+        connection,
+        *,
+        variant_id: str,
+        eval_set_version_id: str,
+    ) -> dict[str, Any] | None:
+        row = (
+            connection.execute(
+                select(tables.accepted_verifications)
+                .where(tables.accepted_verifications.c.variant_id == variant_id)
+                .where(tables.accepted_verifications.c.eval_set_version_id == eval_set_version_id)
+            )
+            .mappings()
+            .one_or_none()
+        )
+        return self._row_dict(row) if row is not None else None
+
     def _next_variant_version_number(self, connection, variant_id: str) -> int:
         version_numbers = connection.execute(
             select(tables.variant_versions.c.version_number).where(tables.variant_versions.c.variant_id == variant_id)
@@ -1403,18 +1556,29 @@ class SqlSkillRepository:
             current_eval_set_version = primary_eval_set["current_version"]
 
         if current_version is not None and current_eval_set_version is not None:
-            latest_row = (
-                connection.execute(
-                    select(tables.eval_runs)
-                    .where(tables.eval_runs.c.variant_version_id == current_version["id"])
-                    .where(tables.eval_runs.c.eval_set_version_id == current_eval_set_version["id"])
-                    .where(tables.eval_runs.c.status == "finished")
-                    .order_by(desc(tables.eval_runs.c.created_at))
-                    .limit(1)
-                )
-                .mappings()
-                .one_or_none()
+            accepted = self._accepted_verification_for_variant_eval_set(
+                connection,
+                variant_id=default_variant["id"],
+                eval_set_version_id=current_eval_set_version["id"],
             )
+            latest_row = None
+            if accepted is not None:
+                accepted_run = self._eval_run_row(connection, accepted["eval_run_id"])
+                if accepted_run["variant_version_id"] == current_version["id"] and accepted_run["status"] == "finished":
+                    latest_row = accepted_run
+            if latest_row is None:
+                latest_row = (
+                    connection.execute(
+                        select(tables.eval_runs)
+                        .where(tables.eval_runs.c.variant_version_id == current_version["id"])
+                        .where(tables.eval_runs.c.eval_set_version_id == current_eval_set_version["id"])
+                        .where(tables.eval_runs.c.status == "finished")
+                        .order_by(desc(tables.eval_runs.c.created_at))
+                        .limit(1)
+                    )
+                    .mappings()
+                    .one_or_none()
+                )
             latest_eval_run = self._row_dict(latest_row) if latest_row is not None else None
 
         return {

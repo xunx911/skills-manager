@@ -27,6 +27,7 @@ def downgrade() -> None:
         drop table if exists audit_events cascade;
         drop table if exists role_assignments cascade;
         drop table if exists jobs cascade;
+        drop table if exists accepted_verifications cascade;
         drop table if exists promotion_decisions cascade;
         drop table if exists case_results cascade;
         drop table if exists eval_runs cascade;

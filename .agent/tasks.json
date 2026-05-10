@@ -19,5 +19,12 @@
     "priority": 3,
     "passes": true,
     "spec": ".agent/tasks/TASK-003.json"
+  },
+  {
+    "id": "004",
+    "title": "实现 run-to-run comparison 和 accepted verification",
+    "priority": 4,
+    "passes": true,
+    "spec": ".agent/tasks/TASK-004.json"
   }
 ]

@@ -12,6 +12,7 @@
 - `EvalSetVersion` 是测评集快照，必须引用具体的 `EvalCaseVersion`。
 - `EvalRun` 必须绑定 `VariantVersion + EvalSetVersion`。
 - `CaseResult` 是某个 case 在某次 run 中的最终 `pass/fail`。
+- `AcceptedVerification` 是验证指针，只指向一次不可变 `EvalRun`，用于说明当前 variant 在某个 eval set snapshot 上认可哪次测评。
 
 ## 对象字段
 
@@ -133,6 +134,22 @@ MVP 约束：
 | `CaseResult` | `passed` | boolean | MVP 最终结论。 |
 | `CaseResult` | `score` | number | MVP 中 `pass=1`、`fail=0`，后续可扩展但不改变 pass/fail 主线。 |
 
+### AcceptedVerification
+
+`AcceptedVerification` 不是新的测评结果，也不复制 case result。它只把 `(variant_id, eval_set_version_id)` 指向一个已经完成的 `EvalRun`，并写入 audit event。替换验证依据时更新同一指针，不改变旧 run。
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `id` | string | 内部唯一 ID。 |
+| `skill_id` | string | 所属 `Skill.id`。 |
+| `variant_id` | string | 被验证的 variant。 |
+| `variant_version_id` | string | 被接受 run 绑定的 variant version。 |
+| `eval_set_version_id` | string | 被验证的 eval set snapshot。 |
+| `eval_run_id` | string | 被接受的 finished run。 |
+| `note` | string | 可选人工说明。 |
+| `created_at` | ISO datetime | 接受时间。 |
+| `created_by` | string | 操作者。 |
+
 ## CRUD 策略
 
 不是所有对象都应该完整 CRUD。
@@ -171,6 +188,7 @@ MVP 约束：
 | `EvalSetVersion` | 由 `POST /api/eval-cases` 自动创建 | `GET /api/eval-set` | 不允许原地更新 | 不允许硬删 | 已覆盖快照 |
 | `EvalRun` | `POST /api/eval-runs`、`POST /api/eval-result-imports` | `GET /api/eval-result`、`GET /api/variant-page` | finished 后不改事实 | 不允许硬删 | 已覆盖手工记录和外部导入 |
 | `CaseResult` | 随 `POST /api/eval-runs` 或 `POST /api/eval-result-imports` 创建 | `GET /api/eval-result` | 不允许原地更新 | 不允许硬删 | 已覆盖 pass/fail |
+| `AcceptedVerification` | `POST /api/eval-runs/accepted-verifications` | `GET /api/skills/{skill_id}/eval-runs`、`GET /api/eval-runs/compare` | 替换同一 `(variant, eval set version)` 指针 | 不硬删 | 已覆盖验证依据 |
 
 刻意不做完整 CRUD 的对象：
 

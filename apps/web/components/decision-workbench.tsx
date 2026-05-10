@@ -7,12 +7,14 @@ import { passRate } from "@/lib/api";
 import { emptySkillDetail } from "@/lib/empty-state";
 import { percent, shortId } from "@/lib/format";
 import { PromotionReviewPane } from "@/components/promotion-review/promotion-review-pane";
+import { RunComparisonPanel } from "@/components/run-comparison/run-comparison-panel";
 import type {
   BundleDiff,
   BundleDiffFile,
   BundleDiffStatus,
   BundleFile,
   EvalCaseHistory,
+  EvalRunComparison,
   EvalRunRecord,
   EvalRunDetail,
   EvalRunHistory,
@@ -91,6 +93,10 @@ export function DecisionWorkbench({ skills: initialSkills, featuredSkill }: Deci
   const [runHistoryLoading, setRunHistoryLoading] = useState(false);
   const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
   const [selectedRunDetail, setSelectedRunDetail] = useState<EvalRunDetail | null>(null);
+  const [compareBaselineRunId, setCompareBaselineRunId] = useState<string | null>(null);
+  const [compareCandidateRunId, setCompareCandidateRunId] = useState<string | null>(null);
+  const [runComparison, setRunComparison] = useState<EvalRunComparison | null>(null);
+  const [runComparisonLoading, setRunComparisonLoading] = useState(false);
   const [runFilters, setRunFilters] = useState<RunFilters>({
     variant_version_id: "all",
     eval_set_version_id: "all",
@@ -157,6 +163,10 @@ export function DecisionWorkbench({ skills: initialSkills, featuredSkill }: Deci
     setRunHistory(null);
     setSelectedRunId(null);
     setSelectedRunDetail(null);
+    setCompareBaselineRunId(null);
+    setCompareCandidateRunId(null);
+    setRunComparison(null);
+    setRunComparisonLoading(false);
     setCaseHistory(null);
     setCaseHistoryCaseId(null);
     setEvalTargetVersionId(null);
@@ -208,6 +218,26 @@ export function DecisionWorkbench({ skills: initialSkills, featuredSkill }: Deci
     void loadSelectedRunDetail(selectedRunId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode, selectedRunId]);
+
+  useEffect(() => {
+    if (mode !== "history" || !compareBaselineRunId || !compareCandidateRunId) {
+      setRunComparison(null);
+      return;
+    }
+    if (compareBaselineRunId === compareCandidateRunId) {
+      setRunComparison(null);
+      return;
+    }
+    void loadRunComparison(compareBaselineRunId, compareCandidateRunId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode, compareBaselineRunId, compareCandidateRunId]);
+
+  useEffect(() => {
+    if (!runHistory) return;
+    const visibleRunIds = new Set(runHistory.runs.map((row) => row.eval_run.id));
+    if (compareBaselineRunId && !visibleRunIds.has(compareBaselineRunId)) setCompareBaselineRunId(null);
+    if (compareCandidateRunId && !visibleRunIds.has(compareCandidateRunId)) setCompareCandidateRunId(null);
+  }, [compareBaselineRunId, compareCandidateRunId, runHistory]);
 
   function chooseAction(nextActionMode: ActionMode) {
     setActionMode(nextActionMode);
@@ -299,6 +329,50 @@ export function DecisionWorkbench({ skills: initialSkills, featuredSkill }: Deci
       setSelectedRunDetail(null);
       setNotice({ tone: "bad", message: error instanceof Error ? error.message : "加载 run 详情失败" });
     }
+  }
+
+  async function loadRunComparison(baselineRunId: string, candidateRunId: string) {
+    setRunComparisonLoading(true);
+    setNotice(null);
+    try {
+      const params = new URLSearchParams({
+        baseline_run_id: baselineRunId,
+        candidate_run_id: candidateRunId,
+      });
+      setRunComparison(await apiGet<EvalRunComparison>(`/api/eval-runs/compare?${params.toString()}`));
+    } catch (error) {
+      setRunComparison(null);
+      setNotice({ tone: "bad", message: error instanceof Error ? error.message : "比较 run 失败：请选择同一个 EvalSetVersion 下的两次 run" });
+    } finally {
+      setRunComparisonLoading(false);
+    }
+  }
+
+  function chooseComparisonRun(role: "baseline" | "candidate", runId: string) {
+    if (role === "baseline") {
+      setCompareBaselineRunId(runId);
+      if (compareCandidateRunId === runId) setCompareCandidateRunId(null);
+      return;
+    }
+    setCompareCandidateRunId(runId);
+    if (compareBaselineRunId === runId) setCompareBaselineRunId(null);
+  }
+
+  async function acceptComparisonCandidate(note: string) {
+    if (!runComparison) return;
+    await runCommand("候选 run 已接受为验证依据。", async () => {
+      await apiSend<{ ok: boolean }>("/api/eval-runs/accepted-verifications", {
+        method: "POST",
+        body: {
+          eval_run_id: runComparison.candidate.eval_run.id,
+          note,
+          actor: ACTOR,
+        },
+      });
+      await loadRunHistory(selectedDetail.skill.id, runFilters);
+      await loadRunComparison(runComparison.baseline.eval_run.id, runComparison.candidate.eval_run.id);
+      return "候选 run 已接受为验证依据。";
+    });
   }
 
   async function loadCaseHistory(caseId: string) {
@@ -807,12 +881,19 @@ export function DecisionWorkbench({ skills: initialSkills, featuredSkill }: Deci
 
         {mode === "history" ? (
           <HistoryPane
+            busy={busy}
+            compareBaselineRunId={compareBaselineRunId}
+            compareCandidateRunId={compareCandidateRunId}
             evalSets={selectedDetail.eval_sets}
             filters={runFilters}
             loading={runHistoryLoading}
+            onAcceptComparison={acceptComparisonCandidate}
             onAction={chooseAction}
+            onChooseComparisonRun={chooseComparisonRun}
             onFilterChange={(key, value) => setRunFilters((current) => ({ ...current, [key]: value }))}
             onSelectRun={setSelectedRunId}
+            runComparison={runComparison}
+            runComparisonLoading={runComparisonLoading}
             runDetail={selectedRunDetail}
             runHistory={runHistory}
             selectedRunId={selectedRunId}
@@ -1254,23 +1335,37 @@ function DiffPane({
 }
 
 function HistoryPane({
+  busy,
+  compareBaselineRunId,
+  compareCandidateRunId,
   evalSets,
   filters,
   loading,
+  onAcceptComparison,
   onAction,
+  onChooseComparisonRun,
   onFilterChange,
   onSelectRun,
+  runComparison,
+  runComparisonLoading,
   runDetail,
   runHistory,
   selectedRunId,
   variants,
 }: {
+  busy: boolean;
+  compareBaselineRunId: string | null;
+  compareCandidateRunId: string | null;
   evalSets: SkillDetail["eval_sets"];
   filters: RunFilters;
   loading: boolean;
+  onAcceptComparison: (note: string) => void;
   onAction: (mode: ActionMode) => void;
+  onChooseComparisonRun: (role: "baseline" | "candidate", runId: string) => void;
   onFilterChange: (key: keyof RunFilters, value: string) => void;
   onSelectRun: (runId: string) => void;
+  runComparison: EvalRunComparison | null;
+  runComparisonLoading: boolean;
   runDetail: EvalRunDetail | null;
   runHistory: EvalRunHistory | null;
   selectedRunId: string | null;
@@ -1355,26 +1450,37 @@ function HistoryPane({
         <section className="historyRunList" aria-label="Eval run history">
           {rows.map((row) => {
             const isSelected = row.eval_run.id === selectedRunId;
+            const isBaseline = row.eval_run.id === compareBaselineRunId;
+            const isCandidate = row.eval_run.id === compareCandidateRunId;
             return (
-              <button
-                className={`historyRunRow ${isSelected ? "historyRunRowActive" : ""}`}
+              <article
+                className={`historyRunRow ${isSelected ? "historyRunRowActive" : ""} ${row.accepted_verification ? "historyRunAccepted" : ""}`}
                 key={row.eval_run.id}
-                onClick={() => onSelectRun(row.eval_run.id)}
-                type="button"
               >
-                <span>
-                  <strong>{runFraction(row.eval_run)}</strong>
-                  <small>{percent(passRate(row.eval_run))}</small>
-                </span>
-                <span>
-                  <b>{row.variant.label} v{row.variant_version.version_number}</b>
-                  <small>{row.eval_set.name} v{row.eval_set_version.version_number}</small>
-                </span>
-                <span>
-                  <b>{row.eval_run.strategy}</b>
-                  <small>{row.eval_run.status} · {formatDate(row.eval_run.created_at)}</small>
-                </span>
-              </button>
+                <button className="historyRunMain" onClick={() => onSelectRun(row.eval_run.id)} type="button">
+                  <span>
+                    <strong>{runFraction(row.eval_run)}</strong>
+                    <small>{percent(passRate(row.eval_run))}</small>
+                  </span>
+                  <span>
+                    <b>{row.variant.label} v{row.variant_version.version_number}</b>
+                    <small>{row.eval_set.name} v{row.eval_set_version.version_number}</small>
+                  </span>
+                  <span>
+                    <b>{row.eval_run.strategy}</b>
+                    <small>{row.eval_run.status} · {formatDate(row.eval_run.created_at)}</small>
+                  </span>
+                </button>
+                <div className="historyRunCompareActions">
+                  {row.accepted_verification ? <Badge tone="good">Accepted</Badge> : null}
+                  <button className={isBaseline ? "historyCompareActive" : ""} onClick={() => onChooseComparisonRun("baseline", row.eval_run.id)} type="button">
+                    对照
+                  </button>
+                  <button className={isCandidate ? "historyCompareActive" : ""} onClick={() => onChooseComparisonRun("candidate", row.eval_run.id)} type="button">
+                    候选
+                  </button>
+                </div>
+              </article>
             );
           })}
           {!loading && rows.length === 0 ? (
@@ -1387,6 +1493,12 @@ function HistoryPane({
         </section>
 
         <section className="historyRunDetail">
+          <RunComparisonPanel
+            busy={busy}
+            comparison={runComparison}
+            loading={runComparisonLoading}
+            onAccept={onAcceptComparison}
+          />
           {selectedRow ? (
             <>
               <div className="historyDetailHead">

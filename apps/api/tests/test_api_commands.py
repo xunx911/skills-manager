@@ -424,6 +424,104 @@ class ApiCommandTest(unittest.TestCase):
         promoted = self.client.get(f"/api/skills/{imported['skill_id']}").json()
         self.assertEqual(promoted["summary"]["default_variant"]["current_version"]["id"], candidate["variant_version_id"])
 
+    def test_eval_run_compare_endpoint_returns_case_impact(self):
+        skill = self.create_skill("run-compare-api")
+        case = self.client.post(
+            "/api/eval-cases",
+            json={
+                "skill_id": skill["skill_id"],
+                "title": "PR: missing tenant scope",
+                "input_text": "Project.all()",
+                "expected_output": "Flag missing tenant scope.",
+                "actor": "tester",
+            },
+        ).json()
+        candidate = self.client.post(
+            "/api/variant-versions",
+            json={
+                "variant_id": skill["variant_id"],
+                "content_ref": {"kind": "skill_bundle", "locator": "memory:v2", "digest": "digest-v2"},
+                "change_summary": "Add tenant guidance.",
+                "make_current": False,
+                "actor": "tester",
+            },
+        ).json()
+        baseline_run = self.client.post(
+            "/api/eval-runs",
+            json={
+                "variant_version_id": skill["variant_version_id"],
+                "eval_set_version_id": case["eval_set_version_id"],
+                "strategy": "manual_pass_fail",
+                "results": {case["eval_case_version_id"]: False},
+                "actor": "tester",
+            },
+        ).json()
+        candidate_run = self.client.post(
+            "/api/eval-runs",
+            json={
+                "variant_version_id": candidate["variant_version_id"],
+                "eval_set_version_id": case["eval_set_version_id"],
+                "strategy": "manual_pass_fail",
+                "results": {case["eval_case_version_id"]: True},
+                "actor": "tester",
+            },
+        ).json()
+
+        response = self.client.get(
+            "/api/eval-runs/compare",
+            params={
+                "baseline_run_id": baseline_run["eval_run_id"],
+                "candidate_run_id": candidate_run["eval_run_id"],
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload["summary"]["baseline_pass_rate"], 0)
+        self.assertEqual(payload["summary"]["candidate_pass_rate"], 100)
+        self.assertEqual(payload["summary"]["delta"], 100)
+        self.assertEqual(payload["summary"]["fixed"], 1)
+        self.assertEqual(payload["case_comparisons"][0]["change_label"], "修复")
+        self.assertIsNone(payload["candidate_accepted_verification"])
+
+    def test_accept_eval_run_verification_command_marks_history(self):
+        skill = self.create_skill("accepted-api")
+        case = self.client.post(
+            "/api/eval-cases",
+            json={
+                "skill_id": skill["skill_id"],
+                "title": "PR: owner scope",
+                "input_text": "Project.all()",
+                "expected_output": "Flag owner scope.",
+                "actor": "tester",
+            },
+        ).json()
+        run = self.client.post(
+            "/api/eval-runs",
+            json={
+                "variant_version_id": skill["variant_version_id"],
+                "eval_set_version_id": case["eval_set_version_id"],
+                "strategy": "manual_pass_fail",
+                "results": {case["eval_case_version_id"]: True},
+                "actor": "tester",
+            },
+        ).json()
+
+        response = self.client.post(
+            "/api/eval-runs/accepted-verifications",
+            json={
+                "eval_run_id": run["eval_run_id"],
+                "note": "Accepted for Primary v2.",
+                "actor": "tester",
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json()["ok"])
+        self.assertEqual(response.json()["accepted_verification"]["eval_run_id"], run["eval_run_id"])
+        history = self.client.get(f"/api/skills/{skill['skill_id']}/eval-runs").json()
+        self.assertEqual(history["runs"][0]["accepted_verification"]["eval_run_id"], run["eval_run_id"])
+
     def test_missing_variant_returns_404(self):
         response = self.client.post(
             "/api/variant-versions",

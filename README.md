@@ -9,10 +9,11 @@
 - `VariantVersion` 是不可变内容快照，可以是标准 Skill 文件夹或 zip 导入后的 `skill_bundle` artifact。
 - `EvalSetVersion` 是测试用例版本快照。
 - `EvalRun` 记录一次 exact `VariantVersion + EvalSetVersion` 的通过/不通过结果。
+- `AcceptedVerification` 是当前 variant 在某个 eval set snapshot 上认可的测评依据，只指向不可变 `EvalRun`。
 - 候选 `VariantVersion` 可以先测评，但不立刻成为 current。
 - “设为当前版本评审”会把候选版本、当前版本、目标评测集版本、逐 case 修复/回退、文件 diff 和风险说明放到同一个决策页面。
 - 外部 runner 可以导入标准 eval result JSON，并得到同样的 `EvalRun + CaseResult` 记录。
-- 工作台内可以查看 bundle 文件内容、版本 diff、run 历史、case 版本历史和 promotion review。
+- 工作台内可以查看 bundle 文件内容、版本 diff、run 历史、run-to-run 比较、accepted verification、case 版本历史和 promotion review。
 
 ## 快速开始
 
@@ -83,7 +84,7 @@ description: Review pull requests for auth and data access regressions.
 5. 在评审页查看 readiness、逐 case 修复/回退、bundle diff；如果有风险，需要填写说明后才能 `接受风险并设为当前版本`。
 6. 提交后，variant 历史列表会刷新，候选版本显示为 `Current`。
 
-记录多次手工测评后，打开 `历史` 可按 exact variant version、eval set version、strategy、status 过滤 run。在 `测评` 中，每个 case 行都有 `历史`，可以查看旧 case version 的 input、expected output、notes，以及它进入过哪些 eval set snapshot。
+记录多次手工测评后，打开 `历史` 可按 exact variant version、eval set version、strategy、status 过滤 run。每条 run 都可以标为 `对照` 或 `候选`；当两条 run 绑定同一个 `EvalSetVersion` 时，右侧会显示通过率变化、逐 case `修复/回退/稳定通过/仍未通过`，并可把候选 run `接受为验证依据`。在 `测评` 中，每个 case 行都有 `历史`，可以查看旧 case version 的 input、expected output、notes，以及它进入过哪些 eval set snapshot。
 
 ### 验证命令
 
@@ -163,7 +164,7 @@ python -m skillhub_demo.external_runner \
 
 项目已安装 Ralph Loop 配置，任务定义在 `.agent/tasks.json` 和 `.agent/tasks/`。
 
-当前 promotion review 的后端契约和前端评审体验已经接入；后续 Ralph 任务应继续围绕产品打磨、文档审计和回归覆盖推进。
+当前 promotion review、run-to-run comparison 和 accepted verification 的后端契约与前端体验已经接入；后续 Ralph 任务应继续围绕产品打磨、文档审计和回归覆盖推进。
 
 运行前需要 Docker Sandboxes 登录：
 
