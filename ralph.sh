@@ -213,6 +213,24 @@ $(cat $SCRIPT_DIR/.agent/PROMPT.md)"
     exit $EXIT_DOCKER_ERROR
   fi
 
+  # Check for Docker Sandboxes authentication errors before agent-level auth
+  # matching. Some sbx errors contain "not authenticated", which would otherwise
+  # be misreported as a Codex/Claude login problem.
+  if echo "$OUTPUT" | grep -Eiq "Not authenticated to Docker|Sign in with: sbx login|auth login failed"; then
+    stop_spinner
+    clear_rolling_preview
+    echo ""
+    echo -e "${RD}░░▒▒▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▒▒░░${R}"
+    echo -e "  ❌ ${RD}Docker Authentication Error${R}"
+    echo -e "  Docker Sandboxes is not authenticated."
+    echo -e ""
+    echo -e "  Run ${C}sbx login${R}, then start Ralph again:"
+    echo -e "  ${C}./ralph.sh --agent $RALPH_AGENT${R}"
+    echo -e "${RD}░░▒▒▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▒▒░░${R}"
+    rm -f "$OUTPUT_FILE" "$FULL_OUTPUT_FILE"
+    exit $EXIT_AUTH_ERROR
+  fi
+
   # Check for invalid API key / authentication error
   AUTH_ERROR_PATTERN=$(agent_auth_error_patterns "$RALPH_AGENT")
   if [ -n "$AUTH_ERROR_PATTERN" ] && echo "$OUTPUT" | grep -Eiq "$AUTH_ERROR_PATTERN"; then
