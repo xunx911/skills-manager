@@ -22,5 +22,6 @@ apps/web/test-results/
 
 .data/
 .uv-cache/
+.tools/
 .DS_Store
 .superpowers/

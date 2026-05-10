@@ -1,0 +1,29 @@
+{
+  "id": "001",
+  "title": "实现设为当前版本评审后端契约",
+  "priority": 1,
+  "area": "backend",
+  "spec": "docs/superpowers/specs/2026-05-09-promotion-decision-surface-design.md",
+  "goal": "实现 promotion review read model、promotion command、promotion_decisions 持久化和审计记录。",
+  "requirements": [
+    "新增 GET /api/variants/{variant_id}/promotion-review，参数 candidate_version_id 和可选 eval_set_version_id。",
+    "read model 必须精确绑定当前 variant、current version、candidate version、目标 eval set version、candidate run、current run。",
+    "case_comparisons 以 EvalSetVersion 的 case version 列表为准，计算 fixed、regressed、stable_pass、stable_fail、missing_baseline、missing_candidate。",
+    "readiness 至少支持 ready、risky、unverified、blocked，并提供中文 label、reason、requires_note、risk_items、blocking_items、passing_items。",
+    "新增 POST /api/variants/promotions，校验证据 run 必须属于目标 candidate version 和 eval set version，且必须 finished。",
+    "如果存在回退或仍未通过，decision_note 不能为空，accept_risk 必须为 true。",
+    "命令成功后移动 Variant.current_version_id，写入 promotion_decisions 和 audit_events。",
+    "不要把业务逻辑塞进路由函数；保持 repository/service 分层。"
+  ],
+  "tests": [
+    "候选版本完整测评且无回退时 readiness 为 ready。",
+    "候选版本有回退时 readiness 为 risky 且 requires_note 为 true。",
+    "候选版本没有测评时 readiness 为 unverified。",
+    "证据 run 不属于候选版本时 promotion command 拒绝。",
+    "存在风险但缺少 decision_note 时 promotion command 拒绝。",
+    "promotion 成功后 current_version_id 指向候选版本，并生成 promotion_decisions 和 audit_events。"
+  ],
+  "verification": [
+    "cd apps/api && uv run pytest"
+  ]
+}

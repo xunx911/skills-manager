@@ -147,3 +147,35 @@ python -m skillhub_demo.external_runner \
 - [Bundle diff workbench design](docs/superpowers/specs/2026-05-08-bundle-diff-workbench-design.md)
 - [Roadmap](docs/roadmap.md)
 - [1.0 architecture review](docs/architecture-review-1.0.md)
+- [Ralph Loop 运行说明](RALPH.md)
+
+## Ralph Loop
+
+项目已安装 Ralph Loop 配置，任务定义在 `.agent/tasks.json` 和 `.agent/tasks/`。
+
+当前下一阶段任务是实现“设为当前版本评审”：后端契约、前端评审界面、文档和全量回归。
+
+运行前需要 Docker Sandboxes 登录：
+
+```bash
+sbx login
+```
+
+如果使用项目本地下载的 `sbx` 二进制：
+
+```bash
+PATH="$PWD/.tools/sbx/bin:$PATH" ./ralph.sh --agent codex
+```
+
+当前 Codex 沙箱里需要把 `sbx` 状态写到可写目录：
+
+```bash
+HOME=/private/tmp/skillhub-sbx-home PATH="$PWD/.tools/sbx/bin:$PATH" sbx login
+HOME=/private/tmp/skillhub-sbx-home PATH="$PWD/.tools/sbx/bin:$PATH" ./ralph.sh --agent codex
+```
+
+如果只想验证一轮：
+
+```bash
+PATH="$PWD/.tools/sbx/bin:$PATH" ./ralph.sh --agent codex --once
+```

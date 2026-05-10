@@ -1,7 +1,56 @@
-# 项目协作约定
+# Code Quality Standards
+
+Always apply these standards to all code you write.
+
+For Ralph's Docker Sandboxes naming conventions (per-agent + per-project, used at startup and during cleanup), see @RALPH.md.
 
 ## 文档语言
 
-- 后续新增或更新的产品规格、架构说明、实现计划、审计报告、README 说明，默认使用中文书写。
-- 引用英文资料时，用中文总结其结论、适配方式和取舍；除 API 名称、代码标识、命令、文件路径、产品专有名词外，不直接堆英文原文。
-- 面向用户的运行说明和验证说明要保持可执行、可核对，避免只写概念性描述。
+- 默认使用中文编写产品文档、规格文档、计划、审计记录、README 更新和用户可见说明。
+- 代码标识、API 字段、命令、错误码、第三方产品名保留英文。
+- 如果必须引用英文资料，先给中文结论，再附英文链接或原术语。
+
+## Reuse Before Creating
+
+Before writing new code, analyze existing utilities, components, hooks, helpers and tests:
+
+1. **Search first** — grep/glob for similar functionality before implementing
+2. **Extend if close** — if something exists that's 80% of what you need, extend it
+3. **Extract if duplicating** — if you're about to copy-paste, extract to shared module instead
+
+## File Size & Organization
+
+Keep files between **200-300 lines max**. If a file exceeds this:
+
+1. **Split by responsibility** — one module = one concern
+2. **Extract sub-components** — UI pieces that can stand alone should
+3. **Separate logic from presentation** — hooks/utils in their own files
+4. **Group by feature** — co-locate related files, not by type
+
+Signs a file needs splitting:
+- Multiple unrelated exports
+- Scrolling to find what you need
+- "Utils" file becoming a junk drawer
+- Component doing data fetching + transformation + rendering
+
+## Task Execution
+
+- **One task per invocation.** When working from `.agent/tasks.json`, complete exactly one task, commit, and stop. Never batch multiple tasks.
+
+## Code Style
+
+1. Prefer writing clear code and use inline comments sparingly
+2. Document methods with block comments at the top of the method
+3. Use Conventional Commit format
+
+## Test To Verify Functionality
+
+If you didn't test it, it doesn't work.
+
+Verify written code by:
+- Running unit tests
+- Running end to end tests
+- Checking for type errors
+- Checking for lint errors
+- Smoke testing and checking for runtime errors with Playwright
+- Taking screenshots and verifying the UI is as expected

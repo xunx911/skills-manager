@@ -1,0 +1,28 @@
+{
+  "id": "002",
+  "title": "实现设为当前版本评审前端体验",
+  "priority": 2,
+  "area": "frontend",
+  "spec": "docs/superpowers/specs/2026-05-09-promotion-decision-surface-design.md",
+  "goal": "在现有 SkillHub 工作台内加入证据驱动的设为当前版本评审界面。",
+  "requirements": [
+    "在 variant 历史版本列表和版本 diff 区域提供“设为当前版本评审”入口。",
+    "点击入口后加载 promotion review read model。",
+    "页面应展示顶部摘要、文件变更、逐 case 对比、右侧决策栏。",
+    "中文文案使用：设为当前版本、候选版本、当前版本、修复、回退、稳定通过、仍未通过、缺少对照、可设为当前版本、有风险、未验证。",
+    "有风险时点击主按钮必须弹出理由输入；未填理由不能提交。",
+    "无风险时允许直接设为当前版本。",
+    "提交成功后刷新 variant 当前版本和历史列表。",
+    "避免继续膨胀单个大组件；优先放在 apps/web/components/promotion-review/。"
+  ],
+  "tests": [
+    "补充必要的前端类型覆盖。",
+    "新增或更新 Playwright happy path：候选版本修复用例后可设为当前版本。",
+    "新增或更新 Playwright 风险路径：出现回退时必须填写理由。"
+  ],
+  "verification": [
+    "cd apps/web && npm run typecheck",
+    "cd apps/web && npm run build",
+    "cd apps/web && npm run e2e"
+  ]
+}

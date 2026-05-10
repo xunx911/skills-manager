@@ -1,0 +1,25 @@
+{
+  "id": "003",
+  "title": "补齐文档、审计和端到端回归",
+  "priority": 3,
+  "area": "docs-and-verification",
+  "spec": "docs/superpowers/specs/2026-05-09-promotion-decision-surface-design.md",
+  "goal": "把设为当前版本评审能力沉淀为中文文档，并执行全量回归。",
+  "requirements": [
+    "更新 README.md，说明如何运行、如何完成 skill/variant/eval/promotion 全流程。",
+    "更新 docs/api-contract.md，记录 promotion review 和 promotion command 契约。",
+    "更新 docs/product-ux-review.md，把 promotion decision 相关缺口调整为已实现或部分实现。",
+    "更新 docs/product-completion-audit-2026-05-08.md，说明当前闭环成熟度和剩余风险。",
+    "文档必须使用中文，英文只用于 API 字段、命令和专有名词。"
+  ],
+  "tests": [
+    "执行后端测试、前端类型检查、前端构建、前端 E2E。",
+    "若有 UI 变化，保存 Ralph 截图到 .agent/screenshots/。"
+  ],
+  "verification": [
+    "cd apps/api && uv run pytest",
+    "cd apps/web && npm run typecheck",
+    "cd apps/web && npm run build",
+    "cd apps/web && npm run e2e"
+  ]
+}

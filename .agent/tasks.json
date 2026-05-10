@@ -1,0 +1,23 @@
+[
+  {
+    "id": "001",
+    "title": "实现设为当前版本评审后端契约",
+    "priority": 1,
+    "passes": false,
+    "spec": ".agent/tasks/TASK-001.json"
+  },
+  {
+    "id": "002",
+    "title": "实现设为当前版本评审前端体验",
+    "priority": 2,
+    "passes": false,
+    "spec": ".agent/tasks/TASK-002.json"
+  },
+  {
+    "id": "003",
+    "title": "补齐文档、审计和端到端回归",
+    "priority": 3,
+    "passes": false,
+    "spec": ".agent/tasks/TASK-003.json"
+  }
+]
