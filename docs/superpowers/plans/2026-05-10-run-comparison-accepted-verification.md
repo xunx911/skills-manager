@@ -296,7 +296,7 @@ cd apps/api && uv run pytest
 git diff --check
 ```
 
-- [ ] **Step 4: Commit and push**
+- [x] **Step 4: Commit and push**
 
 Commit:
 
