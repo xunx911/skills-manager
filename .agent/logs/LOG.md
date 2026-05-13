@@ -10,6 +10,14 @@
 
 ## Session Log
 
+### 2026-05-14 00:36 CST - TASK-036 Workbench Variants Pane 组件抽离
+
+- 新增 `WorkbenchVariantsPane`，把变体页 toolbar、创建 composer、版本 composer、variant map cards 和 version rows 从 `DecisionWorkbench` 抽离。
+- 主工作台继续持有 API mutation、mode 切换、diff 编排和 promotion review 编排；变体页只负责展示和本页局部派生状态。
+- 保留 CSS class、文案、链接、按钮禁用逻辑、Current 标记和设为当前版本评审入口。
+- 主文件从 1609 行降到 1519 行，新 Variants 文件 104 行。
+- 已验证：`npm run typecheck` passed；`npm run build` passed；`uv run pytest` 90 passed；`npm run e2e` 50 passed；`git diff --check` passed。
+
 ### 2026-05-14 00:30 CST - TASK-035 Workbench Diff Pane 组件抽离
 
 - 新增 `WorkbenchDiffPane`，把版本差异页的 version selectors、summary metrics、filter bar、file rail、binary notice 和 line-level diff 从 `DecisionWorkbench` 抽离。

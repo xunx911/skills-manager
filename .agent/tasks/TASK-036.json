@@ -1,0 +1,32 @@
+{
+  "id": "036",
+  "title": "抽离 Workbench Variants Pane",
+  "status": "complete",
+  "goal": "把主工作区变体页从 DecisionWorkbench 中抽离为独立组件，降低主工作台文件体积，并保持变体地图、版本列表、创建入口、比较入口和候选版本评审入口行为不变。",
+  "scope": [
+    "新增 apps/web/components/variants/workbench-variants-pane.tsx",
+    "迁移变体页 toolbar、VariantCreationComposer、WorkspaceVersionComposer、variant map cards 和 version rows",
+    "DecisionWorkbench 继续持有 API mutation、mode 切换、diff 编排和 promotion review 编排",
+    "保留现有 CSS class、文案、链接、按钮禁用逻辑和当前版本标记",
+    "记录中文规格、执行计划和任务日志"
+  ],
+  "out_of_scope": [
+    "重做变体地图视觉设计",
+    "改变 variant/tag/current version 的领域语义",
+    "调整创建 variant/version 的表单字段或 API payload",
+    "拆分 composer 子组件、diff pane 或 promotion review pane",
+    "调整数据库模型、权限策略或 E2E 语义"
+  ],
+  "verification": [
+    "test -f apps/web/components/variants/workbench-variants-pane.tsx -> failed before implementation, confirming missing component boundary",
+    "rg -n \"function VariantsPane\\\\(\" apps/web/components/decision-workbench.tsx -> found old inline VariantsPane before implementation",
+    "wc -l apps/web/components/decision-workbench.tsx -> 1609 before, 1519 after extraction",
+    "wc -l apps/web/components/variants/workbench-variants-pane.tsx -> 104 lines",
+    "rg -n \"function VariantsPane\\\\(|VariantCreationComposer|WorkspaceVersionComposer|<VariantsPane|\\\\bLink\\\\b|\\\\bBadge\\\\b\" apps/web/components/decision-workbench.tsx -> no matches after extraction",
+    "cd apps/web && npm run typecheck -> passed",
+    "cd apps/web && npm run build -> passed",
+    "cd apps/api && uv run pytest -> 90 passed",
+    "cd apps/web && UV_CACHE_DIR=/Users/xx/Documents/code/skills-manager/.uv-cache npm run e2e -> 50 passed",
+    "git diff --check -> passed"
+  ]
+}
