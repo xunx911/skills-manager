@@ -10,6 +10,14 @@
 
 ## Session Log
 
+### 2026-05-13 23:35 CST - TASK-030 Skill Catalog 组件抽离
+
+- 新增 `SkillCatalog` 组件，把左侧 skill 目录、筛选、导入、新建和选择入口从 `DecisionWorkbench` 中抽离。
+- `DecisionWorkbench` 现在只向 catalog 传入状态和动作回调，后续继续拆分右侧 Inspector 和主区 panes 时边界更清楚。
+- 保留原有 CSS class、文案、ARIA label 和用户可见行为，不做视觉重设计。
+- 新增中文规格和执行计划，记录结构性红灯、组件边界和回滚策略。
+- 已验证：`npm run typecheck` passed；`npm run build` passed；`uv run pytest` 90 passed；`npm run e2e` 50 passed；`git diff --check` passed。
+
 ### 2026-05-13 23:19 CST - TASK-029 Workbench Modes Tablist 键盘语义
 
 - 将工作区 mode switcher 从普通按钮组抽成 `WorkbenchTabs`，按 APG Tabs Pattern 暴露 `tablist/tab/tabpanel`、`aria-selected`、`aria-controls` 和 roving `tabIndex`。

@@ -1,0 +1,27 @@
+{
+  "id": "030",
+  "title": "抽离 Skill Catalog 组件",
+  "status": "complete",
+  "goal": "把左侧 Skill Catalog 从巨型 DecisionWorkbench 中抽离为独立展示组件，降低主工作台组件体积，为后续继续拆分 Inspector 和主区 panes 做准备。",
+  "scope": [
+    "新增 apps/web/components/skills/skill-catalog.tsx，保留现有目录筛选、新建、导入、选择 skill 行为",
+    "DecisionWorkbench 只传入 catalog 状态、可见 skill 列表和动作回调",
+    "不改变现有 CSS class、文案、ARIA label 和 E2E 可见行为",
+    "记录中文规格、执行计划和任务日志"
+  ],
+  "out_of_scope": [
+    "重做 Skill Catalog 视觉设计",
+    "新增目录分组、收藏、排序或命令菜单能力",
+    "抽离右侧 Inspector 或主区 pane",
+    "调整 API、数据库模型或权限策略"
+  ],
+  "verification": [
+    "test -f apps/web/components/skills/skill-catalog.tsx -> failed before implementation, confirming missing component boundary",
+    "wc -l apps/web/components/decision-workbench.tsx -> 2924 before, 2890 after extraction",
+    "cd apps/web && npm run typecheck -> passed",
+    "cd apps/web && npm run build -> passed",
+    "cd apps/api && uv run pytest -> 90 passed",
+    "cd apps/web && UV_CACHE_DIR=/Users/xx/Documents/code/skills-manager/.uv-cache npm run e2e -> 50 passed",
+    "git diff --check -> passed"
+  ]
+}

@@ -201,5 +201,12 @@
     "priority": 29,
     "passes": true,
     "spec": ".agent/tasks/TASK-029.json"
+  },
+  {
+    "id": "030",
+    "title": "抽离 Skill Catalog 组件",
+    "priority": 30,
+    "passes": true,
+    "spec": ".agent/tasks/TASK-030.json"
   }
 ]

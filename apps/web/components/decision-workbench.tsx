@@ -20,6 +20,7 @@ import { SavedRunViews } from "@/components/saved-views/saved-run-views";
 import { LocalSessionPanel } from "@/components/session/local-session-panel";
 import { SkillAccessPanel } from "@/components/skills/skill-access-panel";
 import { SkillAuditExplorer, type AuditExplorerFilters } from "@/components/skills/skill-audit-explorer";
+import { SkillCatalog } from "@/components/skills/skill-catalog";
 import { SkillGovernancePanel } from "@/components/skills/skill-governance-panel";
 import { SkillLaunchpad } from "@/components/skills/skill-launchpad";
 import { SkillSettingsPanel } from "@/components/skills/skill-settings-panel";
@@ -1138,55 +1139,20 @@ export function DecisionWorkbench({ skills: initialSkills, featuredSkill }: Deci
   return (
     <div className="linearWorkbench">
       <CommandMenu commands={commandItems} scopeLabel={selectedDetail.skill.slug} />
-      <aside className="linearCatalog" aria-label="Skill catalog">
-        <div className="linearCatalogTop">
-          <div>
-            <span>SkillHub</span>
-            <small>{skills.length} skills</small>
-          </div>
-          <div className="catalogTopActions">
-            <button onClick={() => chooseAction("import-skill")} type="button">导入</button>
-            <button onClick={() => chooseAction("new-skill")} type="button">新建</button>
-          </div>
-        </div>
-        <label className="linearSearch">
-          <span>Filter</span>
-          <input
-            onChange={(event) => setCatalogQuery(event.currentTarget.value)}
-            placeholder="skill、owner、tag"
-            value={catalogQuery}
-          />
-        </label>
-        <div className="linearSkillList">
-          {visibleSkills.map((summary) => {
-            const isSelected = summary.skill.id === selectedDetail.skill.id;
-            const run = summary.latest_accepted_eval_run;
-            const rate = run ? passRate(run) : null;
-            return (
-              <button
-                className={`linearSkillItem ${isSelected ? "linearSkillItemActive" : ""}`}
-                key={summary.skill.id}
-                onClick={() => {
-                  setSelectedSkillId(summary.skill.id);
-                  chooseAction("skill", { focusInspector: false });
-                  setSelectedCaseId(null);
-                }}
-                type="button"
-              >
-                <span className="linearSkillTitle">
-                  <strong>{summary.skill.slug}</strong>
-                  <i>{run ? percent(rate) : "未测"}</i>
-                </span>
-                <span>{summary.skill.owner_ref}</span>
-                <span>{summary.default_variant?.tags.join(" + ") ?? "draft"}</span>
-              </button>
-            );
-          })}
-          {visibleSkills.length === 0 ? (
-            <div className="linearCatalogEmpty">{skills.length === 0 ? "还没有 skill。先导入 bundle 或新建一个。" : "没有匹配的 skill"}</div>
-          ) : null}
-        </div>
-      </aside>
+      <SkillCatalog
+        catalogQuery={catalogQuery}
+        onCatalogQueryChange={setCatalogQuery}
+        onCreateSkill={() => chooseAction("new-skill")}
+        onImportSkill={() => chooseAction("import-skill")}
+        onSelectSkill={(skillId) => {
+          setSelectedSkillId(skillId);
+          chooseAction("skill", { focusInspector: false });
+          setSelectedCaseId(null);
+        }}
+        selectedSkillId={selectedDetail.skill.id}
+        skills={skills}
+        visibleSkills={visibleSkills}
+      />
 
       <main className="linearMain">
         <header className="linearHeader">
