@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment } from "react";
+import { Fragment, useId } from "react";
 
 import { passRate } from "@/lib/api";
 import { percent } from "@/lib/format";
@@ -64,13 +64,21 @@ export function RunMatrixPanel({
     })).filter((group) => group.rows.length > 0)
     : [{ impact: "waiting" as MatrixImpact, label: null, rows: visibleRows }];
   const showScore = controls.matrix_show_score !== "false";
+  const descriptionId = useId();
+  const groupRowCount = groupedRows.filter((group) => Boolean(group.label)).length;
+  const tableRowCount = 1 + groupRowCount + visibleRows.length;
+  const tableColCount = runs.length + 2;
+  const matrixDescription = loading
+    ? "正在加载矩阵。"
+    : `${runs.length} runs · ${cases.length} cases · 当前筛选生效`;
+  let bodyRowIndex = 2;
 
   return (
     <section className="runMatrixPanel" data-testid="run-matrix-panel">
       <div className="runMatrixHead">
         <div>
           <h3>Run matrix</h3>
-          <p>{loading ? "正在加载矩阵..." : `${runs.length} runs · ${cases.length} cases · 当前筛选生效`}</p>
+          <p id={descriptionId}>{matrixDescription}</p>
         </div>
         <span>Case x EvalRun</span>
       </div>
@@ -116,13 +124,24 @@ export function RunMatrixPanel({
         <div className="runMatrixEmptyView">当前矩阵视图没有匹配 case。</div>
       ) : (
         <div className="runMatrixScroller">
-          <table className="runMatrixTable">
+          <table
+            aria-colcount={tableColCount}
+            aria-describedby={descriptionId}
+            aria-rowcount={tableRowCount}
+            className="runMatrixTable"
+          >
+            <caption className="visuallyHidden">Run matrix results</caption>
             <thead>
-              <tr>
-                <th className="runMatrixCaseHeader">Case</th>
-                <th className="runMatrixImpactHeader">Impact</th>
-                {runs.map((row) => (
-                  <th className="runMatrixRunHeader" key={row.eval_run.id}>
+              <tr aria-rowindex={1}>
+                <th aria-colindex={1} className="runMatrixCaseHeader" scope="col">Case</th>
+                <th aria-colindex={2} className="runMatrixImpactHeader" scope="col">Impact</th>
+                {runs.map((row, runIndex) => (
+                  <th
+                    aria-colindex={runIndex + 3}
+                    className="runMatrixRunHeader"
+                    key={row.eval_run.id}
+                    scope="col"
+                  >
                     <strong>{row.variant.label} v{row.variant_version.version_number}</strong>
                     <span>{row.eval_set.name} v{row.eval_set_version.version_number}</span>
                     {showScore ? <small>{percent(passRate(row.eval_run))}</small> : null}
@@ -134,35 +153,46 @@ export function RunMatrixPanel({
               {groupedRows.map((group) => (
                 <Fragment key={group.label ?? "all"}>
                   {group.label ? (
-                    <tr className="runMatrixGroupRow">
-                      <td colSpan={runs.length + 2}>{group.label} · {group.rows.length} case</td>
+                    <tr aria-rowindex={bodyRowIndex++} className="runMatrixGroupRow">
+                      <th colSpan={tableColCount} scope="rowgroup">{group.label} · {group.rows.length} case</th>
                     </tr>
                   ) : null}
-                  {group.rows.map(({ impact, row }) => (
-                    <tr key={row.case.id}>
-                      <th className="runMatrixCaseTitle" scope="row">
-                        <strong>{row.case.title}</strong>
-                        <span>{row.versions.map((version) => `v${version.version_number}`).join(", ")}</span>
-                      </th>
-                      <td className="runMatrixImpactCell">
-                        <span className={impactClass[impact]}>{impactCopy[impact]}</span>
-                      </td>
-                      {runs.map((run) => {
-                        const cell = cells.get(`${run.eval_run.id}:${row.case.id}`);
-                        return (
-                          <td key={run.eval_run.id}>
-                            {cell ? (
-                              <span className={cell.passed ? "runMatrixCellPass" : "runMatrixCellFail"}>
-                                {cell.passed ? "通过" : "不通过"}
-                              </span>
-                            ) : (
-                              <span className="runMatrixCellMissing">-</span>
-                            )}
-                          </td>
-                        );
-                      })}
-                    </tr>
-                  ))}
+                  {group.rows.map(({ impact, row }) => {
+                    const rowIndex = bodyRowIndex++;
+                    return (
+                      <tr aria-rowindex={rowIndex} key={row.case.id}>
+                        <th aria-colindex={1} className="runMatrixCaseTitle" scope="row">
+                          <strong>{row.case.title}</strong>
+                          <span>{row.versions.map((version) => `v${version.version_number}`).join(", ")}</span>
+                        </th>
+                        <td
+                          aria-colindex={2}
+                          aria-label={`${row.case.title} 的对照候选影响：${impactCopy[impact]}`}
+                          className="runMatrixImpactCell"
+                        >
+                          <span className={impactClass[impact]}>{impactCopy[impact]}</span>
+                        </td>
+                        {runs.map((run, runIndex) => {
+                          const cell = cells.get(`${run.eval_run.id}:${row.case.id}`);
+                          return (
+                            <td
+                              aria-colindex={runIndex + 3}
+                              aria-label={resultLabel(row.case.title, run, cell?.passed ?? null)}
+                              key={run.eval_run.id}
+                            >
+                              {cell ? (
+                                <span className={cell.passed ? "runMatrixCellPass" : "runMatrixCellFail"}>
+                                  {cell.passed ? "通过" : "不通过"}
+                                </span>
+                              ) : (
+                                <span className="runMatrixCellMissing">-</span>
+                              )}
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    );
+                  })}
                 </Fragment>
               ))}
             </tbody>
@@ -188,4 +218,13 @@ function caseImpact(
   if (baseline.passed && !candidate.passed) return "regressed";
   if (baseline.passed && candidate.passed) return "stable_pass";
   return "stable_fail";
+}
+
+function runLabel(row: EvalRunMatrix["runs"][number]) {
+  return `${row.variant.label} v${row.variant_version.version_number} / ${row.eval_set.name} v${row.eval_set_version.version_number}`;
+}
+
+function resultLabel(caseTitle: string, run: EvalRunMatrix["runs"][number], passed: boolean | null) {
+  const result = passed === null ? "未覆盖" : passed ? "通过" : "不通过";
+  return `${caseTitle} 在 ${runLabel(run)} 的结果：${result}`;
 }

@@ -47,7 +47,7 @@ export async function addEvalCase(page: Page, title: string) {
   await page.getByPlaceholder("输入：代码 diff、上下文、用户请求...").fill("diff --git a/api.py b/api.py\n+return db.query(Project).all()");
   await page.getByPlaceholder("期望输出：应该指出什么、避免什么...").fill("Must flag missing owner_id filter as a P1 issue.");
   await page.getByPlaceholder("来源、bad case、维护说明").fill("Regression from customer review.");
-  await page.getByRole("button", { name: "加入评测集" }).click();
+  await page.getByRole("button", { name: "加入评测集", exact: true }).click();
 
   await expect(page.locator(".caseReviewCard").filter({ hasText: title })).toBeVisible();
 }

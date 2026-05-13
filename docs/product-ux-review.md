@@ -30,7 +30,7 @@
 - Archived skill 会保留历史审计能力，但不会出现在 active SkillHub 列表。
 - 标准 bundle version 可以在专门的 diff mode 里比较文件状态、筛选 changed/added/removed/binary，并查看行级 diff。
 - History mode 支持按 exact variant version、eval set version、strategy、status 过滤 eval run，并查看每个 run 的逐 case 结果。
-- History mode 支持 `Run matrix`，把当前筛选下的 runs 展成 case x run 矩阵，快速识别哪些 case 在哪些 run 上通过、不通过或未覆盖。
+- History mode 支持 `Run matrix`，把当前筛选下的 runs 展成 case x run 矩阵，快速识别哪些 case 在哪些 run 上通过、不通过或未覆盖；矩阵使用原生 table、caption、列/行标题和完整单元格标签，辅助技术不用靠颜色和视觉位置猜测结果。
 - History mode 支持保存、应用、删除当前筛选视图，用户可以把“候选 v2 / Primary v3”这类常用实验入口固化下来，不需要反复手动组合筛选。
 - 选择 `对照` 和 `候选` run 后，Run matrix 每个 case 行会显示 `修复`、`回退`、`稳定通过`、`仍未通过` 或 `缺失`，把样本级变化直接放到表格里。
 - Run matrix 支持按 impact 过滤 case、按 impact 分组、隐藏 run header 分数，并且这些矩阵控制项会随命名视图一起保存和恢复。
@@ -81,6 +81,7 @@
 - **LangSmith experiment comparison:** LangSmith 的 comparison view 支持多 experiment 表格、过滤、列显示和 regression/improvement。SkillHub 适配为 run matrix，把多 run x 多 case 的 pass/fail 关系铺开，并用 impact filter/grouping 聚焦 regression 和 improvement。
 - **LangSmith regression / improvement focus:** LangSmith 会基于 source experiment 标出 regression 和 improvement。SkillHub 适配为选择 `对照` 和 `候选` 后，在矩阵每个 case 行显示 impact chip，减少用户心算。
 - **W&B Tables:** W&B Tables 用表格比较模型版本、时间和具体样本结果。SkillHub 适配为 case x run 矩阵，把 skill 评测从两两比较扩展到多 run 浏览。
+- **WAI-ARIA APG Table:** APG 建议静态表格优先使用原生 `table`，只有需要单元格级交互时才使用 `grid`。SkillHub 的 Run matrix 是 read-only 分析视图，所以保留原生表格，补 caption、`scope`、row/col index 和单元格 `aria-label`，而不是过早引入 data grid。
 - **Linear Saved Views / Airtable Views:** 常用筛选不应该每次重建，视图保存的是查询意图而不是复制数据。SkillHub 适配为保存 `run_history` 筛选配置和 matrix 展示偏好，run 列表和矩阵仍实时读取同一份后端结果。
 - **W&B / release gate:** accepted verification 借鉴 pinned baseline / release gate 思路，用一个明确指针说明“当前分发依据是哪次测评”，而不是让用户猜最新 run 是否可信。
 - **Sentry issue timeline:** case history 留在当前排查上下文中，避免用户跳走后丢失对当前测试集的理解。
@@ -116,7 +117,7 @@
 24. 以前归档 skill 是 inspector 里的普通按钮，缺少权限和确认语义；现在归档需要 owner 权限、输入当前 skill ID，并写入 `skill.archived` audit event。
 25. 以前治理面板只能看最近几条 skill 级事件；现在 `审计 Explorer` 能读取当前 skill 关联的 skill、variant、eval_run 事件，并按 actor、action、resource type 过滤后检查 payload。
 26. 以前切换本地 actor 只能改代码里的常量或请求 header；现在可以在页面右侧直接切换本地 session actor，并通过 E2E 验证新导入 skill 的 owner 来自该 session。
-27. 以前键盘和读屏只有零散 smoke；现在有独立 accessibility E2E，覆盖 skip link、focus indicator、reduced-motion、status notice，以及命令菜单的 combobox/listbox 关系、Tab trap 和关闭回焦点。
+27. 以前键盘和读屏只有零散 smoke；现在有独立 accessibility E2E，覆盖 skip link、focus indicator、reduced-motion、status notice、命令菜单的 combobox/listbox 关系、Tab trap 和关闭回焦点，以及 Run matrix 的 table/header/cell 语义。
 
 ## 仍然存在的摩擦
 
@@ -125,11 +126,11 @@
 3. Run matrix 已经提供 read-only 多 run x case 浏览、保存筛选视图、对照/候选 impact、impact 过滤和分组，但还没有列配置、自定义指标列、导出或保存对照/候选 run 指针。
 4. 权限还没有真实认证来源。当前 actor 已从请求体和前端硬编码 header 收敛到后端签名的本地 cookie session，但仍不是多用户登录、token rotation 或组织级身份系统。
 5. Zip import 预览仍然依赖后端校验；folder import 的浏览器侧预览更丰富。
-6. Accessibility 仍未完整覆盖复杂数据区。现在已有 skip link、focus ring、reduced-motion、status notice 和 command menu combobox/listbox 回归，但 run matrix 表格语义、全路径 focus order 和人工读屏验收还需要继续补。
+6. Accessibility 仍未完整覆盖全路径。现在已有 skip link、focus ring、reduced-motion、status notice、command menu combobox/listbox 和 Run matrix 表格语义回归，但完整 focus order 和人工读屏验收还需要继续补。
 
 ## 下一轮优化队列
 
 1. 扩展审计能力：当前已支持 skill-scoped filter 和 payload inspect，后续可做跨 skill/组织级查询、导出、保留策略和 webhook。
 2. 做 run matrix 多维表格：支持列配置、自定义指标列、导出，并考虑是否保存对照/候选 run 指针。
 3. 接入真实认证：用真正的登录 session/token 替换本地 actor cookie，前端只展示 capability，不再允许自由切换开发身份。
-4. 扩展 accessibility E2E：继续覆盖复杂矩阵表格语义、完整焦点顺序和人工读屏验收。
+4. 扩展 accessibility E2E：继续覆盖完整焦点顺序和人工读屏验收。

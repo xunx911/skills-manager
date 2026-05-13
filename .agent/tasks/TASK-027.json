@@ -1,0 +1,26 @@
+{
+  "id": "027",
+  "title": "补齐 Run Matrix 表格语义",
+  "status": "complete",
+  "goal": "把 History 页 Run matrix 从视觉矩阵升级为可被辅助技术严谨理解的原生数据表。",
+  "scope": [
+    "Run matrix 使用可命名的原生 table / caption 结构",
+    "列 header、行 header 和 group row 语义明确",
+    "通过/不通过/缺失单元格暴露完整 aria-label，不依赖颜色和视觉位置推断",
+    "新增 Playwright 回归覆盖 table 名称、columnheader、rowheader、cell 标签和控制项仍可用",
+    "更新中文 README、UX 复盘和完成度审计"
+  ],
+  "out_of_scope": [
+    "可编辑 data grid",
+    "单元格方向键 roving focus",
+    "列配置、自定义指标列和导出",
+    "真实认证和自动测评策略"
+  ],
+  "verification": [
+    "cd apps/api && uv run pytest -> 90 passed",
+    "cd apps/web && npm run typecheck -> passed",
+    "cd apps/web && npm run build -> passed",
+    "cd apps/web && UV_CACHE_DIR=/Users/xx/Documents/code/skills-manager/.uv-cache npm run e2e -> 47 passed",
+    "git diff --check -> passed"
+  ]
+}

@@ -10,6 +10,14 @@
 
 ## Session Log
 
+### 2026-05-13 23:58 CST - TASK-027 Run Matrix 表格语义
+
+- 将 `RunMatrixPanel` 明确为命名原生 table：新增隐藏 caption、description、`aria-rowcount` / `aria-colcount`、列/行 header scope 和 row/col index。
+- 给 impact 单元格和 pass/fail/missing 结果单元格补完整 `aria-label`，读屏不再需要靠颜色、chip 文案和视觉位置推断 case/run/result。
+- 扩展 run matrix E2E：覆盖 table 名称、columnheader、rowheader、pass/fail/missing cell 名称、impact cell 名称，并修正 `addEvalCase` helper 的 exact selector。
+- 更新 README、UX 复盘和产品完成度审计，明确 run matrix 表格语义已闭环，剩余 accessibility 深水区集中在完整焦点顺序和人工读屏验收。
+- 已验证：`uv run pytest` 90 passed；`npm run typecheck` passed；`npm run build` passed；`npm run e2e` 47 passed；`git diff --check` passed。
+
 ### 2026-05-13 23:42 CST - TASK-026 Command Menu ARIA 语义
 
 - 将 `CommandMenu` 收敛为 `dialog + editable combobox + listbox` 模式：搜索框暴露 `aria-controls` / `aria-activedescendant`，结果项暴露 `role=option` 和 `aria-selected`。

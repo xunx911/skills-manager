@@ -77,6 +77,16 @@ a:focus-visible {
   box-shadow: 0 0 0 6px var(--focus-ring-soft);
 }
 
+.visuallyHidden {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
 .shell {
   min-height: 100vh;
 }
@@ -6183,7 +6193,7 @@ body {
   background: #ffffff;
 }
 
-.runMatrixGroupRow td {
+.runMatrixGroupRow th {
   position: sticky;
   left: 0;
   z-index: 2;

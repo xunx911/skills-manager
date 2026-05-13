@@ -180,5 +180,12 @@
     "priority": 26,
     "passes": true,
     "spec": ".agent/tasks/TASK-026.json"
+  },
+  {
+    "id": "027",
+    "title": "补齐 Run Matrix 表格语义",
+    "priority": 27,
+    "passes": true,
+    "spec": ".agent/tasks/TASK-027.json"
   }
 ]

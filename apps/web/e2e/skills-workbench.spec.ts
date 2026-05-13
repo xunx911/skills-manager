@@ -691,32 +691,51 @@ test("operator can inspect run matrix across eval runs", async ({ page }) => {
   await page.getByTestId("eval-run-bar").getByRole("button", { name: "记录本次测评" }).click();
   await expect(page.getByText("已记录 1/2 通过。")).toBeVisible();
 
+  await addEvalCase(page, "PR: audit log leak");
+
   await appendSkillBundleVersion(page, skillName, { makeCurrent: false });
   await page.locator(".caseReviewCard").filter({ hasText: "PR: missing tenant scope" }).getByRole("button", { name: "通过", exact: true }).click();
   await page.locator(".caseReviewCard").filter({ hasText: "PR: token logging" }).getByRole("button", { name: "通过", exact: true }).click();
+  await page.locator(".caseReviewCard").filter({ hasText: "PR: audit log leak" }).getByRole("button", { name: "通过", exact: true }).click();
   await page.getByTestId("eval-run-bar").getByRole("button", { name: "记录本次测评" }).click();
-  await expect(page.getByText("已记录 2/2 通过。")).toBeVisible();
+  await expect(page.getByText("已记录 3/3 通过。")).toBeVisible();
 
   await page.getByLabel("Workbench modes").getByRole("button", { name: "历史" }).click();
 
   await expect(page.getByTestId("run-matrix-panel")).toBeVisible();
+  const matrixTable = page.getByRole("table", { name: "Run matrix results" });
+  await expect(matrixTable).toBeVisible();
+  await expect(matrixTable).toHaveAttribute("aria-colcount", "4");
+  await expect(matrixTable.getByRole("columnheader", { name: "Case" })).toBeVisible();
+  await expect(matrixTable.getByRole("columnheader", { name: "Impact" })).toBeVisible();
   await expect(page.locator(".runMatrixRunHeader")).toHaveCount(2);
   await expect(page.locator(".runMatrixCaseTitle", { hasText: "PR: missing tenant scope" })).toBeVisible();
   await expect(page.locator(".runMatrixCaseTitle", { hasText: "PR: token logging" })).toBeVisible();
+  await expect(page.locator(".runMatrixCaseTitle", { hasText: "PR: audit log leak" })).toBeVisible();
   await expect(page.locator(".runMatrixCellFail")).toHaveCount(1);
-  await expect(page.locator(".runMatrixCellPass")).toHaveCount(3);
+  await expect(page.locator(".runMatrixCellPass")).toHaveCount(4);
+  await expect(page.locator(".runMatrixCellMissing")).toHaveCount(1);
+  await expect(matrixTable.getByRole("rowheader", { name: /PR: missing tenant scope/ })).toBeVisible();
+  await expect(matrixTable.getByRole("cell", { name: /PR: missing tenant scope.*不通过/ })).toBeVisible();
+  await expect(matrixTable.getByRole("cell", { name: /PR: token logging.*通过/ })).toHaveCount(2);
+  await expect(matrixTable.getByRole("cell", { name: /PR: audit log leak.*未覆盖/ })).toBeVisible();
 
   await page.locator(".historyRunRow").filter({ hasText: "1/2" }).getByRole("button", { name: "对照" }).click();
-  await page.locator(".historyRunRow").filter({ hasText: "2/2" }).getByRole("button", { name: "候选" }).click();
+  await page.locator(".historyRunRow").filter({ hasText: "3/3" }).getByRole("button", { name: "候选" }).click();
   await expect(page.locator(".runMatrixImpactFixed")).toHaveCount(1);
   await expect(page.locator(".runMatrixImpactStablePass")).toHaveCount(1);
+  await expect(page.locator(".runMatrixImpactMissing")).toHaveCount(1);
+  await expect(matrixTable.getByRole("cell", { name: /PR: missing tenant scope.*影响：修复/ })).toBeVisible();
+  await expect(matrixTable.getByRole("cell", { name: /PR: audit log leak.*影响：缺失/ })).toBeVisible();
 
   await page.getByLabel("Matrix group by").selectOption("impact");
   await expect(page.locator(".runMatrixGroupRow").filter({ hasText: "修复 · 1 case" })).toBeVisible();
   await expect(page.locator(".runMatrixGroupRow").filter({ hasText: "稳定通过 · 1 case" })).toBeVisible();
+  await expect(page.locator(".runMatrixGroupRow").filter({ hasText: "缺失 · 1 case" })).toBeVisible();
   await page.getByLabel("Matrix impact filter").selectOption("fixed");
   await expect(page.locator(".runMatrixCaseTitle", { hasText: "PR: missing tenant scope" })).toBeVisible();
   await expect(page.locator(".runMatrixCaseTitle", { hasText: "PR: token logging" })).toHaveCount(0);
+  await expect(page.locator(".runMatrixCaseTitle", { hasText: "PR: audit log leak" })).toHaveCount(0);
 });
 
 test("operator can save and reapply an eval run history view", async ({ page }) => {
