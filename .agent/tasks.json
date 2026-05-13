@@ -271,5 +271,12 @@
     "priority": 39,
     "passes": true,
     "spec": ".agent/tasks/TASK-039.json"
+  },
+  {
+    "id": "040",
+    "title": "移动端 first-run Inspector 去重",
+    "priority": 40,
+    "passes": true,
+    "spec": ".agent/tasks/TASK-040.json"
   }
 ]

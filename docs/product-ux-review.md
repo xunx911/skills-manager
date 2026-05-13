@@ -6,6 +6,7 @@
 
 - `/skills` 是一个正式的三栏工作台：左侧 catalog、中间 focused workspace、右侧 contextual inspector。它借鉴 Linear 的“选中对象 + 上下文操作”模型，避免把所有表单堆在一个页面里。
 - 空工作台现在在主内容区展示 `SkillLaunchpad`，用户可以直接导入标准 Skill bundle 或创建空白 skill，不需要先理解右侧 inspector。
+- 移动端 first-run 默认折叠 inspector action menu/form，只保留主区 `SkillLaunchpad` 作为导入/创建主路径；用户从 catalog 或命令菜单显式触发 action 后，inspector 表单会重新展开并接收焦点。
 - 工作台支持 `Cmd/Ctrl+K` 上下文命令菜单，用户可以搜索并执行导入、创建、测评、历史、差异等高频动作；可见的 `Cmd K` 按钮也能打开同一个入口。命令菜单现在按 `dialog + combobox + listbox` 建模，搜索框保留焦点，方向键移动 active option，Tab 在弹层内循环。
 - 中间工作区的 `概览 / 变体 / 测评 / 差异 / 历史` 已按 APG Tabs Pattern 建模：Tab 只进入当前 mode tab，左右方向键、Home、End 在同组模式中移动并激活对应 panel，减少键盘用户重复 Tab 的成本。
 - 从 catalog button 或命令菜单触发 `导入 bundle`、`新建 skill`、`添加 case` 等 Inspector action 后，焦点会进入对应表单的第一个可操作控件，键盘用户不用从旧触发点一路 Tab 到右侧面板。
@@ -45,6 +46,7 @@
 
 - **Linear:** 左侧列表负责选择对象，中间主面板展示当前上下文，右侧 inspector 处理局部操作。适合 SkillHub 这种“对象多、动作也多”的维护工作台。
 - **Vercel import flow:** Vercel 把新项目导入放在主工作区，而不是藏在设置面板。SkillHub 适配为 first-run `SkillLaunchpad`，让导入标准 bundle 成为用户看到的第一条主路径。
+- **移动端 first-run 单主路径:** 借鉴 Vercel/Linear 在移动端优先呈现当前任务、把低频设置后置的方式。SkillHub 适配为：空工作台移动端先让用户完成导入或创建，inspector 的低频 action 只有在用户显式请求时展开。
 - **Vercel project settings:** Vercel 的 General Settings 把项目名、构建配置和项目 ID 放在同一个项目设置上下文中。SkillHub 适配为 `身份与默认分发`：只编辑 skill 入口指针和归属，不把 bundle 内容改写混进来。
 - **Linear project overview:** Linear 允许在 Project overview 直接编辑项目属性、名称和描述，也保留详情侧栏。SkillHub 适配为主区设置面板加 inspector 双入口。
 - **Linear Command Menu:** 同一动作可以通过按钮、快捷键、上下文菜单和命令菜单触发；SkillHub 第一版把“导入/创建/测评/历史/差异”收进 `Cmd/Ctrl+K`，让新手可发现、熟手少移动鼠标。
@@ -124,29 +126,28 @@
 27. 以前键盘和读屏只有零散 smoke；现在有独立 accessibility E2E，覆盖 skip link、focus indicator、reduced-motion、status notice、命令菜单的 combobox/listbox 关系、Tab trap 和关闭回焦点、Workbench mode tablist、Run matrix 的 table/header/cell 语义，以及 Inspector action 的焦点交接。
 28. 以前从左侧或命令菜单触发右侧表单后，键盘用户仍停在旧触发点；现在 action 切换会把焦点送到对应表单的第一个字段。
 29. 以前工作区模式是一排普通按钮，键盘用户要逐个 Tab 经过；现在它是一个 tablist，当前 mode 是唯一 tab stop，方向键负责组内移动。
+30. 以前移动端 first-run 会先看到主区 Launchpad，继续向下又看到 inspector 的第二份完整导入表单；现在默认只保留主区接入路径，显式请求 inspector action 时再展开右侧表单。
 
 ## 仍然存在的摩擦
 
-1. 移动端 first-run 同时展示 Launchpad 和完整 inspector 导入表单，同一主任务出现两份入口；应先做 mobile/first-run inspector 去重。
-2. 1280 宽桌面三栏固定宽度让主工作区在 promotion、diff、history、audit 等证据视图里偏窄；右侧 inspector 需要按 mode 折叠成 drawer 或 compact rail。
-3. `/skills` 的核心工作状态仍主要在本地 state 中，mode、diff pair、history filters、selected case/run 和 promotion 上下文还不能深链分享或刷新恢复。
-4. Audit Explorer 已有过滤和 payload inspect，但列表项过早截断、Raw JSON 默认占据右侧，扫读治理事件还不够快。
-5. 表单细节还未完全产品化：部分业务字段缺少显式 `autoComplete`，局部 focus 样式仍和全局 `:focus-visible` 策略不统一。
-6. Command menu 已有分组、快捷键和单元测试，但排序还没有根据当前 mode/焦点上下文化。
-7. Promotion review 已经展示 case impact 和 diff，但还没有文件 reviewed progress，也没有把具体 diff hunk 关联到具体 eval case。
-8. Run matrix 已经提供 read-only 多 run x case 浏览、保存筛选视图、对照/候选 impact、impact 过滤和分组，但还没有列配置、自定义指标列、导出或保存对照/候选 run 指针。
-9. 权限还没有真实认证来源。当前 actor 已从请求体和前端硬编码 header 收敛到后端签名的本地 cookie session，但仍不是多用户登录、token rotation 或组织级身份系统。
-10. Accessibility 仍未完整覆盖全路径。现在已有 skip link、focus ring、reduced-motion、status notice、command menu combobox/listbox、Workbench mode tablist、Run matrix 表格语义和 Inspector action focus handoff 回归，但更广的全路径焦点巡检和人工读屏验收还需要继续补。
+1. 1280 宽桌面三栏固定宽度让主工作区在 promotion、diff、history、audit 等证据视图里偏窄；右侧 inspector 需要按 mode 折叠成 drawer 或 compact rail。
+2. `/skills` 的核心工作状态仍主要在本地 state 中，mode、diff pair、history filters、selected case/run 和 promotion 上下文还不能深链分享或刷新恢复。
+3. Audit Explorer 已有过滤和 payload inspect，但列表项过早截断、Raw JSON 默认占据右侧，扫读治理事件还不够快。
+4. 表单细节还未完全产品化：部分业务字段缺少显式 `autoComplete`，局部 focus 样式仍和全局 `:focus-visible` 策略不统一。
+5. Command menu 已有分组、快捷键和单元测试，但排序还没有根据当前 mode/焦点上下文化。
+6. Promotion review 已经展示 case impact 和 diff，但还没有文件 reviewed progress，也没有把具体 diff hunk 关联到具体 eval case。
+7. Run matrix 已经提供 read-only 多 run x case 浏览、保存筛选视图、对照/候选 impact、impact 过滤和分组，但还没有列配置、自定义指标列、导出或保存对照/候选 run 指针。
+8. 权限还没有真实认证来源。当前 actor 已从请求体和前端硬编码 header 收敛到后端签名的本地 cookie session，但仍不是多用户登录、token rotation 或组织级身份系统。
+9. Accessibility 仍未完整覆盖全路径。现在已有 skip link、focus ring、reduced-motion、status notice、command menu combobox/listbox、Workbench mode tablist、Run matrix 表格语义和 Inspector action focus handoff 回归，但更广的全路径焦点巡检和人工读屏验收还需要继续补。
 
 ## 下一轮优化队列
 
-1. 移动端 first-run/inspector 去重：保留单一主路径，避免 Launchpad 和 inspector 重复表单。
-2. 工作台 inspector 响应式折叠：promotion/diff/history/audit 默认把证据视图放大，inspector 变 compact rail 或 drawer。
-3. URL state 同步第一阶段：支持 `mode`、selected skill、diff pair、history filters、selected case/run 深链。
-4. Audit Explorer 扫读重构：摘要优先，Raw JSON 后置，关键动作可快速过滤。
-5. 表单字段组件化：统一 label、`autoComplete`、placeholder、错误展示和 `:focus-visible`。
-6. Command menu 当前 mode 上下文化排序：测评页优先 case/run 命令，变体页优先 variant/version/diff 命令。
-7. Diff / Promotion review 文件 reviewed progress：按文件标记已查看，显示 x/y reviewed。
-8. 做 run matrix 多维表格：支持列配置、自定义指标列、导出，并考虑是否保存对照/候选 run 指针。
-9. 接入真实认证：用真正的登录 session/token 替换本地 actor cookie，前端只展示 capability，不再允许自由切换开发身份。
-10. 扩展 accessibility E2E：继续覆盖更广的全路径焦点巡检和人工读屏验收。
+1. 工作台 inspector 响应式折叠：promotion/diff/history/audit 默认把证据视图放大，inspector 变 compact rail 或 drawer。
+2. URL state 同步第一阶段：支持 `mode`、selected skill、diff pair、history filters、selected case/run 深链。
+3. Audit Explorer 扫读重构：摘要优先，Raw JSON 后置，关键动作可快速过滤。
+4. 表单字段组件化：统一 label、`autoComplete`、placeholder、错误展示和 `:focus-visible`。
+5. Command menu 当前 mode 上下文化排序：测评页优先 case/run 命令，变体页优先 variant/version/diff 命令。
+6. Diff / Promotion review 文件 reviewed progress：按文件标记已查看，显示 x/y reviewed。
+7. 做 run matrix 多维表格：支持列配置、自定义指标列、导出，并考虑是否保存对照/候选 run 指针。
+8. 接入真实认证：用真正的登录 session/token 替换本地 actor cookie，前端只展示 capability，不再允许自由切换开发身份。
+9. 扩展 accessibility E2E：继续覆盖更广的全路径焦点巡检和人工读屏验收。

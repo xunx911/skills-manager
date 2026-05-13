@@ -1,24 +1,8 @@
-import { expect, test, type APIRequestContext } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { addEvalCase, appendSkillBundleVersion, createStoredZip, importSkillBundle } from "./helpers";
-
-const API_BASE_URL = `http://127.0.0.1:${process.env.SKILLHUB_E2E_API_PORT ?? 8021}`;
-const CLEANUP_ACTORS = ["product-operator", "release-manager"];
-
-async function clearSkillCatalog(request: APIRequestContext) {
-  const response = await request.get(`${API_BASE_URL}/api/skills`);
-  const skills = (await response.json()) as Array<{ skill: { id: string } }>;
-  for (const summary of skills) {
-    for (const actor of CLEANUP_ACTORS) {
-      const deleted = await request.delete(`${API_BASE_URL}/api/skills/${summary.skill.id}`, {
-        headers: { "X-SkillHub-Actor": actor },
-      });
-      if (deleted.ok() || deleted.status() === 404) break;
-    }
-  }
-}
+import { addEvalCase, appendSkillBundleVersion, clearSkillCatalog, createStoredZip, importSkillBundle } from "./helpers";
 
 test("invalid skill folders show a blocking import preview", async ({ page }) => {
   const bundleDir = await mkdtemp(join(tmpdir(), "skillhub-invalid-bundle-"));

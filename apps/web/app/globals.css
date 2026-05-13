@@ -7667,6 +7667,11 @@ body {
     border-radius: 12px;
   }
 
+  .linearWorkbench[data-first-run="true"] .linearInspector[data-action-requested="false"] .actionMenu,
+  .linearWorkbench[data-first-run="true"] .linearInspector[data-action-requested="false"] .inspectorForm {
+    display: none;
+  }
+
   .heroScore {
     border-top: 1px solid #e6ebf2;
   }

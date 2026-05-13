@@ -1,0 +1,33 @@
+{
+  "id": "040",
+  "title": "移动端 first-run Inspector 去重",
+  "status": "complete",
+  "goal": "空工作台在移动端默认只展示主区 SkillLaunchpad 作为导入/创建主路径，避免右侧 inspector 在页面下方重复展示完整导入表单；用户显式触发 catalog 或 command action 时仍能打开 inspector 表单并获得焦点。",
+  "scope": [
+    "新增 Playwright E2E 覆盖移动端 first-run 初始态和显式 inspector action",
+    "抽取 E2E 清理 helper，避免第三份 skill catalog 清理逻辑重复",
+    "在工作台根节点标记 first-run，在 inspector 标记 action 是否由用户显式请求",
+    "用窄屏 CSS 折叠 first-run 初始 inspector action menu/form，保留 verification 和 local session 状态",
+    "更新 mobile empty 视觉基线",
+    "更新 README、产品体验评审、完成度审计、任务日志和本任务规格/计划"
+  ],
+  "out_of_scope": [
+    "桌面端 inspector 折叠",
+    "promotion/diff/history/audit 的响应式两栏布局",
+    "URL state 深链",
+    "真实认证或多用户协作"
+  ],
+  "verification": [
+    "Red: cd apps/web && UV_CACHE_DIR=/Users/xx/Documents/code/skills-manager/.uv-cache npx playwright test e2e/mobile-first-run.spec.ts --project=chromium -> failed because inspector .inspectorForm was visible",
+    "Green: cd apps/web && UV_CACHE_DIR=/Users/xx/Documents/code/skills-manager/.uv-cache npx playwright test e2e/mobile-first-run.spec.ts --project=chromium -> 1 passed",
+    "cd apps/web && UV_CACHE_DIR=/Users/xx/Documents/code/skills-manager/.uv-cache npx playwright test e2e/visual-workbench.spec.ts --project=chromium -g \"mobile empty workbench\" --update-snapshots -> regenerated mobile empty snapshot",
+    "Viewed apps/web/e2e/visual-workbench.spec.ts-snapshots/mobile-empty-workbench-chromium-darwin.png -> Launchpad remains primary, duplicate inspector form removed",
+    "cd apps/web && npm run test:unit -> 1 file passed, 3 tests passed",
+    "cd apps/web && npm run typecheck -> passed",
+    "cd apps/web && npm run build -> passed",
+    "cd apps/web && npm audit --omit=dev -> found 0 vulnerabilities",
+    "cd apps/api && uv run pytest -> 90 passed",
+    "cd apps/web && UV_CACHE_DIR=/Users/xx/Documents/code/skills-manager/.uv-cache npm run e2e -> 51 passed",
+    "git diff --check -> passed"
+  ]
+}

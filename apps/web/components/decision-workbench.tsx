@@ -1098,7 +1098,7 @@ export function DecisionWorkbench({ skills: initialSkills, featuredSkill }: Deci
   if (mode === "promotion" || promotionReview) workbenchTabs.push({ label: "评审", mode: "promotion" });
 
   return (
-    <div className="linearWorkbench">
+    <div className="linearWorkbench" data-first-run={hasPersistedSkill ? undefined : "true"}>
       <CommandMenu commands={commandItems} scopeLabel={selectedDetail.skill.slug} />
       <SkillCatalog
         catalogQuery={catalogQuery}
@@ -1298,7 +1298,11 @@ export function DecisionWorkbench({ skills: initialSkills, featuredSkill }: Deci
         </section>
       </main>
 
-      <aside className="linearInspector" aria-label="Inspector">
+      <aside
+        className="linearInspector"
+        aria-label="Inspector"
+        data-action-requested={inspectorFocusRequest > 0 ? "true" : "false"}
+      >
         <WorkbenchInspector
           actionMode={actionMode}
           busy={busy}

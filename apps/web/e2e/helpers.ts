@@ -1,7 +1,23 @@
-import { expect, type Page } from "@playwright/test";
+import { expect, type APIRequestContext, type Page } from "@playwright/test";
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
+
+const API_BASE_URL = `http://127.0.0.1:${process.env.SKILLHUB_E2E_API_PORT ?? 8021}`;
+const CLEANUP_ACTORS = ["product-operator", "release-manager"];
+
+export async function clearSkillCatalog(request: APIRequestContext) {
+  const response = await request.get(`${API_BASE_URL}/api/skills`);
+  const skills = (await response.json()) as Array<{ skill: { id: string } }>;
+  for (const summary of skills) {
+    for (const actor of CLEANUP_ACTORS) {
+      const deleted = await request.delete(`${API_BASE_URL}/api/skills/${summary.skill.id}`, {
+        headers: { "X-SkillHub-Actor": actor },
+      });
+      if (deleted.ok() || deleted.status() === 404) break;
+    }
+  }
+}
 
 export async function importSkillBundle(page: Page, skillName: string) {
   const bundleDir = await mkdtemp(join(tmpdir(), "skillhub-bundle-"));

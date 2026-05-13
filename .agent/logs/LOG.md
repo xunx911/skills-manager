@@ -10,6 +10,14 @@
 
 ## Session Log
 
+### 2026-05-14 01:09 CST - TASK-040 移动端 First-Run Inspector 去重
+
+- 新增 `apps/web/e2e/mobile-first-run.spec.ts`，用红绿测试覆盖移动端空工作台默认折叠 inspector action 区，并验证 catalog 显式触发后表单展开且焦点进入 `owner_ref`。
+- `DecisionWorkbench` 增加 `data-first-run` 和 `data-action-requested` 标记；窄屏 first-run 初始态隐藏 inspector `.actionMenu` 与 `.inspectorForm`，保留 `Verification` 和 `Local session` 状态。
+- 抽取 E2E `clearSkillCatalog` helper，避免 skills/visual/mobile specs 各自维护清理逻辑。
+- 更新 mobile empty 视觉基线、README、产品体验评审、完成度审计和 TASK-040 规格/计划。
+- 已验证：红灯测试先失败于 inspector `.inspectorForm` 可见；绿色后 `mobile-first-run.spec.ts` 1 passed；mobile empty snapshot 已更新并人工查看；`npm run test:unit` 1 file/3 tests passed；`npm run typecheck` passed；`npm run build` passed；`npm audit --omit=dev` found 0 vulnerabilities；`uv run pytest` 90 passed；`npm run e2e` 51 passed；`git diff --check` passed。
+
 ### 2026-05-14 01:00 CST - TASK-039 产品操作摩擦审计
 
 - 新增 `docs/product-ux-friction-audit-2026-05-14.md`，把视觉截图、E2E 覆盖、源码行号和外部产品准则合并成当前操作摩擦审计。

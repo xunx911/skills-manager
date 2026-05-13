@@ -1,21 +1,9 @@
 import { expect, test } from "@playwright/test";
 
-import { addEvalCase, appendSkillBundleVersion, hideVolatileUi, importSkillBundle } from "./helpers";
-
-const API_BASE_URL = `http://127.0.0.1:${process.env.SKILLHUB_E2E_API_PORT ?? 8021}`;
-const CLEANUP_ACTORS = ["product-operator", "release-manager"];
+import { addEvalCase, appendSkillBundleVersion, clearSkillCatalog, hideVolatileUi, importSkillBundle } from "./helpers";
 
 test.beforeEach(async ({ request }) => {
-  const response = await request.get(`${API_BASE_URL}/api/skills`);
-  const skills = (await response.json()) as Array<{ skill: { id: string } }>;
-  for (const summary of skills) {
-    for (const actor of CLEANUP_ACTORS) {
-      const deleted = await request.delete(`${API_BASE_URL}/api/skills/${summary.skill.id}`, {
-        headers: { "X-SkillHub-Actor": actor },
-      });
-      if (deleted.ok() || deleted.status() === 404) break;
-    }
-  }
+  await clearSkillCatalog(request);
 });
 
 test("visual baseline: empty skill workbench", async ({ page }) => {
