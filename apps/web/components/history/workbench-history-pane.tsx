@@ -3,6 +3,7 @@
 import Link from "next/link";
 
 import { Badge } from "@/components/chrome";
+import { HistoryRunFiltersBar } from "@/components/history/history-run-filters-bar";
 import type { InspectorActionMode } from "@/components/inspector/workbench-inspector";
 import { RunComparisonPanel } from "@/components/run-comparison/run-comparison-panel";
 import { RunMatrixPanel, type RunMatrixControls } from "@/components/run-matrix/run-matrix-panel";
@@ -125,57 +126,12 @@ export function WorkbenchHistoryPane({
             selectedViewId={selectedSavedViewId}
             views={savedViews}
           />
-          <div className="historyFilters">
-            <label>
-              <span>Variant</span>
-              <select
-                aria-label="Variant version filter"
-                onChange={(event) => onFilterChange("variant_version_id", event.currentTarget.value)}
-                value={filters.variant_version_id}
-              >
-                <option value="all">All versions</option>
-                {variantVersions.map((version) => (
-                  <option key={version.id} value={version.id}>{version.label}</option>
-                ))}
-              </select>
-            </label>
-            <label>
-              <span>Eval set</span>
-              <select
-                aria-label="Eval set version filter"
-                onChange={(event) => onFilterChange("eval_set_version_id", event.currentTarget.value)}
-                value={filters.eval_set_version_id}
-              >
-                <option value="all">All snapshots</option>
-                {evalSetVersions.map((version) => (
-                  <option key={version.id} value={version.id}>{version.label}</option>
-                ))}
-              </select>
-            </label>
-            <label>
-              <span>Strategy</span>
-              <select
-                aria-label="Strategy filter"
-                onChange={(event) => onFilterChange("strategy", event.currentTarget.value)}
-                value={filters.strategy}
-              >
-                <option value="all">All strategies</option>
-                <option value="manual_pass_fail">manual_pass_fail</option>
-              </select>
-            </label>
-            <label>
-              <span>Status</span>
-              <select
-                aria-label="Status filter"
-                onChange={(event) => onFilterChange("status", event.currentTarget.value)}
-                value={filters.status}
-              >
-                <option value="all">All statuses</option>
-                <option value="finished">finished</option>
-                <option value="failed">failed</option>
-              </select>
-            </label>
-          </div>
+          <HistoryRunFiltersBar
+            evalSetVersions={evalSetVersions}
+            filters={filters}
+            onFilterChange={onFilterChange}
+            variantVersions={variantVersions}
+          />
         </div>
       </div>
 

@@ -2,6 +2,7 @@
 
 import { Fragment, useId } from "react";
 
+import { CheckboxField, SelectField } from "@/components/forms/workbench-field";
 import { passRate } from "@/lib/api";
 import { percent } from "@/lib/format";
 import type { EvalRunMatrix } from "@/lib/types";
@@ -83,39 +84,33 @@ export function RunMatrixPanel({
         <span>Case x EvalRun</span>
       </div>
       <div className="runMatrixControls" aria-label="Matrix controls">
-        <label>
-          <span>Impact</span>
-          <select
-            aria-label="Matrix impact filter"
-            onChange={(event) => onControlChange("matrix_impact", event.currentTarget.value as RunMatrixControls["matrix_impact"])}
-            value={controls.matrix_impact}
-          >
-            <option value="all">All impacts</option>
-            {impactOrder.map((impact) => (
-              <option key={impact} value={impact}>{impactCopy[impact]}</option>
-            ))}
-          </select>
-        </label>
-        <label>
-          <span>Group</span>
-          <select
-            aria-label="Matrix group by"
-            onChange={(event) => onControlChange("matrix_group_by", event.currentTarget.value as RunMatrixControls["matrix_group_by"])}
-            value={controls.matrix_group_by}
-          >
-            <option value="none">No grouping</option>
-            <option value="impact">Impact</option>
-          </select>
-        </label>
-        <label className="runMatrixToggle">
-          <input
-            aria-label="Show matrix score"
-            checked={showScore}
-            onChange={(event) => onControlChange("matrix_show_score", event.currentTarget.checked ? "true" : "false")}
-            type="checkbox"
-          />
-          <span>Score</span>
-        </label>
+        <SelectField
+          aria-label="Matrix impact filter"
+          label="Impact"
+          onChange={(event) => onControlChange("matrix_impact", event.currentTarget.value as RunMatrixControls["matrix_impact"])}
+          value={controls.matrix_impact}
+        >
+          <option value="all">All impacts</option>
+          {impactOrder.map((impact) => (
+            <option key={impact} value={impact}>{impactCopy[impact]}</option>
+          ))}
+        </SelectField>
+        <SelectField
+          aria-label="Matrix group by"
+          label="Group"
+          onChange={(event) => onControlChange("matrix_group_by", event.currentTarget.value as RunMatrixControls["matrix_group_by"])}
+          value={controls.matrix_group_by}
+        >
+          <option value="none">No grouping</option>
+          <option value="impact">Impact</option>
+        </SelectField>
+        <CheckboxField
+          aria-label="Show matrix score"
+          checked={showScore}
+          className="runMatrixToggle"
+          label="Score"
+          onChange={(event) => onControlChange("matrix_show_score", event.currentTarget.checked ? "true" : "false")}
+        />
       </div>
 
       {!loading && runs.length === 0 ? (

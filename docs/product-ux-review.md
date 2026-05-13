@@ -143,21 +143,22 @@
 35. 以前 command menu 默认静态导航优先；现在会按当前 mode 排序，测评页第一条就是 `记录本次测评`，变体页优先 variant/version/diff，空工作台优先导入/新建。
 36. 以前 diff/promotion review 中用户只能靠记忆判断哪些文件已经看过；现在可以逐文件勾选已查看，并在 summary/header 中看到 `Reviewed x/y`。
 37. 以前用户只能分享粗粒度 mode；现在可以分享具体 diff pair、selected diff file、candidate eval target、selected case、history filters、selected run、run comparison、matrix controls、audit filters 和 promotion review permalink。
+38. 以前剩余表单仍各自手写 label/input/select；现在 QuickAddCases、EvalCaseDetailPanel、SkillSettingsPanel、SkillAccessPanel、SkillGovernancePanel、SavedRunViews、history filters、run matrix controls 和 diff selectors 都接入共享字段基础件。
 
 ## 仍然存在的摩擦
 
-1. 表单细节还未完全产品化：第一阶段已覆盖 `SkillLaunchpad` 和 `WorkbenchInspector` 高频写入表单；`QuickAddCases`、`EvalCaseDetailPanel`、`SkillSettingsPanel`、`SkillAccessPanel`、history filters、run matrix controls 和 diff selectors 还没有迁移到同一字段基础件。
-2. Command menu 已根据当前 mode 做第一阶段上下文化排序；还没有最近使用、个人化排序、selection-aware 命令或右侧 preview。
+1. Command menu 已根据当前 mode 做第一阶段上下文化排序；还没有最近使用、个人化排序、selection-aware 命令或右侧 preview。
+2. 表单字段基础件已覆盖主要工作台表单，但还没有错误 summary、提交后聚焦第一个错误、后端字段错误映射和完整 validation copy。
 3. Promotion review 已经展示 case impact、diff 和会话级文件 reviewed progress，但 viewed state 还没有服务端持久化，也没有把具体 diff hunk 关联到具体 eval case。
 4. URL state 已覆盖核心证据上下文，但还没有短链接、权限感知分享提示，也没有保存未提交草稿。
 5. Run matrix 已经提供 read-only 多 run x case 浏览、保存筛选视图、对照/候选 impact、impact 过滤和分组，但还没有列配置、自定义指标列、导出或保存对照/候选 run 指针。
 6. 权限还没有真实认证来源。当前 actor 已从请求体和前端硬编码 header 收敛到后端签名的本地 cookie session，但仍不是多用户登录、token rotation 或组织级身份系统。
-7. Accessibility 仍未完整覆盖全路径。现在已有 skip link、focus ring、reduced-motion、status notice、command menu combobox/listbox、Workbench mode tablist、Run matrix 表格语义和 Inspector action focus handoff 回归，但更广的全路径焦点巡检和人工读屏验收还需要继续补。
+7. Accessibility 仍未完整覆盖全路径。现在已有 skip link、focus ring、reduced-motion、status notice、命令菜单、Workbench mode tablist、Run matrix 表格语义、Inspector action focus handoff 和主要表单字段语义回归，但更广的全路径焦点巡检和人工读屏验收还需要继续补。
 
 ## 下一轮优化队列
 
-1. 表单字段基础件第二阶段：迁移 QuickAddCases、EvalCaseDetailPanel、SkillSettingsPanel、SkillAccessPanel、history filters、run matrix controls 和 diff selectors，并补错误展示规范。
-2. Command menu 第二阶段：增加最近使用/selection-aware 排序和命令 preview，避免只靠 mode 估计意图。
+1. Command menu 第二阶段：增加最近使用/selection-aware 排序和命令 preview，避免只靠 mode 估计意图。
+2. 表单验证第二阶段：错误 summary、提交后聚焦第一个错误、后端字段错误映射和统一 validation copy。
 3. Diff / Promotion review 第二阶段：评估是否服务端持久化 viewed state、自动折叠已查看文件，或把 diff hunk 关联到 eval case。
 4. URL state 第三阶段：增加短链接、权限感知分享提示，并评估是否保存草稿到本地 session storage 而不是 URL。
 5. 做 run matrix 多维表格：支持列配置、自定义指标列、导出，并考虑是否保存对照/候选 run 指针。

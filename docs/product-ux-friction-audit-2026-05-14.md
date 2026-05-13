@@ -2,7 +2,7 @@
 
 日期：2026-05-14
 
-状态：当前产品闭环已经强于普通 demo，但还不是成熟产品。主要缺口不在“能不能跑通”，而在信息架构密度、历史/发布证据的可扫读性，以及部分表单/焦点/权限协作的产品级细节。移动端 first-run、证据视图 inspector 折叠、URL state 第二阶段、Audit Explorer 扫读重构、表单字段基础件第一阶段、Command menu mode-aware 排序和 Diff / Promotion 文件 reviewed progress 第一阶段已经按本审计后续任务完成。
+状态：当前产品闭环已经强于普通 demo，但还不是成熟产品。主要缺口不在“能不能跑通”，而在信息架构密度、历史/发布证据的可扫读性，以及权限协作、验证策略和少量深水区可访问性细节。移动端 first-run、证据视图 inspector 折叠、URL state 第二阶段、Audit Explorer 扫读重构、表单字段基础件第二阶段、Command menu mode-aware 排序和 Diff / Promotion 文件 reviewed progress 第一阶段已经按本审计后续任务完成。
 
 ## 审计输入
 
@@ -105,25 +105,26 @@
 
 - 将来做组织级审计时，沿用这套信息架构，并补日期范围、分页、导出和保留策略。
 
-### 已解决第一阶段 / 仍需后续 - 表单细节还没完全产品化
+### 已解决第二阶段 / 仍需后续 - 表单字段语义已统一，验证体验还需深化
 
 证据：
 
 - TASK-044 已新增 `apps/web/components/forms/workbench-field.tsx`，提供 `TextField`、`TextAreaField`、`SelectField`、`FileField`，统一 label、hint 和 `aria-describedby`。
 - `SkillLaunchpad` 与 `WorkbenchInspector` 高频写入路径已迁移到共享字段基础件；业务 text/textarea 默认显式 `autocomplete="off"`。
 - `apps/web/e2e/accessibility-workbench.spec.ts` 新增回归，红灯先失败于 Launchpad `owner_ref` 缺少 autocomplete；绿色后覆盖 Launchpad 与 Inspector 的 autocomplete、焦点交接和可见焦点。
-- CSS 已把 command menu、search box、inline case form、inspector form 的局部输入焦点样式收敛到 `:focus-visible`。
-- 仍未迁移的批次包括 `QuickAddCases`、`EvalCaseDetailPanel`、`SkillSettingsPanel`、`SkillAccessPanel`、history filters、run matrix controls 和 diff selectors。
+- TASK-048 已把 `QuickAddCases`、`EvalCaseDetailPanel`、`SkillSettingsPanel`、`SkillAccessPanel`、`SkillGovernancePanel`、`SavedRunViews`、history filters、run matrix controls 和 diff selectors 迁移到共享字段基础件。
+- `WorkbenchField` 已预留字段级 `error`、`aria-invalid` 和错误文案 `aria-describedby` 接口；`CheckboxField` 覆盖 run matrix score toggle。
+- `accessibility-workbench.spec.ts` 覆盖主要表单字段语义，红灯先失败于 `quick_title` 缺少 autocomplete/shared shell，绿色后 11 条 accessibility 回归通过。
 
 影响：
 
-- Launchpad 和 Inspector 这两条高频写入路径已经减少浏览器自动填充误填、焦点规则分叉和字段语义漂移。
-- 剩余低频表单还没有共享错误展示、autocomplete 策略和 hint 规则，后续如果继续各自手写，维护成本会重新升高。
+- 主要工作台表单已经减少浏览器自动填充误填、焦点规则分叉和字段语义漂移。
+- 后续新增表单应该优先复用 `WorkbenchField`，而不是在 pane 内继续手写 label/control。
 
 建议：
 
-- 第二阶段继续迁移 QuickAddCases、EvalCaseDetailPanel、SkillSettingsPanel、SkillAccessPanel、history filters、run matrix controls 和 diff selectors。
-- 字段基础件第二阶段再补错误态、验证文案和 submit disabled/loading 规范，不在第一阶段扩大视觉重做范围。
+- 下一轮表单方向应聚焦验证体验：错误 summary、提交后聚焦第一个错误、后端字段错误映射和统一 validation copy。
+- 不建议为了“更像表单系统”而改成全受控输入；SkillHub 的长文本 case input/expected output 仍适合原生 form + FormData。
 
 ### 已解决第一阶段 / 仍需后续 - Command menu 已可用，但还不够智能
 
@@ -179,8 +180,8 @@
 
 ## 下一轮任务排序
 
-1. **表单字段基础件第二阶段。** 迁移 QuickAddCases、EvalCaseDetailPanel、SkillSettingsPanel、SkillAccessPanel、history filters、run matrix controls 和 diff selectors。
-2. **Command menu 第二阶段。** 增加最近使用/selection-aware 排序和命令 preview。
+1. **Command menu 第二阶段。** 增加最近使用/selection-aware 排序和命令 preview。
+2. **表单验证第二阶段。** 错误 summary、提交后聚焦第一个错误、后端字段错误映射和统一 validation copy。
 3. **组织级 Audit Explorer。** 跨 skill 查询、日期范围、分页、导出和保留策略。
 4. **Diff / Promotion reviewed progress 第二阶段。** 决定是否服务端持久化、自动折叠已查看文件或纳入 promotion checklist。
 5. **URL state 第三阶段。** 短链接、权限感知分享提示和草稿恢复策略。

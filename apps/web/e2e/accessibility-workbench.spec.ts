@@ -1,6 +1,6 @@
 import { expect, test, type Locator } from "@playwright/test";
 
-import { clearSkillCatalog, importSkillBundle } from "./helpers";
+import { addEvalCase, appendSkillBundleVersion, clearSkillCatalog, importSkillBundle } from "./helpers";
 
 test("keyboard users can skip chrome and move focus to main content", async ({ page }) => {
   await page.goto("/skills");
@@ -128,6 +128,54 @@ test("core write forms expose explicit autocomplete and visible field focus", as
   await expectVisibleFocusIndicator(inspectorOwner);
 });
 
+test("secondary workbench forms use shared field semantics", async ({ page }) => {
+  const skillName = `secondary-fields-${Date.now()}`;
+  await importSkillBundle(page, skillName);
+  await appendSkillBundleVersion(page, skillName);
+
+  await page.getByRole("tab", { name: "测评", exact: true }).click();
+  await expectAutocompleteOff(page.locator(".quickCaseGrid").locator('input[name="quick_title"]'));
+  await expectAutocompleteOff(page.locator(".quickCaseGrid").locator('textarea[name="quick_input_text"]'));
+  await expectAutocompleteOff(page.locator(".quickCaseGrid").locator('textarea[name="quick_expected_output"]'));
+  await expectAutocompleteOff(page.locator(".quickCaseGrid").locator('input[name="quick_notes"]'));
+
+  await page.getByRole("button", { name: "批量", exact: true }).click();
+  await expectAutocompleteOff(page.getByLabel("批量 case 文本"));
+
+  await addEvalCase(page, "PR: field foundation inline");
+  await page.locator(".evalCaseDetailPanel").getByRole("button", { name: "编辑" }).click();
+  await expectAutocompleteOff(page.getByLabel("详情内标题"));
+  await expectAutocompleteOff(page.getByLabel("详情内 input"));
+  await expectAutocompleteOff(page.getByLabel("详情内 expected output"));
+  await expectAutocompleteOff(page.getByLabel("详情内 notes"));
+
+  await page.getByRole("tab", { name: "概览", exact: true }).click();
+  const settingsForm = page.locator(".skillSettingsForm");
+  await expectAutocompleteOff(settingsForm.locator('input[name="slug"]'));
+  await expectAutocompleteOff(settingsForm.locator('input[name="owner_ref"]'));
+  await expectWithinSharedField(settingsForm.locator('select[name="default_variant_id"]'));
+
+  const accessForm = page.locator(".skillAccessForm");
+  await expectAutocompleteOff(accessForm.locator('input[name="subject_id"]'));
+  await expectWithinSharedField(accessForm.getByLabel("Access role"));
+  await expectAutocompleteOff(page.locator(".dangerZone").getByLabel("确认 Skill ID"));
+
+  await page.getByRole("tab", { name: "历史", exact: true }).click();
+  await expectWithinSharedField(page.getByLabel("Saved run view"));
+  await expectAutocompleteOff(page.getByLabel("保存视图名称"));
+  await expectWithinSharedField(page.getByLabel("Variant version filter"));
+  await expectWithinSharedField(page.getByLabel("Eval set version filter"));
+  await expectWithinSharedField(page.getByLabel("Strategy filter"));
+  await expectWithinSharedField(page.getByLabel("Status filter"));
+  await expectWithinSharedField(page.getByLabel("Matrix impact filter"));
+  await expectWithinSharedField(page.getByLabel("Matrix group by"));
+  await expectWithinSharedField(page.getByLabel("Show matrix score"), "workbenchCheckboxField");
+
+  await page.getByRole("tab", { name: "差异", exact: true }).click();
+  await expectWithinSharedField(page.locator(".diffSelectors").getByLabel("From"));
+  await expectWithinSharedField(page.locator(".diffSelectors").locator("select").nth(1));
+});
+
 test("workbench modes use tablist keyboard navigation", async ({ page }) => {
   await importSkillBundle(page, `tabs-${Date.now()}`);
 
@@ -180,4 +228,15 @@ async function expectVisibleFocusIndicator(locator: Locator) {
     return hasOutline || hasShadow;
   });
   expect(indicator).toBe(true);
+}
+
+async function expectAutocompleteOff(locator: Locator) {
+  await expect(locator).toHaveAttribute("autocomplete", "off");
+  await expectWithinSharedField(locator);
+}
+
+async function expectWithinSharedField(locator: Locator, className = "workbenchField") {
+  const hasFieldShell = await locator.evaluate((element, expectedClassName) =>
+    Boolean(element.closest(`.${expectedClassName}`)), className);
+  expect(hasFieldShell).toBe(true);
 }

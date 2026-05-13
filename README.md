@@ -23,7 +23,7 @@
 - 工作台支持 `Cmd/Ctrl+K` 上下文命令菜单，可搜索并执行导入、创建、测评、历史、差异等高频动作；菜单使用 `dialog + combobox + listbox` 语义，方向键移动 active option，Tab 会限制在弹层内，关闭后焦点回到触发按钮。菜单会根据当前 mode 排序：空工作台优先导入/新建，测评页优先 run/case，变体页优先 variant/version/diff。
 - `/skills` 支持第二阶段 URL state：可以直达某个 skill 的 `概览 / 变体 / 测评 / 差异 / 历史 / 审计 / 评审`，并恢复 diff pair/file/filter、eval target/case、history filters、selected run、run comparison、matrix controls、audit filters 和 promotion review context；刷新、复制链接和浏览器 Back/Forward 都能还原这些证据上下文。
 - 工作台有基础 accessibility 护栏：键盘用户可用 skip link 直接进入主内容；全局 focus ring 更醒目；`prefers-reduced-motion` 会压低非必要动效；操作结果通过 `role=status` 暴露给读屏软件；命令菜单、Workbench mode tabs、Run matrix 和 Inspector action 焦点交接已有 E2E 回归。
-- 高频写入表单第一阶段已统一字段基础件：`SkillLaunchpad` 和 `WorkbenchInspector` 使用共享 `TextField/TextAreaField/SelectField/FileField`，业务 text/textarea 默认显式 `autocomplete="off"`，局部焦点样式收敛到 `:focus-visible`。
+- 表单字段基础件已覆盖主要工作台表单：`SkillLaunchpad`、`WorkbenchInspector`、快速添加 case、case 详情内联编辑、skill 设置、访问控制、危险区确认、保存历史视图、history filters、run matrix controls 和 diff selectors 都使用共享字段壳层；业务 text/textarea 默认显式 `autocomplete="off"`，字段级 error/`aria-invalid` 接口已预留。
 - `测评` 页支持单条快速添加和批量粘贴 case；批量写入会生成一个新的 `EvalSetVersion`，避免逐条添加制造版本噪音。
 - `测评` 页的手工确认区是 review queue：可按全部/未确认/通过/不通过筛选，点击通过/不通过后自动前进到下一条未确认 case，并支持把未确认项批量标为通过。
 - 导入标准 Skill bundle 后，`概览` 会显示验证清单，引导用户补首批 case、记录首轮手工测评，再进入历史页沉淀证据。

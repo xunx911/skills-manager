@@ -554,6 +554,53 @@ a:focus-visible {
   line-height: 1.35;
 }
 
+.workbenchFieldError {
+  color: #b42318;
+  font-size: 11px;
+  font-weight: 850;
+  line-height: 1.35;
+}
+
+.workbenchField :where(input:not([type="file"]), textarea, select) {
+  min-width: 0;
+}
+
+.workbenchField :where(input:not([type="file"]), textarea, select):focus-visible {
+  border-color: #111827;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(17, 24, 39, 0.08);
+  outline: none;
+}
+
+.workbenchField :where(input, textarea, select)[aria-invalid="true"] {
+  border-color: #d92d20;
+  box-shadow: 0 0 0 3px rgba(217, 45, 32, 0.08);
+}
+
+.workbenchCheckboxField {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+
+.workbenchCheckboxField input {
+  width: 16px;
+  height: 16px;
+  accent-color: #111827;
+}
+
+.workbenchCheckboxField span {
+  color: #334155;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.workbenchCheckboxField input:focus-visible {
+  outline: 3px solid rgba(17, 24, 39, 0.14);
+  outline-offset: 2px;
+}
+
 .quickCaseComposer {
   display: grid;
   gap: 12px;
@@ -577,7 +624,7 @@ a:focus-visible {
 }
 
 .quickCaseHeader span,
-.quickCaseBatch label span {
+.quickCaseBatch .workbenchField > span {
   color: #667085;
   font-size: 11px;
   font-weight: 900;
@@ -623,9 +670,9 @@ a:focus-visible {
   gap: 8px;
 }
 
-.quickCaseGrid input,
-.quickCaseGrid textarea,
-.quickCaseBatch textarea {
+.quickCaseGrid .workbenchField input,
+.quickCaseGrid .workbenchField textarea,
+.quickCaseBatch .workbenchField textarea {
   width: 100%;
   border: 1px solid #d6deea;
   border-radius: 7px;
@@ -636,12 +683,12 @@ a:focus-visible {
   padding: 9px 10px;
 }
 
-.quickCaseGrid textarea {
+.quickCaseGrid .workbenchField textarea {
   min-height: 72px;
   resize: vertical;
 }
 
-.quickCaseGrid input[name="quick_notes"] {
+.quickCaseNotesField {
   grid-column: 1 / 3;
 }
 
@@ -672,12 +719,12 @@ a:focus-visible {
   gap: 10px;
 }
 
-.quickCaseBatch label {
+.quickCaseBatch .workbenchField {
   display: grid;
   gap: 6px;
 }
 
-.quickCaseBatch textarea {
+.quickCaseBatch .workbenchField textarea {
   min-height: 116px;
   resize: vertical;
 }
@@ -4528,7 +4575,7 @@ body {
 }
 
 .skillSettingsHeader span,
-.skillSettingsForm label span,
+.skillSettingsForm .workbenchField > span,
 .skillSettingsDistribution > span {
   color: #667085;
   font-size: 11px;
@@ -4558,14 +4605,14 @@ body {
   gap: 10px;
 }
 
-.skillSettingsForm label {
+.skillSettingsForm .workbenchField {
   display: grid;
   gap: 6px;
   min-width: 0;
 }
 
-.skillSettingsForm input,
-.skillSettingsForm select {
+.skillSettingsForm .workbenchField input,
+.skillSettingsForm .workbenchField select {
   width: 100%;
   min-height: 38px;
   border: 1px solid #dce2ea;
@@ -4740,7 +4787,7 @@ body {
 
 .skillAccessHeader span,
 .skillAccessActor span,
-.skillAccessForm label span {
+.skillAccessForm .workbenchField > span {
   color: #667085;
   font-size: 11px;
   font-weight: 900;
@@ -4833,13 +4880,13 @@ body {
   align-items: end;
 }
 
-.skillAccessForm label {
+.skillAccessForm .workbenchField {
   display: grid;
   gap: 5px;
 }
 
-.skillAccessForm input,
-.skillAccessForm select {
+.skillAccessForm .workbenchField input,
+.skillAccessForm .workbenchField select {
   min-height: 36px;
   min-width: 0;
   border: 1px solid #dce2ea;
@@ -5020,12 +5067,12 @@ body {
   line-height: 1.4;
 }
 
-.dangerZone label {
+.dangerZone .workbenchField {
   display: grid;
   gap: 5px;
 }
 
-.dangerZone input {
+.dangerZone .workbenchField input {
   min-height: 38px;
   min-width: 0;
   border: 1px solid #e9a59a;
@@ -5763,12 +5810,12 @@ body {
   padding: 12px;
 }
 
-.evalCaseInlineForm label {
+.evalCaseInlineForm .workbenchField {
   display: grid;
   gap: 6px;
 }
 
-.evalCaseInlineForm label span {
+.evalCaseInlineForm .workbenchField > span {
   color: #475467;
   font-size: 12px;
   font-weight: 800;
@@ -5776,8 +5823,8 @@ body {
   text-transform: uppercase;
 }
 
-.evalCaseInlineForm input,
-.evalCaseInlineForm textarea {
+.evalCaseInlineForm .workbenchField input,
+.evalCaseInlineForm .workbenchField textarea {
   width: 100%;
   border: 1px solid #dce2ea;
   border-radius: 10px;
@@ -5787,13 +5834,13 @@ body {
   padding: 10px 11px;
 }
 
-.evalCaseInlineForm textarea {
+.evalCaseInlineForm .workbenchField textarea {
   min-height: 132px;
   resize: vertical;
 }
 
-.evalCaseInlineForm input:focus-visible,
-.evalCaseInlineForm textarea:focus-visible {
+.evalCaseInlineForm .workbenchField input:focus-visible,
+.evalCaseInlineForm .workbenchField textarea:focus-visible {
   border-color: #111827;
   background: #ffffff;
   box-shadow: 0 0 0 3px rgba(17, 24, 39, 0.08);
@@ -5917,7 +5964,7 @@ body {
   gap: 8px;
 }
 
-.diffSelectors label {
+.diffSelectors .workbenchField {
   display: grid;
   gap: 4px;
   color: #667085;
@@ -5926,7 +5973,7 @@ body {
   text-transform: uppercase;
 }
 
-.diffSelectors select {
+.diffSelectors .workbenchField select {
   min-width: 108px;
   min-height: 34px;
   border: 1px solid #dce2ea;
@@ -6205,7 +6252,7 @@ body {
   padding: 9px;
 }
 
-.savedRunViews label {
+.savedRunViews .workbenchField {
   display: grid;
   gap: 4px;
   min-width: 0;
@@ -6215,8 +6262,8 @@ body {
   text-transform: uppercase;
 }
 
-.savedRunViews select,
-.savedRunViews input {
+.savedRunViews .workbenchField select,
+.savedRunViews .workbenchField input {
   min-height: 34px;
   min-width: 0;
   border: 1px solid #d6dde8;
@@ -6253,8 +6300,8 @@ body {
 }
 
 .savedRunViews button:disabled,
-.savedRunViews select:disabled,
-.savedRunViews input:disabled {
+.savedRunViews .workbenchField select:disabled,
+.savedRunViews .workbenchField input:disabled {
   cursor: not-allowed;
   opacity: 0.55;
 }
@@ -6266,7 +6313,7 @@ body {
   min-width: min(100%, 620px);
 }
 
-.historyFilters label {
+.historyFilters .workbenchField {
   display: grid;
   gap: 4px;
   color: #667085;
@@ -6275,7 +6322,7 @@ body {
   text-transform: uppercase;
 }
 
-.historyFilters select {
+.historyFilters .workbenchField select {
   min-height: 34px;
   min-width: 0;
   border: 1px solid #dce2ea;
@@ -6336,20 +6383,20 @@ body {
   padding: 0 12px 10px;
 }
 
-.runMatrixControls label {
+.runMatrixControls .workbenchField {
   display: grid;
   gap: 4px;
   min-width: 138px;
 }
 
-.runMatrixControls label span {
+.runMatrixControls .workbenchField > span {
   color: #667085;
   font-size: 10px;
   font-weight: 900;
   text-transform: uppercase;
 }
 
-.runMatrixControls select {
+.runMatrixControls .workbenchField select {
   min-height: 34px;
   border: 1px solid #dce2ea;
   border-radius: 8px;

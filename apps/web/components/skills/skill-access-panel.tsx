@@ -2,6 +2,7 @@
 
 import type { FormEvent } from "react";
 
+import { SelectField, TextField } from "@/components/forms/workbench-field";
 import type { RoleAssignment } from "@/lib/types";
 
 const roleLabels: Record<RoleAssignment["role"], string> = {
@@ -63,19 +64,13 @@ export function SkillAccessPanel({
       </div>
 
       <form className="skillAccessForm" onSubmit={onAssignRole}>
-        <label>
-          <span>成员</span>
-          <input name="subject_id" placeholder="qa-reviewer" required />
-        </label>
-        <label>
-          <span>角色</span>
-          <select aria-label="Access role" name="role" defaultValue="evaluator">
-            <option value="maintainer">Maintainer</option>
-            <option value="evaluator">Evaluator</option>
-            <option value="viewer">Viewer</option>
-            <option value="owner">Owner</option>
-          </select>
-        </label>
+        <TextField label="成员" name="subject_id" placeholder="qa-reviewer" required />
+        <SelectField aria-label="Access role" defaultValue="evaluator" label="角色" name="role">
+          <option value="maintainer">Maintainer</option>
+          <option value="evaluator">Evaluator</option>
+          <option value="viewer">Viewer</option>
+          <option value="owner">Owner</option>
+        </SelectField>
         <button disabled={busy} type="submit">添加成员</button>
       </form>
     </section>

@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useState } from "react";
 
+import { TextAreaField, TextField } from "@/components/forms/workbench-field";
 import type { EvalCaseHistory, EvalSetVersionDetail } from "@/lib/types";
 import { CaseHistoryPanel } from "./case-history-panel";
 
@@ -99,32 +100,22 @@ export function EvalCaseDetailPanel({
           <button onClick={() => setEditing(false)} type="button">取消</button>
         </div>
         <form className="evalCaseInlineForm" onSubmit={submitEdit}>
-          <label>
-            <span>标题</span>
-            <input aria-label="详情内标题" defaultValue={item.case.title} name="title" required />
-          </label>
-          <label>
-            <span>Input</span>
-            <textarea
-              aria-label="详情内 input"
-              defaultValue={item.case_version.input_artifact.content_text ?? ""}
-              name="input_text"
-              required
-            />
-          </label>
-          <label>
-            <span>Expected output</span>
-            <textarea
-              aria-label="详情内 expected output"
-              defaultValue={item.case_version.expected_output_artifact.content_text ?? ""}
-              name="expected_output"
-              required
-            />
-          </label>
-          <label>
-            <span>Notes</span>
-            <textarea aria-label="详情内 notes" defaultValue={item.case_version.notes ?? ""} name="notes" />
-          </label>
+          <TextField aria-label="详情内标题" defaultValue={item.case.title} label="标题" name="title" required />
+          <TextAreaField
+            aria-label="详情内 input"
+            defaultValue={item.case_version.input_artifact.content_text ?? ""}
+            label="Input"
+            name="input_text"
+            required
+          />
+          <TextAreaField
+            aria-label="详情内 expected output"
+            defaultValue={item.case_version.expected_output_artifact.content_text ?? ""}
+            label="Expected output"
+            name="expected_output"
+            required
+          />
+          <TextAreaField aria-label="详情内 notes" defaultValue={item.case_version.notes ?? ""} label="Notes" name="notes" />
           <button disabled={busy} type="submit">保存为新版本</button>
         </form>
       </div>

@@ -1,0 +1,37 @@
+{
+  "id": "048",
+  "title": "表单字段基础件第二阶段",
+  "status": "completed",
+  "goal": "把剩余工作台表单和筛选控件迁移到共享字段基础件，统一 label、hint、error、autocomplete 和 focus 行为。",
+  "scope": [
+    "扩展 WorkbenchField 支持字段级 error 和 CheckboxField",
+    "迁移 QuickAddCases 单条/批量 case 输入",
+    "迁移 EvalCaseDetailPanel 内联编辑字段",
+    "迁移 SkillSettingsPanel、SkillAccessPanel 和 SkillGovernancePanel 字段",
+    "抽出 HistoryRunFiltersBar，迁移 history filters",
+    "迁移 SavedRunViews、RunMatrixPanel controls 和 WorkbenchDiffPane selectors",
+    "新增 Playwright E2E 覆盖剩余表单共享字段语义和 explicit autocomplete",
+    "更新 README、产品体验评审、完成度审计、摩擦审计、任务日志和本任务规格/计划"
+  ],
+  "out_of_scope": [
+    "错误 summary",
+    "后端验证模型改造",
+    "整体视觉换肤",
+    "命令菜单搜索框、catalog 搜索框、promotion decision note 和 local session actor 字段迁移",
+    "真实认证和组织级权限"
+  ],
+  "verification": [
+    "Red: cd apps/web && UV_CACHE_DIR=/Users/xx/Documents/code/skills-manager/.uv-cache npx playwright test e2e/accessibility-workbench.spec.ts --project=chromium -g \"secondary workbench forms use shared field semantics\" -> failed as expected because quick_title had no autocomplete/shared field shell",
+    "Green: cd apps/web && UV_CACHE_DIR=/Users/xx/Documents/code/skills-manager/.uv-cache npx playwright test e2e/accessibility-workbench.spec.ts --project=chromium -g \"secondary workbench forms use shared field semantics\" -> 1 passed",
+    "cd apps/web && UV_CACHE_DIR=/Users/xx/Documents/code/skills-manager/.uv-cache npx playwright test e2e/accessibility-workbench.spec.ts --project=chromium -> 11 passed",
+    "cd apps/web && npm run typecheck -> passed",
+    "cd apps/web && npm run test:unit -> 1 file / 6 tests passed",
+    "cd apps/web && npm run build -> passed",
+    "cd apps/web && npm audit --omit=dev -> found 0 vulnerabilities",
+    "cd apps/api && uv run pytest -> 90 passed",
+    "cd apps/web && UV_CACHE_DIR=/Users/xx/Documents/code/skills-manager/.uv-cache npm run e2e -> 59 passed",
+    "git diff --check -> passed",
+    "jq empty .agent/tasks.json .agent/tasks/TASK-048.json -> passed",
+    "wc -l apps/web/components/history/workbench-history-pane.tsx apps/web/components/history/history-run-filters-bar.tsx apps/web/components/forms/workbench-field.tsx -> 256 / 69 / 155"
+  ]
+}

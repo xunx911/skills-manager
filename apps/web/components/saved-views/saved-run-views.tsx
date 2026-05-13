@@ -1,5 +1,6 @@
 "use client";
 
+import { SelectField, TextField } from "@/components/forms/workbench-field";
 import type { SavedView } from "@/lib/types";
 
 export function SavedRunViews({
@@ -27,35 +28,32 @@ export function SavedRunViews({
 
   return (
     <section className="savedRunViews" aria-label="保存视图">
-      <label>
-        <span>Saved view</span>
-        <select
-          aria-label="Saved run view"
-          disabled={loading || busy}
-          onChange={(event) => {
-            const nextId = event.currentTarget.value;
-            onApply(views.find((view) => view.id === nextId) ?? null);
-          }}
-          value={selectedView?.id ?? "adhoc"}
-        >
-          <option value="adhoc">临时视图</option>
-          {views.map((view) => (
-            <option key={view.id} value={view.id}>
-              {view.name}
-            </option>
-          ))}
-        </select>
-      </label>
-      <label className="savedRunViewName">
-        <span>保存为</span>
-        <input
-          aria-label="保存视图名称"
-          disabled={busy}
-          onChange={(event) => onNameChange(event.currentTarget.value)}
-          placeholder="候选 v2 / Primary v3"
-          value={name}
-        />
-      </label>
+      <SelectField
+        aria-label="Saved run view"
+        disabled={loading || busy}
+        label="Saved view"
+        onChange={(event) => {
+          const nextId = event.currentTarget.value;
+          onApply(views.find((view) => view.id === nextId) ?? null);
+        }}
+        value={selectedView?.id ?? "adhoc"}
+      >
+        <option value="adhoc">临时视图</option>
+        {views.map((view) => (
+          <option key={view.id} value={view.id}>
+            {view.name}
+          </option>
+        ))}
+      </SelectField>
+      <TextField
+        aria-label="保存视图名称"
+        className="savedRunViewName"
+        disabled={busy}
+        label="保存为"
+        onChange={(event) => onNameChange(event.currentTarget.value)}
+        placeholder="候选 v2 / Primary v3"
+        value={name}
+      />
       <button disabled={busy || name.trim().length === 0} onClick={onSave} type="button">
         保存当前视图
       </button>

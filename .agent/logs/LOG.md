@@ -10,6 +10,15 @@
 
 ## Session Log
 
+### 2026-05-14 03:25 CST - TASK-048 表单字段基础件第二阶段
+
+- 新增 `docs/superpowers/specs/2026-05-14-form-field-foundation-stage-2-design.md` 和执行计划，记录 Vercel、GOV.UK、USWDS、Material 表单实践对 SkillHub 的适配方案。
+- `WorkbenchField` 系列新增字段级 `error`、`aria-invalid`、错误文案 `aria-describedby` 绑定，以及 `CheckboxField`，为后续统一错误展示留接口。
+- 迁移 `QuickAddCases`、`EvalCaseDetailPanel`、`SkillSettingsPanel`、`SkillAccessPanel`、`SkillGovernancePanel`、`SavedRunViews`、`RunMatrixPanel` 和 `WorkbenchDiffPane` 的剩余表单/筛选控件；业务 text/textarea 字段继续默认 `autocomplete="off"`。
+- 抽出 `HistoryRunFiltersBar`，让 `WorkbenchHistoryPane` 从 300 行降到 256 行，避免 history 主 pane 继续膨胀。
+- 新增 E2E 红绿覆盖剩余表单共享字段语义和 explicit autocomplete；更新 README、产品体验评审、完成度审计、摩擦审计和 TASK-048 任务记录。
+- 已验证：红灯 E2E 先失败于 `quick_title` 缺少 autocomplete/shared field shell；绿色后目标 E2E 1 passed；`accessibility-workbench.spec.ts` 11 passed；`npm run typecheck` passed；`npm run test:unit` 1 file/6 tests passed；`npm run build` passed；`npm audit --omit=dev` found 0 vulnerabilities；`uv run pytest` 90 passed；`npm run e2e` 59 passed；`git diff --check` passed；任务 JSON 结构检查 passed；关键文件行数 256/69/155。
+
 ### 2026-05-14 02:43 CST - TASK-047 URL State 第二阶段
 
 - 新增 `docs/superpowers/specs/2026-05-14-url-state-second-stage-design.md` 和执行计划，记录 Vercel URL-as-state、Next.js search params 和 MDN History API 对 SkillHub 的适配方案。

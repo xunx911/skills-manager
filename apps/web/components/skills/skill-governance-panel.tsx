@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import { TextField } from "@/components/forms/workbench-field";
 import { auditPayloadSummary, formatAuditDate } from "@/components/skills/audit-event-format";
 import type { AuditEvent, RoleAssignment, SkillDetail } from "@/lib/types";
 
@@ -57,15 +58,13 @@ export function SkillGovernancePanel({ busy, onArchiveSkill, onOpenAudit, select
           <strong>归档 skill</strong>
           <p>归档后它会从 catalog 中隐藏；历史版本、测评记录和审计事件不会被删除。</p>
         </div>
-        <label>
-          <span>确认 Skill ID</span>
-          <input
-            aria-label="确认 Skill ID"
-            onChange={(event) => setConfirmation(event.target.value)}
-            placeholder={skill.slug}
-            value={confirmation}
-          />
-        </label>
+        <TextField
+          aria-label="确认 Skill ID"
+          label="确认 Skill ID"
+          onChange={(event) => setConfirmation(event.target.value)}
+          placeholder={skill.slug}
+          value={confirmation}
+        />
         <button className="dangerButton" disabled={busy || !canArchive} onClick={onArchiveSkill} type="button">
           归档 skill
         </button>

@@ -2,6 +2,7 @@
 
 import { Metric } from "@/components/workbench-metric";
 import { bundleDiffReviewKey, useFileReviewProgress } from "@/components/diff/use-file-review-progress";
+import { SelectField } from "@/components/forms/workbench-field";
 import { formatBytes } from "@/lib/format";
 import type { BundleDiff, BundleDiffFile, BundleDiffStatus, VariantDetail, VariantVersion } from "@/lib/types";
 
@@ -64,32 +65,28 @@ export function WorkbenchDiffPane({
           <p>{variant.label} · {diff ? `v${diff.left.version_number} -> v${diff.right.version_number}` : "选择两个版本后加载 diff"}</p>
         </div>
         <div className="diffSelectors">
-          <label>
-            <span>From</span>
-            <select
-              onChange={(event) => updatePairFromSelect(event.currentTarget.value, rightVersionId, onPairChange)}
-              value={leftVersionId ?? ""}
-            >
-              {versions.map((version) => (
-                <option disabled={version.id === rightVersionId} key={version.id} value={version.id}>
-                  v{version.version_number}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            <span>To</span>
-            <select
-              onChange={(event) => updatePairFromSelect(leftVersionId, event.currentTarget.value, onPairChange)}
-              value={rightVersionId ?? ""}
-            >
-              {versions.map((version) => (
-                <option disabled={version.id === leftVersionId} key={version.id} value={version.id}>
-                  v{version.version_number}
-                </option>
-              ))}
-            </select>
-          </label>
+          <SelectField
+            label="From"
+            onChange={(event) => updatePairFromSelect(event.currentTarget.value, rightVersionId, onPairChange)}
+            value={leftVersionId ?? ""}
+          >
+            {versions.map((version) => (
+              <option disabled={version.id === rightVersionId} key={version.id} value={version.id}>
+                v{version.version_number}
+              </option>
+            ))}
+          </SelectField>
+          <SelectField
+            label="To"
+            onChange={(event) => updatePairFromSelect(leftVersionId, event.currentTarget.value, onPairChange)}
+            value={rightVersionId ?? ""}
+          >
+            {versions.map((version) => (
+              <option disabled={version.id === leftVersionId} key={version.id} value={version.id}>
+                v{version.version_number}
+              </option>
+            ))}
+          </SelectField>
           <button
             disabled={!canReviewRight}
             onClick={() => {
