@@ -187,5 +187,12 @@
     "priority": 27,
     "passes": true,
     "spec": ".agent/tasks/TASK-027.json"
+  },
+  {
+    "id": "028",
+    "title": "补齐 Inspector Action 焦点交接",
+    "priority": 28,
+    "passes": true,
+    "spec": ".agent/tasks/TASK-028.json"
   }
 ]

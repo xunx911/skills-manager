@@ -7,6 +7,7 @@
 - `/skills` 是一个正式的三栏工作台：左侧 catalog、中间 focused workspace、右侧 contextual inspector。它借鉴 Linear 的“选中对象 + 上下文操作”模型，避免把所有表单堆在一个页面里。
 - 空工作台现在在主内容区展示 `SkillLaunchpad`，用户可以直接导入标准 Skill bundle 或创建空白 skill，不需要先理解右侧 inspector。
 - 工作台支持 `Cmd/Ctrl+K` 上下文命令菜单，用户可以搜索并执行导入、创建、测评、历史、差异等高频动作；可见的 `Cmd K` 按钮也能打开同一个入口。命令菜单现在按 `dialog + combobox + listbox` 建模，搜索框保留焦点，方向键移动 active option，Tab 在弹层内循环。
+- 从 catalog button 或命令菜单触发 `导入 bundle`、`新建 skill`、`添加 case` 等 Inspector action 后，焦点会进入对应表单的第一个可操作控件，键盘用户不用从旧触发点一路 Tab 到右侧面板。
 - 用户可以创建 skill、导入标准 Skill 文件夹或 zip、创建 variant、追加 bundle version、添加/编辑/归档 eval case，并记录手工通过/不通过测评。
 - `概览` 页现在提供 `身份与默认分发` 设置面板，用户可以直接修改 skill ID、归属，并选择默认分发 variant。
 - `概览` 页现在提供 `访问控制` 面板，用户可以查看 skill 作用域角色，并添加或移除 owner/maintainer/evaluator/viewer。
@@ -58,6 +59,7 @@
 - **本地开发 session 面板:** 参考很多开发者工具把环境身份、workspace 或 account switcher 放在固定侧栏的做法。SkillHub 适配为 inspector 顶部的 `Local session`，让用户明确“接下来写入和审计会以谁的身份发生”，同时把真实认证留给下一阶段。
 - **W3C WCAG / Vercel Web Interface Guidelines:** WCAG 强调可见焦点、焦点外观和 reduced-motion；Vercel guidelines 强调 skip link、`:focus-visible`、`aria-live` 和 icon/button label。SkillHub 适配为可测试的键盘和读屏护栏，而不是只写文档承诺。
 - **WAI-ARIA APG Combobox / Dialog:** APG 对 editable combobox 的建议是把 DOM focus 留在输入框，并用 `aria-activedescendant` 报告当前 option；modal dialog 要求 Tab 不离开弹层、Escape 可关闭、关闭后焦点回到触发点。SkillHub 适配为命令菜单搜索框控制 listbox，option 不进入 Tab 序列，关闭按钮提供明确出口。
+- **WCAG Focus Order:** WCAG 2.4.3 要求顺序导航保留意义和可操作性。SkillHub 适配为 Inspector action 的焦点交接：用户请求某个右侧表单时，焦点进入该表单，而不是停在左侧或命令菜单的旧位置。
 - **GitHub Command Palette:** 命令菜单兼具导航、搜索和运行命令能力；SkillHub 借鉴其 scope 思路，把菜单限定在当前 skill 工作区，避免全局搜索过早膨胀。
 - **TestRail quick outline:** 测试用例管理工具会区分完整表单和快速 outline。SkillHub 借鉴“快速进入测试集”的速度，但不允许只填标题，仍要求 `input + expected output`，保证测评资产质量。
 - **TestRail Pass & Next / bulk result:** TestRail 在三栏执行视图里提供快速通过并进入下一条，也支持批量提交相同结果。SkillHub 适配为“通过/不通过后自动前进”和“仅把未确认项标为通过”，避免覆盖已发现的失败。
@@ -117,7 +119,8 @@
 24. 以前归档 skill 是 inspector 里的普通按钮，缺少权限和确认语义；现在归档需要 owner 权限、输入当前 skill ID，并写入 `skill.archived` audit event。
 25. 以前治理面板只能看最近几条 skill 级事件；现在 `审计 Explorer` 能读取当前 skill 关联的 skill、variant、eval_run 事件，并按 actor、action、resource type 过滤后检查 payload。
 26. 以前切换本地 actor 只能改代码里的常量或请求 header；现在可以在页面右侧直接切换本地 session actor，并通过 E2E 验证新导入 skill 的 owner 来自该 session。
-27. 以前键盘和读屏只有零散 smoke；现在有独立 accessibility E2E，覆盖 skip link、focus indicator、reduced-motion、status notice、命令菜单的 combobox/listbox 关系、Tab trap 和关闭回焦点，以及 Run matrix 的 table/header/cell 语义。
+27. 以前键盘和读屏只有零散 smoke；现在有独立 accessibility E2E，覆盖 skip link、focus indicator、reduced-motion、status notice、命令菜单的 combobox/listbox 关系、Tab trap 和关闭回焦点、Run matrix 的 table/header/cell 语义，以及 Inspector action 的焦点交接。
+28. 以前从左侧或命令菜单触发右侧表单后，键盘用户仍停在旧触发点；现在 action 切换会把焦点送到对应表单的第一个字段。
 
 ## 仍然存在的摩擦
 
@@ -126,11 +129,11 @@
 3. Run matrix 已经提供 read-only 多 run x case 浏览、保存筛选视图、对照/候选 impact、impact 过滤和分组，但还没有列配置、自定义指标列、导出或保存对照/候选 run 指针。
 4. 权限还没有真实认证来源。当前 actor 已从请求体和前端硬编码 header 收敛到后端签名的本地 cookie session，但仍不是多用户登录、token rotation 或组织级身份系统。
 5. Zip import 预览仍然依赖后端校验；folder import 的浏览器侧预览更丰富。
-6. Accessibility 仍未完整覆盖全路径。现在已有 skip link、focus ring、reduced-motion、status notice、command menu combobox/listbox 和 Run matrix 表格语义回归，但完整 focus order 和人工读屏验收还需要继续补。
+6. Accessibility 仍未完整覆盖全路径。现在已有 skip link、focus ring、reduced-motion、status notice、command menu combobox/listbox、Run matrix 表格语义和 Inspector action focus handoff 回归，但更广的全路径焦点巡检和人工读屏验收还需要继续补。
 
 ## 下一轮优化队列
 
 1. 扩展审计能力：当前已支持 skill-scoped filter 和 payload inspect，后续可做跨 skill/组织级查询、导出、保留策略和 webhook。
 2. 做 run matrix 多维表格：支持列配置、自定义指标列、导出，并考虑是否保存对照/候选 run 指针。
 3. 接入真实认证：用真正的登录 session/token 替换本地 actor cookie，前端只展示 capability，不再允许自由切换开发身份。
-4. 扩展 accessibility E2E：继续覆盖完整焦点顺序和人工读屏验收。
+4. 扩展 accessibility E2E：继续覆盖更广的全路径焦点巡检和人工读屏验收。

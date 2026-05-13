@@ -26,10 +26,12 @@ export async function importSkillBundle(page: Page, skillName: string) {
     await page.goto("/skills");
     const inspector = page.getByLabel("Inspector");
     await inspector.getByRole("button", { name: "导入 bundle", exact: true }).click();
+    const form = inspector.locator(".inspectorForm");
+    await expect(form.locator('input[name="owner_ref"]')).toBeFocused();
 
-    await inspector.getByPlaceholder("skillhub-lab").fill("skillhub-e2e");
-    await inspector.getByPlaceholder("codex, gpt5.4").fill("codex, e2e");
-    await inspector.locator('input[name="folder_files"]').setInputFiles(bundleDir);
+    await form.locator('input[name="owner_ref"]').fill("skillhub-e2e");
+    await form.locator('input[name="tags"]').fill("codex, e2e");
+    await form.locator('input[name="folder_files"]').setInputFiles(bundleDir);
     await expect(inspector.getByText(skillName)).toBeVisible();
     await inspector.getByRole("button", { name: "导入并创建 skill" }).click();
 
@@ -43,11 +45,13 @@ export async function importSkillBundle(page: Page, skillName: string) {
 export async function addEvalCase(page: Page, title: string) {
   await page.getByRole("button", { name: "测评", exact: true }).click();
   await page.getByRole("button", { name: "添加 case" }).click();
-  await page.getByPlaceholder("PR: 缺少 owner 校验").fill(title);
-  await page.getByPlaceholder("输入：代码 diff、上下文、用户请求...").fill("diff --git a/api.py b/api.py\n+return db.query(Project).all()");
-  await page.getByPlaceholder("期望输出：应该指出什么、避免什么...").fill("Must flag missing owner_id filter as a P1 issue.");
-  await page.getByPlaceholder("来源、bad case、维护说明").fill("Regression from customer review.");
-  await page.getByRole("button", { name: "加入评测集", exact: true }).click();
+  const form = page.getByLabel("Inspector").locator(".inspectorForm");
+  await expect(form.locator('input[name="title"]')).toBeFocused();
+  await form.locator('input[name="title"]').fill(title);
+  await form.locator('textarea[name="input_text"]').fill("diff --git a/api.py b/api.py\n+return db.query(Project).all()");
+  await form.locator('textarea[name="expected_output"]').fill("Must flag missing owner_id filter as a P1 issue.");
+  await form.locator('textarea[name="notes"]').fill("Regression from customer review.");
+  await form.getByRole("button", { name: "加入评测集", exact: true }).click();
 
   await expect(page.locator(".caseReviewCard").filter({ hasText: title })).toBeVisible();
 }

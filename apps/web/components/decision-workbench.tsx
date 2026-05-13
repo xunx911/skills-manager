@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 
 import { passRate } from "@/lib/api";
 import { emptySkillDetail } from "@/lib/empty-state";
@@ -67,6 +67,7 @@ type ActionMode =
   | "edit-case"
   | "run";
 type Notice = { tone: "good" | "bad" | "neutral"; message: string } | null;
+type ActionFocusOptions = { focusInspector?: boolean };
 type ImportSkillResponse = { skill_id: string; slug: string; file_count: number };
 type SessionResponse = { actor: string; subject_type: string };
 type ImportPreview = {
@@ -123,6 +124,7 @@ export function DecisionWorkbench({ skills: initialSkills, featuredSkill }: Deci
   const [caseResults, setCaseResults] = useState<Record<string, boolean | null>>({});
   const [mode, setMode] = useState<Mode>("overview");
   const [actionMode, setActionMode] = useState<ActionMode>(initialSkills.length > 0 ? "skill" : "import-skill");
+  const [inspectorFocusRequest, setInspectorFocusRequest] = useState(0);
   const [catalogQuery, setCatalogQuery] = useState("");
   const [selectedCaseId, setSelectedCaseId] = useState<string | null>(null);
   const [importPreview, setImportPreview] = useState<ImportPreview>(null);
@@ -348,8 +350,11 @@ export function DecisionWorkbench({ skills: initialSkills, featuredSkill }: Deci
     if (compareCandidateRunId && !visibleRunIds.has(compareCandidateRunId)) setCompareCandidateRunId(null);
   }, [compareBaselineRunId, compareCandidateRunId, runHistory]);
 
-  function chooseAction(nextActionMode: ActionMode) {
+  function chooseAction(nextActionMode: ActionMode, options: ActionFocusOptions = {}) {
     setActionMode(nextActionMode);
+    if (options.focusInspector !== false) {
+      setInspectorFocusRequest((current) => current + 1);
+    }
     if (nextActionMode === "new-case" || nextActionMode === "edit-case" || nextActionMode === "run") {
       setMode("evals");
     }
@@ -379,7 +384,7 @@ export function DecisionWorkbench({ skills: initialSkills, featuredSkill }: Deci
       setAuditEvents([]);
       setEvalSetDetail(null);
       setCaseResults({});
-      chooseAction("import-skill");
+      chooseAction("import-skill", { focusInspector: false });
       return;
     }
     const nextId = nextSkills.some((item) => item.skill.id === nextSelectedId)
@@ -780,7 +785,7 @@ export function DecisionWorkbench({ skills: initialSkills, featuredSkill }: Deci
         },
       });
       setCatalogQuery("");
-      chooseAction("skill");
+      chooseAction("skill", { focusInspector: false });
       formElement.reset();
       return { selectedSkillId: result.skill_id };
     });
@@ -814,7 +819,7 @@ export function DecisionWorkbench({ skills: initialSkills, featuredSkill }: Deci
         },
       });
       setCatalogQuery("");
-      chooseAction("skill");
+      chooseAction("skill", { focusInspector: false });
       setImportPreview(null);
       formElement.reset();
       return {
@@ -1146,7 +1151,7 @@ export function DecisionWorkbench({ skills: initialSkills, featuredSkill }: Deci
                 key={summary.skill.id}
                 onClick={() => {
                   setSelectedSkillId(summary.skill.id);
-                  chooseAction("skill");
+                  chooseAction("skill", { focusInspector: false });
                   setSelectedCaseId(null);
                 }}
                 type="button"
@@ -1382,6 +1387,7 @@ export function DecisionWorkbench({ skills: initialSkills, featuredSkill }: Deci
           updateCase={updateCase}
           updateSkill={updateSkill}
           actor={actor}
+          actionFocusRequest={inspectorFocusRequest}
           switchActor={switchActor}
         />
       </aside>
@@ -2363,6 +2369,7 @@ function isTextEntryTarget(target: EventTarget | null) {
 
 function Inspector({
   actionMode,
+  actionFocusRequest,
   actor,
   busy,
   cases,
@@ -2391,6 +2398,7 @@ function Inspector({
   updateSkill,
 }: {
   actionMode: ActionMode;
+  actionFocusRequest: number;
   actor: string;
   busy: boolean;
   cases: EvalSetVersionDetail["cases"];
@@ -2418,8 +2426,23 @@ function Inspector({
   updateCase: (event: FormEvent<HTMLFormElement>) => void;
   updateSkill: (event: FormEvent<HTMLFormElement>) => void;
 }) {
+  const stackRef = useRef<HTMLDivElement>(null);
+  const lastFocusRequestRef = useRef(0);
+
+  useEffect(() => {
+    if (!actionFocusRequest || lastFocusRequestRef.current === actionFocusRequest) return;
+    lastFocusRequestRef.current = actionFocusRequest;
+    const panel = stackRef.current?.querySelector<HTMLElement>(".inspectorForm");
+    const target = panel?.querySelector<HTMLElement>(
+      'input:not([type="hidden"]):not([disabled]), textarea:not([disabled]), select:not([disabled]), button:not([disabled]), a[href]',
+    );
+    if (!target) return;
+    const frame = window.requestAnimationFrame(() => target.focus());
+    return () => window.cancelAnimationFrame(frame);
+  }, [actionFocusRequest, actionMode]);
+
   return (
-    <div className="inspectorStack">
+    <div className="inspectorStack" ref={stackRef}>
       <section className="inspectorCard inspectorEvidence">
         <div className="inspectorTitle">
           <span>Verification</span>

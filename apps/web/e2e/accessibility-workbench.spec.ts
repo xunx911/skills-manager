@@ -1,5 +1,7 @@
 import { expect, test, type Locator } from "@playwright/test";
 
+import { importSkillBundle } from "./helpers";
+
 test("keyboard users can skip chrome and move focus to main content", async ({ page }) => {
   await page.goto("/skills");
 
@@ -85,6 +87,24 @@ test("command menu traps tab focus and restores focus on close", async ({ page }
   await page.keyboard.press("Escape");
   await expect(page.getByRole("dialog", { name: "Command menu" })).toHaveCount(0);
   await expect(trigger).toBeFocused();
+});
+
+test("catalog action moves focus into the inspector form", async ({ page }) => {
+  await page.goto("/skills");
+
+  await page.getByLabel("Skill catalog").getByRole("button", { name: "导入", exact: true }).click();
+
+  await expect(page.getByLabel("Inspector").locator('input[name="owner_ref"]')).toBeFocused();
+});
+
+test("command menu action moves focus into the inspector form", async ({ page }) => {
+  await importSkillBundle(page, `focus-handoff-${Date.now()}`);
+
+  await page.keyboard.press(process.platform === "darwin" ? "Meta+K" : "Control+K");
+  await page.getByRole("combobox", { name: "Search" }).fill("添加 case");
+  await page.keyboard.press("Enter");
+
+  await expect(page.getByLabel("Inspector").locator('input[name="title"]')).toBeFocused();
 });
 
 async function maxTransitionDurationMs(locator: Locator) {

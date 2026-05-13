@@ -10,6 +10,14 @@
 
 ## Session Log
 
+### 2026-05-14 00:18 CST - TASK-028 Inspector Action 焦点交接
+
+- 在 `DecisionWorkbench` 中增加 `inspectorFocusRequest`，用户触发 action 时请求一次 Inspector 表单焦点交接；初始空数据加载和普通 skill 切换不会抢焦点。
+- `Inspector` 在 action 表单渲染后聚焦当前 `.inspectorForm` 的第一个可操作控件，不使用正 `tabindex`，不重排全局 Tab 顺序。
+- 新增 accessibility E2E 覆盖 catalog `导入` 和 command menu `添加 case` 两条路径，证明动态右侧表单获得焦点。
+- 更新 README、UX 复盘和产品完成度审计，明确 Inspector action focus handoff 已闭环，剩余 accessibility 深水区集中在更广的全路径焦点巡检和人工读屏验收。
+- 已验证：`uv run pytest` 90 passed；`npm run typecheck` passed；`npm run build` passed；`npm run e2e` 49 passed；`git diff --check` passed。
+
 ### 2026-05-13 23:58 CST - TASK-027 Run Matrix 表格语义
 
 - 将 `RunMatrixPanel` 明确为命名原生 table：新增隐藏 caption、description、`aria-rowcount` / `aria-colcount`、列/行 header scope 和 row/col index。

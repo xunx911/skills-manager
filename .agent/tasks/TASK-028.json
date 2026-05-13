@@ -1,0 +1,26 @@
+{
+  "id": "028",
+  "title": "补齐 Inspector Action 焦点交接",
+  "status": "complete",
+  "goal": "让键盘用户触发导入、新建、添加 case 等 Inspector action 后，焦点进入对应表单，而不是停在旧触发按钮或丢到 body。",
+  "scope": [
+    "用户触发 action 后，焦点移动到当前 Inspector 表单的第一个可操作控件",
+    "初始页面加载和普通 skill 切换不抢焦点",
+    "Command menu 触发 Inspector action 后也能完成焦点交接",
+    "新增 Playwright 回归覆盖 catalog button 和 command menu 两条路径",
+    "更新中文 README、UX 复盘和完成度审计"
+  ],
+  "out_of_scope": [
+    "完整人工读屏验收",
+    "真实认证",
+    "Inspector 布局重构",
+    "正 tabindex 或自定义全局 Tab 顺序"
+  ],
+  "verification": [
+    "cd apps/api && uv run pytest -> 90 passed",
+    "cd apps/web && npm run typecheck -> passed",
+    "cd apps/web && npm run build -> passed",
+    "cd apps/web && UV_CACHE_DIR=/Users/xx/Documents/code/skills-manager/.uv-cache npm run e2e -> 49 passed",
+    "git diff --check -> passed"
+  ]
+}
