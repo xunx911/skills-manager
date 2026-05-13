@@ -1096,9 +1096,14 @@ export function DecisionWorkbench({ skills: initialSkills, featuredSkill }: Deci
   ];
   if (mode === "audit") workbenchTabs.push({ label: "审计", mode: "audit" });
   if (mode === "promotion" || promotionReview) workbenchTabs.push({ label: "评审", mode: "promotion" });
+  const inspectorLayout = mode === "diff" || mode === "history" || mode === "audit" || mode === "promotion" ? "compact" : "full";
 
   return (
-    <div className="linearWorkbench" data-first-run={hasPersistedSkill ? undefined : "true"}>
+    <div
+      className="linearWorkbench"
+      data-first-run={hasPersistedSkill ? undefined : "true"}
+      data-inspector-layout={inspectorLayout}
+    >
       <CommandMenu commands={commandItems} scopeLabel={selectedDetail.skill.slug} />
       <SkillCatalog
         catalogQuery={catalogQuery}

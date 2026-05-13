@@ -2774,6 +2774,49 @@ h2 {
   font-weight: 900;
 }
 
+@media (min-width: 1041px) and (max-width: 1440px) {
+  .linearWorkbench[data-inspector-layout="compact"] {
+    grid-template-columns: 292px minmax(0, 1fr) 96px;
+  }
+
+  .linearWorkbench[data-inspector-layout="compact"] .linearInspector {
+    padding: 10px;
+  }
+
+  .linearWorkbench[data-inspector-layout="compact"] .inspectorStack {
+    gap: 0;
+  }
+
+  .linearWorkbench[data-inspector-layout="compact"] .localSessionPanel,
+  .linearWorkbench[data-inspector-layout="compact"] .actionMenu,
+  .linearWorkbench[data-inspector-layout="compact"] .inspectorForm {
+    display: none;
+  }
+
+  .linearWorkbench[data-inspector-layout="compact"] .inspectorEvidence {
+    justify-items: center;
+    gap: 8px;
+    border-radius: 14px;
+    padding: 12px 8px;
+    text-align: center;
+  }
+
+  .linearWorkbench[data-inspector-layout="compact"] .inspectorEvidence strong {
+    font-size: 22px;
+    line-height: 1.05;
+  }
+
+  .linearWorkbench[data-inspector-layout="compact"] .inspectorTitle {
+    justify-content: center;
+  }
+
+  .linearWorkbench[data-inspector-layout="compact"] .inspectorTitle span,
+  .linearWorkbench[data-inspector-layout="compact"] .inspectorEvidence small,
+  .linearWorkbench[data-inspector-layout="compact"] .bindingList {
+    display: none;
+  }
+}
+
 @media (max-width: 1040px) {
   .shell {
     grid-template-columns: 1fr;

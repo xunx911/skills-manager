@@ -278,5 +278,12 @@
     "priority": 40,
     "passes": true,
     "spec": ".agent/tasks/TASK-040.json"
+  },
+  {
+    "id": "041",
+    "title": "证据视图 Inspector 响应式折叠",
+    "priority": 41,
+    "passes": true,
+    "spec": ".agent/tasks/TASK-041.json"
   }
 ]

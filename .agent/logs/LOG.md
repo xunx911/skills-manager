@@ -10,6 +10,14 @@
 
 ## Session Log
 
+### 2026-05-14 01:18 CST - TASK-041 证据视图 Inspector 响应式折叠
+
+- 新增 `apps/web/e2e/responsive-inspector.spec.ts`，用红绿测试覆盖 1280px 下 overview 保持完整 inspector，而 history 证据视图收成 compact verification rail。
+- `DecisionWorkbench` 增加 `data-inspector-layout="full|compact"`；`diff/history/audit/promotion` 在 1041-1440px 下使用 `292px / 1fr / 96px` 布局，隐藏 inspector 低频 action，只保留验证状态。
+- 更新 promotion review、run comparison、audit explorer 三张视觉基线，并人工查看确认主证据区放宽、不空白、不重叠。
+- 更新 README、产品体验评审、完成度审计和 TASK-041 规格/计划；下一轮优先级前移到 URL state 深链。
+- 已验证：红灯测试先失败于 history inspector width 336.734375；绿色后 `responsive-inspector.spec.ts` 1 passed；`npm run test:unit` 1 file/3 tests passed；`npm run typecheck` passed；`npm run build` passed；`npm audit --omit=dev` found 0 vulnerabilities；`uv run pytest` 90 passed；`npm run e2e` 52 passed；`git diff --check` passed。
+
 ### 2026-05-14 01:09 CST - TASK-040 移动端 First-Run Inspector 去重
 
 - 新增 `apps/web/e2e/mobile-first-run.spec.ts`，用红绿测试覆盖移动端空工作台默认折叠 inspector action 区，并验证 catalog 显式触发后表单展开且焦点进入 `owner_ref`。
