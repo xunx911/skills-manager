@@ -450,7 +450,11 @@ class SqlSkillRepositoryTest(unittest.TestCase):
         with self.engine.connect() as connection:
             variant = connection.execute(select(variants).where(variants.c.id == skill.variant_id)).mappings().one()
             decision_row = connection.execute(select(promotion_decisions)).mappings().one()
-            audit_row = connection.execute(select(audit_events)).mappings().one()
+            audit_row = (
+                connection.execute(select(audit_events).where(audit_events.c.action == "variant.promoted"))
+                .mappings()
+                .one()
+            )
 
         self.assertEqual(variant["current_version_id"], candidate.variant_version_id)
         self.assertEqual(decision["id"], decision_row["id"])
@@ -1057,7 +1061,13 @@ class SqlSkillRepositoryTest(unittest.TestCase):
 
         with self.engine.connect() as connection:
             accepted_row = connection.execute(select(accepted_verifications)).mappings().one()
-            audit_row = connection.execute(select(audit_events)).mappings().one()
+            audit_row = (
+                connection.execute(
+                    select(audit_events).where(audit_events.c.action == "eval_run.accepted_verification_set")
+                )
+                .mappings()
+                .one()
+            )
 
         self.assertEqual(accepted["eval_run_id"], run.eval_run_id)
         self.assertEqual(accepted_row["variant_id"], skill.variant_id)

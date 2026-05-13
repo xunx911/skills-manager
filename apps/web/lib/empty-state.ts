@@ -17,6 +17,7 @@ export const emptySkillDetail: SkillDetail = {
   eval_sets: [],
   latest_eval_runs: [],
   role_assignments: [],
+  audit_events: [],
 };
 
 emptySkillDetail.summary = {

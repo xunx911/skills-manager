@@ -1,0 +1,30 @@
+{
+  "id": "022",
+  "title": "实现 Skill 治理与审计面板",
+  "status": "complete",
+  "goal": "把归档、审计和治理状态迁入概览主区，让危险操作有 owner 权限、审计记录和 slug 确认。",
+  "scope": [
+    "archive skill 要求 owner 权限并写 skill.archived audit event",
+    "新增 skill audit events read model 和 API endpoint",
+    "Skill detail 返回最近 skill 级 audit events",
+    "概览页新增 SkillGovernancePanel，展示治理摘要、审计事件和危险区",
+    "归档 skill 需要输入当前 slug 才能执行",
+    "移除 inspector 中的普通归档按钮",
+    "新增 API、E2E 和视觉回归覆盖",
+    "更新中文 README、API contract、UX 复盘和完成度审计"
+  ],
+  "out_of_scope": [
+    "unarchive",
+    "全量 audit search/filter/export",
+    "组织级审计",
+    "SIEM webhook",
+    "跨资源 activity feed"
+  ],
+  "verification": [
+    "cd apps/api && uv run pytest",
+    "cd apps/web && npm run typecheck",
+    "cd apps/web && npm run build",
+    "cd apps/web && UV_CACHE_DIR=/Users/xx/Documents/code/skills-manager/.uv-cache npm run e2e",
+    "git diff --check"
+  ]
+}

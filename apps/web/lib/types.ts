@@ -22,6 +22,17 @@ export type SkillDetail = {
   eval_sets: EvalSetSummary[];
   latest_eval_runs: EvalRunRecord[];
   role_assignments: RoleAssignment[];
+  audit_events: AuditEvent[];
+};
+
+export type AuditEvent = {
+  id: string;
+  actor_ref: string;
+  action: string;
+  resource_type: string;
+  resource_id: string;
+  payload: JsonObject;
+  created_at?: string;
 };
 
 export type RoleAssignment = {

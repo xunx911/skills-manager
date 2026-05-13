@@ -215,6 +215,22 @@ class SqlSkillRepository:
                     actor=actor,
                     created_at=created_at,
                 )
+                connection.execute(
+                    insert(tables.audit_events).values(
+                        id=new_id("audit"),
+                        actor_ref=actor,
+                        action="role.assigned",
+                        resource_type="skill",
+                        resource_id=skill_id,
+                        payload={
+                            "subject_type": "user",
+                            "subject_id": actor,
+                            "role": "owner",
+                            "reason": "skill.creator",
+                        },
+                        created_at=created_at,
+                    )
+                )
         except IntegrityError as exc:
             raise InvariantError(f"Skill slug already exists: {slug}") from exc
 
@@ -474,14 +490,26 @@ class SqlSkillRepository:
             )
             return self._row_dict(self._skill_row(connection, skill_id))
 
-    def archive_skill(self, *, skill_id: str) -> None:
+    def archive_skill(self, *, skill_id: str, actor: str) -> None:
         updated_at = utc_now()
         with self.engine.begin() as connection:
             self._skill_row(connection, skill_id)
+            self._require_skill_permission(connection, skill_id=skill_id, actor=actor, permission="role.manage")
             connection.execute(
                 update(tables.skills)
                 .where(tables.skills.c.id == skill_id)
                 .values(lifecycle_status="archived", updated_at=updated_at)
+            )
+            connection.execute(
+                insert(tables.audit_events).values(
+                    id=new_id("audit"),
+                    actor_ref=actor,
+                    action="skill.archived",
+                    resource_type="skill",
+                    resource_id=skill_id,
+                    payload={"skill_id": skill_id},
+                    created_at=updated_at,
+                )
             )
 
     def create_text_artifact(self, *, kind: str, namespace: str, content: str, actor: str) -> dict[str, Any]:
@@ -966,6 +994,7 @@ class SqlSkillRepository:
 
             summary = self._skill_summary(connection, skill)
             role_assignments = self._skill_role_assignments(connection, skill_id)
+            audit_events = self._skill_audit_events(connection, skill_id, limit=10)
 
         return {
             "skill": self._row_dict(skill),
@@ -974,6 +1003,7 @@ class SqlSkillRepository:
             "eval_sets": eval_sets,
             "latest_eval_runs": latest_runs,
             "role_assignments": role_assignments,
+            "audit_events": audit_events,
         }
 
     def list_skill_role_assignments(self, *, skill_id: str) -> list[dict[str, Any]]:
@@ -1050,6 +1080,11 @@ class SqlSkillRepository:
                 )
             )
         return {"ok": True}
+
+    def list_skill_audit_events(self, *, skill_id: str, limit: int = 10) -> list[dict[str, Any]]:
+        with self.engine.connect() as connection:
+            self._skill_row(connection, skill_id)
+            return self._skill_audit_events(connection, skill_id, limit=limit)
 
     def eval_set_version_detail(self, eval_set_version_id: str) -> EvalSetVersionDetail:
         with self.engine.connect() as connection:
@@ -1851,6 +1886,20 @@ class SqlSkillRepository:
                 .where(tables.role_assignments.c.resource_type == "skill")
                 .where(tables.role_assignments.c.resource_id == skill_id)
                 .order_by(tables.role_assignments.c.role, tables.role_assignments.c.subject_id)
+            )
+            .mappings()
+            .all()
+        )
+        return [self._row_dict(row) for row in rows]
+
+    def _skill_audit_events(self, connection, skill_id: str, *, limit: int) -> list[dict[str, Any]]:
+        rows = (
+            connection.execute(
+                select(tables.audit_events)
+                .where(tables.audit_events.c.resource_type == "skill")
+                .where(tables.audit_events.c.resource_id == skill_id)
+                .order_by(desc(tables.audit_events.c.created_at), desc(tables.audit_events.c.id))
+                .limit(limit)
             )
             .mappings()
             .all()

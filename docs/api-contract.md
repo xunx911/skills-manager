@@ -14,6 +14,7 @@
 - `CaseResult` 是某个 case 在某次 run 中的最终 `pass/fail`。
 - `AcceptedVerification` 是验证指针，只指向一次不可变 `EvalRun`，用于说明当前 variant 在某个 eval set snapshot 上认可哪次测评。
 - `RoleAssignment` 是 skill 作用域授权，保护 promotion、accepted verification 和角色管理等高风险动作。
+- `AuditEvent` 是 append-only 治理事实，记录角色变更、发布决策和归档等动作。
 
 ## 对象字段
 
@@ -50,6 +51,21 @@
 | 管理 skill role assignment | `owner` |
 | `POST /api/variants/promotions` | `owner` 或 `maintainer` |
 | `POST /api/eval-runs/accepted-verifications` | `owner` 或 `maintainer` |
+| `DELETE /api/skills/{skill_id}` 归档 skill | `owner` |
+
+### AuditEvent
+
+`AuditEvent` 是不可变审计事实。产品详情页只读取最近事件，用于让用户理解 skill 的治理状态；完整审计检索、导出和组织级日志属于后续版本。
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `id` | string | 内部唯一 ID。 |
+| `actor_ref` | string | 操作者 actor。 |
+| `action` | string | 动作，例如 `role.assigned`、`role.revoked`、`skill.archived`、`variant.promoted`。 |
+| `resource_type` | string | 当前治理面板读取 `skill` 级事件。 |
+| `resource_id` | string | 所属 `Skill.id`。 |
+| `payload` | object | 动作上下文，例如 subject、role、reason 或 skill_id。 |
+| `created_at` | ISO datetime | 事件写入时间。 |
 
 ### Actor Context
 
@@ -191,7 +207,7 @@ MVP 约束：
 
 | 对象 | Create | Read | Update | Delete |
 | --- | --- | --- | --- | --- |
-| `Skill` | 需要 | 需要 | 可更新元数据和默认指针 | 不硬删，后续做 archive |
+| `Skill` | 需要 | 需要 | 可更新元数据和默认指针 | `owner` 可 archive，不硬删 |
 | `Variant` | 需要 | 需要 | 可更新元数据 | 不硬删，后续做 archive/deprecate |
 | `VariantVersion` | 需要 | 需要 | 不更新，append-only | 不硬删 |
 | `EvalCase` | 需要 | 需要 | 可更新标题、状态和当前版本指针 | 不硬删 |
@@ -224,6 +240,7 @@ MVP 约束：
 | `EvalRun` | `POST /api/eval-runs`、`POST /api/eval-result-imports` | `GET /api/eval-result`、`GET /api/variant-page` | finished 后不改事实 | 不允许硬删 | 已覆盖手工记录和外部导入 |
 | `CaseResult` | 随 `POST /api/eval-runs` 或 `POST /api/eval-result-imports` 创建 | `GET /api/eval-result` | 不允许原地更新 | 不允许硬删 | 已覆盖 pass/fail |
 | `AcceptedVerification` | `POST /api/eval-runs/accepted-verifications` | `GET /api/skills/{skill_id}/eval-runs`、`GET /api/eval-runs/compare` | 替换同一 `(variant, eval set version)` 指针 | 不硬删 | 已覆盖验证依据 |
+| `AuditEvent` | 由治理命令自动写入 | `GET /api/skills/{skill_id}/audit-events`、`GET /api/skills/{skill_id}` | 不允许原地更新 | 不允许硬删 | 已覆盖最近事件读取 |
 
 刻意不做完整 CRUD 的对象：
 
@@ -260,7 +277,7 @@ MVP 约束：
 - 每次 `POST` / `PATCH` 成功后：HTTP 层通过 Repository `mutate` 边界加载当前状态、执行业务变更、写回完整 `AppData`。
 - SQLite 写入方式：保存 `app_state` 快照，并刷新一份规范化关系表。
 - skill bundle 内容写入 `ArtifactStore`，Repository 状态只保留 artifact 元数据、hash 和 locator；旧 inline bundle 仍兼容读取。
-- SQLite 读路径：`GET /api/skills`、`GET /api/skill`、`GET /api/variant-page`、`GET /api/eval-set` 和 `GET /api/eval-result` 已经通过 SQL read model 返回。
+- SQLite 读路径：`GET /api/skills`、`GET /api/skills/{skill_id}`、`GET /api/skills/{skill_id}/audit-events`、`GET /api/variant-page`、`GET /api/eval-set` 和 `GET /api/eval-result` 已经通过 SQL read model 返回。
 - SQLite schema：`schema_meta` 记录当前 schema version，初始化流程已预留 migration hook。
 - JSON 写入方式：先写临时文件，再替换目标文件，避免半写入。
 
@@ -299,7 +316,7 @@ GET /api/skills
 ### Skill Detail
 
 ```http
-GET /api/skill?skill_id=skill-code-reviewer
+GET /api/skills/{skill_id}
 ```
 
 返回：
@@ -307,6 +324,8 @@ GET /api/skill?skill_id=skill-code-reviewer
 - `skill`
 - `variants`
 - `eval_set_version`
+- `role_assignments`
+- `audit_events`
 
 ### Create Skill
 
@@ -353,6 +372,20 @@ Content-Type: application/json
 - 更新 skill 元数据。
 - 如果提供 `default_variant_id`，必须指向同一个 skill 下的 variant。
 - 不创建新版本，因为入口指针不是内容快照。
+
+### Archive Skill
+
+```http
+DELETE /api/skills/{skill_id}
+X-SkillHub-Actor: product-operator
+```
+
+行为：
+
+- 调用者必须拥有该 skill 的 `owner` 角色。
+- 把 skill lifecycle 标记为 archived，不硬删历史版本、测评集、测评结果或审计事件。
+- 写入 `skill.archived` audit event。
+- archived skill 不再出现在 `GET /api/skills` 的 active hub 列表中。
 
 ### Variant Page
 
@@ -536,6 +569,30 @@ X-SkillHub-Actor: product-operator
 - 授予和撤销需要 `owner`。
 - 删除最后一个 `owner` 会被拒绝。
 - 重复授予同一个 `subject + skill + role` 会返回已有记录。
+
+### Skill Audit Events
+
+```http
+GET /api/skills/{skill_id}/audit-events?limit=10
+```
+
+返回最近 skill 级治理事件，按 `created_at desc, id desc` 排序：
+
+```json
+[
+  {
+    "id": "audit-abc",
+    "actor_ref": "product-operator",
+    "action": "skill.archived",
+    "resource_type": "skill",
+    "resource_id": "skill-code-reviewer",
+    "payload": { "skill_id": "skill-code-reviewer" },
+    "created_at": "2026-05-13T20:00:00Z"
+  }
+]
+```
+
+这个 endpoint 只读审计事实，不负责权限变更；角色授权和撤销仍通过 role assignment endpoint 完成。
 
 ### Promotion Review
 
@@ -835,4 +892,5 @@ Content-Type: application/json
 正式化前还需要补：
 
 - 持久化迁移：schema version、迁移脚本、SQL 化关键查询。
-- 权限模型：谁能创建 skill、发布版本、切默认入口。
+- 真实认证：把本地 `X-SkillHub-Actor` 替换成 session、JWT 或 OIDC token。
+- 更完整 capability：谁能创建 skill、发布版本、切默认入口仍需要从本地默认策略升级为可配置策略。

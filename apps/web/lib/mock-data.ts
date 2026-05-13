@@ -205,6 +205,17 @@ export const codeReviewerDetail: SkillDetail = {
       created_by: "system",
     },
   ],
+  audit_events: [
+    {
+      id: "audit-code-owner",
+      actor_ref: "product-operator",
+      action: "role.assigned",
+      resource_type: "skill",
+      resource_id: "skill-code-reviewer",
+      payload: { subject_id: "product-operator", role: "owner" },
+      created_at: now,
+    },
+  ],
 };
 
 codeReviewerDetail.variants[0].current_version = codeReviewerDetail.variants[0].versions[0];

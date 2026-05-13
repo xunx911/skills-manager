@@ -10,6 +10,14 @@
 
 ## Session Log
 
+### 2026-05-13 21:32 CST - TASK-022 Skill 治理与审计面板
+
+- 新增 skill 级 audit read model：`GET /api/skills/{skill_id}/audit-events`，并让 skill detail 返回最近 `audit_events`。
+- `DELETE /api/skills/{skill_id}` 改为读取请求级 actor，要求 skill `owner` 权限，成功归档后写入 `skill.archived` audit event。
+- 概览主区新增 `SkillGovernancePanel`，展示 lifecycle、角色态势、最近审计事件和需要输入当前 skill ID 的危险区；移除 inspector 中的普通归档按钮。
+- 新增 API、E2E、视觉基线覆盖，并更新 README、API contract、UX 复盘、产品完成度审计和 Superpowers 规格/计划。
+- 已验证：`uv run pytest` 87 passed；`npm run typecheck` passed；`npm run build` passed；`npm run e2e` 37 passed；`git diff --check` passed。
+
 ### 2026-05-13 21:15 CST - TASK-021 请求级 ActorContext
 
 - 新增 FastAPI `ActorContext` dependency，从 `X-SkillHub-Actor` 读取本地开发 actor，缺省为 `product-operator`。

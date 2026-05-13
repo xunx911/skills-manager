@@ -4633,6 +4633,168 @@ body {
   color: #ffffff;
 }
 
+.skillGovernancePanel {
+  display: grid;
+  gap: 14px;
+  border: 1px solid #dde4ed;
+  border-radius: 12px;
+  background:
+    linear-gradient(135deg, rgba(180, 35, 24, 0.035), transparent 46%),
+    #ffffff;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+  padding: 14px;
+}
+
+.skillGovernanceHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.skillGovernanceHeader span,
+.governanceMetric span,
+.dangerZone span {
+  color: #667085;
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.skillGovernanceHeader h3 {
+  margin: 3px 0 0;
+  color: #111827;
+  font-size: 20px;
+}
+
+.skillGovernanceHeader p {
+  max-width: 520px;
+  margin: 0;
+  color: #536176;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.governanceSummary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.governanceMetric {
+  display: grid;
+  gap: 5px;
+  border: 1px solid #e3e9f1;
+  border-radius: 10px;
+  background: #fbfcfd;
+  padding: 10px;
+}
+
+.governanceMetric strong {
+  overflow-wrap: anywhere;
+  color: #111827;
+  font-size: 14px;
+}
+
+.auditTrailList {
+  display: grid;
+  gap: 8px;
+}
+
+.auditTrailTitle,
+.auditTrailRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 130px 94px;
+  gap: 10px;
+  align-items: center;
+}
+
+.auditTrailTitle strong {
+  color: #111827;
+}
+
+.auditTrailTitle span,
+.auditTrailRow span,
+.auditTrailRow small,
+.auditTrailRow time,
+.auditTrailEmpty {
+  color: #667085;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.auditTrailRow {
+  border: 1px solid #e3e9f1;
+  border-radius: 10px;
+  background: #fbfcfd;
+  padding: 10px;
+}
+
+.auditTrailRow strong {
+  display: block;
+  margin-bottom: 3px;
+  color: #111827;
+  font-size: 13px;
+}
+
+.auditTrailRow time {
+  text-align: right;
+}
+
+.auditTrailEmpty {
+  margin: 0;
+  border: 1px dashed #d6dde8;
+  border-radius: 10px;
+  background: #fbfcfd;
+  padding: 12px;
+}
+
+.dangerZone {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(190px, 0.42fr) auto;
+  gap: 10px;
+  align-items: end;
+  border: 1px solid #f2b8af;
+  border-radius: 12px;
+  background: var(--workbench-danger-soft);
+  padding: 12px;
+}
+
+.dangerZone strong {
+  display: block;
+  margin-top: 3px;
+  color: #8a1f13;
+  font-size: 15px;
+}
+
+.dangerZone p {
+  margin: 6px 0 0;
+  color: #7f3b31;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.dangerZone label {
+  display: grid;
+  gap: 5px;
+}
+
+.dangerZone input {
+  min-height: 38px;
+  min-width: 0;
+  border: 1px solid #e9a59a;
+  border-radius: 9px;
+  background: #ffffff;
+  color: #111827;
+  font: inherit;
+  padding: 8px 10px;
+}
+
+.dangerZone .dangerButton {
+  min-height: 38px;
+  border-radius: 9px;
+  box-shadow: none;
+}
+
 .productHero,
 .linearMetric,
 .linearSection,
@@ -6966,6 +7128,9 @@ body {
   .skillSettingsPanel,
   .skillSettingsForm,
   .skillAccessForm,
+  .skillGovernancePanel,
+  .governanceSummary,
+  .dangerZone,
   .workspaceVersionComposer,
   .workspaceVersionComposerGrid {
     grid-template-columns: 1fr;
@@ -6978,7 +7143,10 @@ body {
   .skillSettingsForm,
   .skillSettingsDistribution,
   .skillAccessHeader,
-  .skillAccessRow {
+  .skillAccessRow,
+  .skillGovernanceHeader,
+  .auditTrailTitle,
+  .auditTrailRow {
     grid-column: 1;
     grid-row: auto;
   }
@@ -6990,6 +7158,15 @@ body {
 
   .skillAccessRow {
     grid-template-columns: 1fr;
+  }
+
+  .auditTrailTitle,
+  .auditTrailRow {
+    grid-template-columns: 1fr;
+  }
+
+  .auditTrailRow time {
+    text-align: left;
   }
 
   .linearWorkbench {

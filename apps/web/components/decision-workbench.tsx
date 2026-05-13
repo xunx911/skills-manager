@@ -18,6 +18,7 @@ import { RunComparisonPanel } from "@/components/run-comparison/run-comparison-p
 import { RunMatrixPanel, type RunMatrixControls } from "@/components/run-matrix/run-matrix-panel";
 import { SavedRunViews } from "@/components/saved-views/saved-run-views";
 import { SkillAccessPanel } from "@/components/skills/skill-access-panel";
+import { SkillGovernancePanel } from "@/components/skills/skill-governance-panel";
 import { SkillLaunchpad } from "@/components/skills/skill-launchpad";
 import { SkillSettingsPanel } from "@/components/skills/skill-settings-panel";
 import { VariantCreationComposer } from "@/components/variants/variant-creation-composer";
@@ -1115,6 +1116,7 @@ export function DecisionWorkbench({ skills: initialSkills, featuredSkill }: Deci
               setActionMode("run");
             }}
             onOpenHistory={() => setMode("history")}
+            onArchiveSkill={archiveSkill}
             primaryEvalSetVersion={currentEvalSetVersion?.version_number}
             refreshImportPreview={refreshImportPreview}
             revokeSkillRole={revokeSkillRole}
@@ -1255,7 +1257,6 @@ export function DecisionWorkbench({ skills: initialSkills, featuredSkill }: Deci
           defaultVariant={defaultVariant}
           latestRun={latestRun}
           onAction={chooseAction}
-          onArchiveSkill={archiveSkill}
           onSelectCase={setSelectedCaseId}
           importPreview={importPreview}
           confirmedDraft={confirmedDraft}
@@ -1287,6 +1288,7 @@ function OverviewPane({
   importSkill,
   latestRun,
   onAction,
+  onArchiveSkill,
   onDiff,
   onOpenEvals,
   onOpenHistory,
@@ -1308,6 +1310,7 @@ function OverviewPane({
   importSkill: (event: FormEvent<HTMLFormElement>) => void;
   latestRun: EvalRunRecord | null;
   onAction: (mode: ActionMode) => void;
+  onArchiveSkill: () => void;
   onDiff: () => void;
   onOpenEvals: () => void;
   onOpenHistory: () => void;
@@ -1376,6 +1379,11 @@ function OverviewPane({
         onAssignRole={assignSkillRole}
         onRevokeRole={revokeSkillRole}
         roleAssignments={selectedDetail.role_assignments}
+      />
+      <SkillGovernancePanel
+        busy={busy}
+        onArchiveSkill={onArchiveSkill}
+        selectedDetail={selectedDetail}
       />
 
       <VerificationStartPanel
@@ -2251,7 +2259,6 @@ function Inspector({
   defaultVariant,
   latestRun,
   onAction,
-  onArchiveSkill,
   onSelectCase,
   importPreview,
   failedDraft,
@@ -2278,7 +2285,6 @@ function Inspector({
   defaultVariant: VariantDetail | null;
   latestRun: EvalRunRecord | null;
   onAction: (mode: ActionMode) => void;
-  onArchiveSkill: () => void;
   onSelectCase: (caseId: string) => void;
   importPreview: ImportPreview;
   failedDraft: number;
@@ -2336,7 +2342,6 @@ function Inspector({
           <input name="slug" defaultValue={selectedDetail.skill.slug} required />
           <input name="owner_ref" defaultValue={selectedDetail.skill.owner_ref} required />
           <button disabled={busy} type="submit">保存</button>
-          <button className="dangerButton" disabled={busy} onClick={onArchiveSkill} type="button">归档 skill</button>
         </form>
       ) : null}
 

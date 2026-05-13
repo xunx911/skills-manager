@@ -225,6 +225,26 @@ test("operator can manage skill access roles from overview", async ({ page }) =>
   await expect(panel.locator(".skillAccessRow").filter({ hasText: "qa-reviewer" })).toHaveCount(0);
 });
 
+test("operator can archive a skill from the governance danger zone", async ({ page, request }) => {
+  await clearSkillCatalog(request);
+  const skillName = `governance-${Date.now()}`;
+  await importSkillBundle(page, skillName);
+
+  const panel = page.locator(".skillGovernancePanel");
+  await expect(panel).toContainText("治理与审计");
+  await expect(panel).toContainText("role.assigned");
+
+  await panel.getByLabel("确认 Skill ID").fill("wrong-skill");
+  await expect(panel.getByRole("button", { name: "归档 skill" })).toBeDisabled();
+
+  await panel.getByLabel("确认 Skill ID").fill(skillName);
+  await panel.getByRole("button", { name: "归档 skill" }).click();
+
+  await expect(page.getByText("Skill 已归档，历史版本和测评记录仍保留。")).toBeVisible();
+  await expect(page.locator(".skillLaunchpad")).toBeVisible();
+  await expect(page.locator(".linearCatalogEmpty")).toContainText("还没有 skill");
+});
+
 test("imported skill is guided into its first verification run", async ({ page }) => {
   await importSkillBundle(page, `first-verification-${Date.now()}`);
 

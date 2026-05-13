@@ -145,5 +145,12 @@
     "priority": 21,
     "passes": true,
     "spec": ".agent/tasks/TASK-021.json"
+  },
+  {
+    "id": "022",
+    "title": "实现 Skill 治理与审计面板",
+    "priority": 22,
+    "passes": true,
+    "spec": ".agent/tasks/TASK-022.json"
   }
 ]

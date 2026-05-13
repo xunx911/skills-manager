@@ -848,6 +848,40 @@ class ApiCommandTest(unittest.TestCase):
         self.assertEqual(assignments[0]["subject_id"], "header-owner")
         self.assertNotEqual(assignments[0]["subject_id"], "body-attacker")
 
+    def test_skill_governance_archive_requires_owner_and_writes_audit_event(self):
+        skill = self.create_skill("governance-archive-api")
+        self.client.post(
+            f"/api/skills/{skill['skill_id']}/role-assignments",
+            json={"subject_id": "readonly-user", "role": "viewer"},
+        )
+
+        rejected = self.client.delete(
+            f"/api/skills/{skill['skill_id']}",
+            headers={"X-SkillHub-Actor": "readonly-user"},
+        )
+        archived = self.client.delete(f"/api/skills/{skill['skill_id']}")
+        detail = self.client.get(f"/api/skills/{skill['skill_id']}").json()
+
+        self.assertEqual(rejected.status_code, 403)
+        self.assertEqual(archived.status_code, 200)
+        self.assertEqual(detail["skill"]["lifecycle_status"], "archived")
+        self.assertEqual(detail["audit_events"][0]["action"], "skill.archived")
+        self.assertEqual(detail["audit_events"][0]["actor_ref"], "tester")
+
+    def test_skill_audit_events_endpoint_returns_recent_governance_events(self):
+        skill = self.create_skill("governance-audit-api")
+        granted = self.client.post(
+            f"/api/skills/{skill['skill_id']}/role-assignments",
+            json={"subject_id": "qa-reviewer", "role": "evaluator"},
+        ).json()
+        self.client.delete(f"/api/role-assignments/{granted['id']}")
+
+        response = self.client.get(f"/api/skills/{skill['skill_id']}/audit-events")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual([event["action"] for event in response.json()[:2]], ["role.revoked", "role.assigned"])
+        self.assertEqual(response.json()[0]["payload"]["subject_id"], "qa-reviewer")
+
     def test_viewer_cannot_promote_variant_version(self):
         skill = self.create_skill("promotion-permission-api")
         candidate = self.client.post(

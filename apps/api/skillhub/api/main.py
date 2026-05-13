@@ -177,6 +177,14 @@ def create_app(engine: Engine | None = None) -> FastAPI:
     def skill_role_assignments(skill_id: str, repository: SqlSkillRepository = Depends(repository_dependency)):
         return result_payload(repository.list_skill_role_assignments(skill_id=skill_id))
 
+    @app.get("/api/skills/{skill_id}/audit-events")
+    def skill_audit_events(
+        skill_id: str,
+        limit: int = 10,
+        repository: SqlSkillRepository = Depends(repository_dependency),
+    ):
+        return result_payload(repository.list_skill_audit_events(skill_id=skill_id, limit=limit))
+
     @app.post("/api/skills/{skill_id}/role-assignments")
     def assign_skill_role(
         skill_id: str,
@@ -474,8 +482,12 @@ def create_app(engine: Engine | None = None) -> FastAPI:
         )
 
     @app.delete("/api/skills/{skill_id}")
-    def archive_skill(skill_id: str, repository: SqlSkillRepository = Depends(repository_dependency)):
-        repository.archive_skill(skill_id=skill_id)
+    def archive_skill(
+        skill_id: str,
+        actor: ActorContext = Depends(actor_dependency),
+        repository: SqlSkillRepository = Depends(repository_dependency),
+    ):
+        repository.archive_skill(skill_id=skill_id, actor=actor.id)
         return {"ok": True}
 
     @app.post("/api/eval-cases")
