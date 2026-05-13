@@ -75,13 +75,14 @@ export async function appendSkillBundleVersion(
   await writeFile(join(bundleDir, "new-checklist.md"), "Check tenant filters and audit logs.\n");
 
   try {
-    await page.getByLabel("Inspector").getByRole("button", { name: "追加版本" }).click();
-    await page.locator('input[name="version_folder_files"]').setInputFiles(bundleDir);
-    await page.getByPlaceholder("这次更新的收益").fill("Add tenant filter guidance and replace the checklist.");
+    const inspector = page.getByLabel("Inspector");
+    await inspector.getByRole("button", { name: "追加版本" }).click();
+    await inspector.locator('input[name="version_folder_files"]').setInputFiles(bundleDir);
+    await inspector.getByPlaceholder("这次更新的收益").fill("Add tenant filter guidance and replace the checklist.");
     if (options.makeCurrent === false) {
-      await page.locator('input[name="make_current"]').uncheck();
+      await inspector.locator('input[name="make_current"]').uncheck();
     }
-    await page.getByRole("button", { name: "保存版本" }).click();
+    await inspector.getByRole("button", { name: "保存版本" }).click();
     await expect(page.getByText("Variant 版本已创建。")).toBeVisible();
   } finally {
     await rm(bundleDir, { force: true, recursive: true });

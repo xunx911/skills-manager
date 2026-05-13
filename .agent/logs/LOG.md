@@ -10,6 +10,14 @@
 
 ## Session Log
 
+### 2026-05-12 21:45 CST - TASK-015 主工作区追加 VariantVersion
+
+- 在 `变体` 主工作区新增 `WorkspaceVersionComposer`，可直接选择 variant、上传标准 Skill 文件夹或 zip、填写 change summary，并选择是否直接设为 current。
+- 复用现有 `POST /api/variant-versions` 和 candidate verification handoff；默认追加为候选版本，保存后自动进入 exact 测评目标。
+- 收窄旧 E2E helper 的 inspector 定位器，避免主工作区 composer 与右侧 inspector 的文件输入冲突。
+- 已验证：`uv run pytest` 80 passed；`npm run typecheck` passed；`npm run build` passed；`npm run e2e` 28 passed；`git diff --check` passed。
+- 截图：`.agent/screenshots/TASK-015-1.png`。
+
 ### 2026-05-10 20:55 CST - TASK-014 测评 case 详情内联编辑
 
 - 新增 `EvalCaseDetailPanel`，在手工测评详情面板中直接查看并编辑当前 case 的 title、input、expected output 和 notes。

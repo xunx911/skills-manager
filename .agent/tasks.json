@@ -96,5 +96,12 @@
     "priority": 14,
     "passes": true,
     "spec": ".agent/tasks/TASK-014.json"
+  },
+  {
+    "id": "015",
+    "title": "实现主工作区追加 variant version",
+    "priority": 15,
+    "passes": true,
+    "spec": ".agent/tasks/TASK-015.json"
   }
 ]

@@ -17,6 +17,7 @@ import { PromotionReviewPane } from "@/components/promotion-review/promotion-rev
 import { RunComparisonPanel } from "@/components/run-comparison/run-comparison-panel";
 import { RunMatrixPanel } from "@/components/run-matrix/run-matrix-panel";
 import { SavedRunViews } from "@/components/saved-views/saved-run-views";
+import { WorkspaceVersionComposer } from "@/components/variants/workspace-version-composer";
 import type {
   BundleDiff,
   BundleDiffFile,
@@ -1077,8 +1078,10 @@ export function DecisionWorkbench({ skills: initialSkills, featuredSkill }: Deci
 
         {mode === "variants" ? (
           <VariantsPane
+            busy={busy}
             defaultVariant={defaultVariant}
             onAction={chooseAction}
+            onCreateVersion={createVariantVersion}
             onDiff={() => openDiffMode()}
             onPromotionReview={openPromotionReview}
             variants={selectedDetail.variants}
@@ -1347,14 +1350,18 @@ function OverviewPane({
 }
 
 function VariantsPane({
+  busy,
   defaultVariant,
   onAction,
+  onCreateVersion,
   onDiff,
   onPromotionReview,
   variants,
 }: {
+  busy: boolean;
   defaultVariant: VariantDetail | null;
   onAction: (mode: ActionMode) => void;
+  onCreateVersion: (event: FormEvent<HTMLFormElement>) => void;
   onDiff: () => void;
   onPromotionReview: (variantId: string, candidateVersionId: string) => void;
   variants: VariantDetail[];
@@ -1374,6 +1381,12 @@ function VariantsPane({
           <button disabled={!defaultVariant || defaultVariant.versions.length < 2} onClick={onDiff} type="button">比较版本</button>
         </div>
       </div>
+      <WorkspaceVersionComposer
+        busy={busy}
+        defaultVariantId={defaultVariant?.id}
+        onCreateVersion={onCreateVersion}
+        variants={variants}
+      />
       <div className="variantMapCanvas">
         {variants.map((variant) => (
           <article className={`variantMapCard ${variant.id === defaultVariant?.id ? "variantMapCardDefault" : ""}`} key={variant.id}>

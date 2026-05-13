@@ -1,0 +1,26 @@
+{
+  "id": "015",
+  "title": "实现主工作区追加 variant version",
+  "status": "complete",
+  "goal": "让用户在变体主工作区直接上传标准 Skill bundle 追加候选版本，减少依赖右侧 inspector 的版本维护摩擦。",
+  "scope": [
+    "在 Variants 主面板中新增版本追加 composer",
+    "复用现有 POST /api/variant-versions 和候选版本测评交接逻辑",
+    "支持选择 variant、上传文件夹、填写 change summary、选择是否设为 current",
+    "新增 E2E 覆盖从主工作区追加 candidate 后自动进入候选测评",
+    "更新中文 README、UX 复盘和完成度审计"
+  ],
+  "out_of_scope": [
+    "新增后端接口",
+    "重做导入 skill 流程",
+    "多文件 diff 与 case 关联",
+    "版本审批权限"
+  ],
+  "verification": [
+    "cd apps/api && uv run pytest",
+    "cd apps/web && npm run typecheck",
+    "cd apps/web && npm run build",
+    "cd apps/web && UV_CACHE_DIR=/Users/xx/Documents/code/skills-manager/.uv-cache npm run e2e",
+    "git diff --check"
+  ]
+}

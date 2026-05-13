@@ -34,7 +34,7 @@ test("operator can import a skill, add a variant, add a case, and record manual 
   await page.getByPlaceholder("这个约束下的最优解说明").fill("Use stricter review criteria for authorization-sensitive diffs.");
   await page.getByPlaceholder("初始版本说明").fill("Add stricter variant for auth-sensitive reviews.");
   await page.getByRole("button", { name: "创建 variant" }).click();
-  await expect(page.getByText("Strict reviewer")).toBeVisible();
+  await expect(page.locator(".variantMapCard").filter({ hasText: "Strict reviewer" })).toBeVisible();
 
   await addEvalCase(page, "PR: missing owner filter");
   await page
@@ -275,6 +275,40 @@ test("operator can compare standard bundle versions", async ({ page }) => {
   await expect(page.locator(".diffFileRow").filter({ hasText: "references/checklist.md" })).toBeVisible();
   await expect(page.locator(".diffFileRow").filter({ hasText: "new-checklist.md" })).toBeVisible();
   await expect(page.getByText("Prioritize missing tenant filters.")).toBeVisible();
+});
+
+test("operator can append a candidate version from the variants workspace", async ({ page }) => {
+  const skillName = `workspace-version-${Date.now()}`;
+  const bundleDir = await mkdtemp(join(tmpdir(), "skillhub-workspace-version-"));
+  await importSkillBundle(page, skillName);
+
+  await writeFile(
+    join(bundleDir, "SKILL.md"),
+    [
+      "---",
+      `name: ${skillName}`,
+      "description: Review pull requests for authorization and data access regressions.",
+      "---",
+      "",
+      "# Security Reviewing",
+      "Prioritize tenant filters before owner filters.",
+      "",
+    ].join("\n"),
+  );
+
+  try {
+    await page.getByRole("button", { name: "变体", exact: true }).click();
+    await page.locator(".workspaceVersionComposer").locator('input[name="version_folder_files"]').setInputFiles(bundleDir);
+    await page.locator(".workspaceVersionComposer").getByPlaceholder("这次更新解决了什么").fill("Add tenant-first review guidance.");
+    await page.locator(".workspaceVersionComposer").locator('input[name="make_current"]').uncheck();
+    await page.locator(".workspaceVersionComposer").getByRole("button", { name: "追加候选版本" }).click();
+
+    await expect(page.getByRole("button", { name: "测评", exact: true })).toHaveClass(/linearTabActive/);
+    await expect(page.locator(".candidateVerificationBanner")).toContainText("v2");
+    await expect(page.getByLabel("测评目标版本")).toHaveValue(/varver_/);
+  } finally {
+    await rm(bundleDir, { force: true, recursive: true });
+  }
 });
 
 test("candidate version handoff selects the new version for verification", async ({ page }) => {

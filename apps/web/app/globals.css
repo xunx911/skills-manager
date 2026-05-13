@@ -3365,6 +3365,119 @@ h2 {
   gap: 10px;
 }
 
+.workspaceVersionComposer {
+  display: grid;
+  grid-template-columns: minmax(180px, 0.34fr) minmax(0, 1fr);
+  gap: 14px;
+  border: 1px solid #dfe5ee;
+  border-radius: 12px;
+  background: #ffffff;
+  padding: 14px;
+}
+
+.workspaceVersionComposerCopy {
+  display: grid;
+  align-content: center;
+  gap: 5px;
+}
+
+.workspaceVersionComposerCopy span,
+.workspaceVersionComposerGrid label span {
+  color: #667085;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.workspaceVersionComposerCopy strong {
+  color: #111827;
+  font-size: 18px;
+}
+
+.workspaceVersionComposerCopy p {
+  margin: 0;
+  color: #667085;
+  line-height: 1.45;
+}
+
+.workspaceVersionComposerGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  align-items: end;
+}
+
+.workspaceVersionComposerGrid label {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.workspaceVersionComposerGrid select,
+.workspaceVersionComposerGrid textarea {
+  width: 100%;
+  min-height: 40px;
+  border: 1px solid #dce2ea;
+  border-radius: 10px;
+  background: #fbfcfd;
+  color: #111827;
+  font: inherit;
+  padding: 9px 10px;
+}
+
+.workspaceVersionComposerGrid textarea {
+  height: 40px;
+  resize: vertical;
+}
+
+.workspaceVersionSummary {
+  grid-column: 1 / -1;
+}
+
+.workspaceVersionDrop {
+  min-height: 72px;
+  border: 1px dashed #cbd5e1;
+  border-radius: 10px;
+  background: #f8fafc;
+  padding: 9px;
+}
+
+.workspaceVersionDrop input {
+  max-width: 100%;
+  color: #475467;
+  font-size: 12px;
+}
+
+.workspaceVersionCurrentToggle {
+  display: flex !important;
+  align-items: center;
+  gap: 8px !important;
+  min-height: 40px;
+  white-space: nowrap;
+}
+
+.workspaceVersionCurrentToggle input {
+  width: 16px;
+  height: 16px;
+}
+
+.workspaceVersionComposerGrid button {
+  justify-self: start;
+  min-height: 40px;
+  border: 1px solid #111827;
+  border-radius: 10px;
+  background: #111827;
+  color: #ffffff;
+  font-weight: 850;
+  padding: 0 14px;
+}
+
+.workspaceVersionComposerGrid button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
 .variantMapCard {
   display: grid;
   gap: 12px;
@@ -6191,6 +6304,11 @@ body {
 }
 
 @media (max-width: 1180px) {
+  .workspaceVersionComposer,
+  .workspaceVersionComposerGrid {
+    grid-template-columns: 1fr;
+  }
+
   .linearWorkbench {
     grid-template-columns: minmax(220px, 0.55fr) minmax(0, 1fr);
     height: auto;
