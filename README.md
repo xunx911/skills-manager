@@ -21,7 +21,7 @@
 - 创建或导入 skill 的本地 actor 会自动成为该 skill 的 `owner`；`promotion` 和 `accepted verification` 需要 `owner` 或 `maintainer`。前端本地开发身份来自后端签名的 HttpOnly cookie session，JSON body 中不再传 actor；直接调 API 的脚本仍可用 `X-SkillHub-Actor` 作为兼容 fallback。
 - `概览` 页提供 `治理与审计` 面板，集中展示 lifecycle、角色态势、最近 audit events，并把归档收进需要输入当前 skill ID 的危险区；归档需要 `owner` 权限并写入 `skill.archived` audit event。治理面板也能打开 `审计 Explorer`，用 action quick filters、actor/action/resource_type 过滤、可读时间线和结构化详情追踪当前 skill 的治理、发布和验证事件，Raw payload 默认折叠在下钻区。
 - 工作台支持 `Cmd/Ctrl+K` 上下文命令菜单，可搜索并执行导入、创建、测评、历史、差异等高频动作；菜单使用 `dialog + combobox + listbox` 语义，方向键移动 active option，Tab 会限制在弹层内，关闭后焦点回到触发按钮。菜单会根据当前 mode 排序：空工作台优先导入/新建，测评页优先 run/case，变体页优先 variant/version/diff。
-- `/skills?skill=<slug-or-id>&mode=<mode>` 支持第一阶段 URL state：可以直达某个 skill 的 `概览 / 变体 / 测评 / 差异 / 历史 / 审计` 视图，刷新和浏览器 Back/Forward 会恢复 selected skill 与 mode；更细的 diff pair、history filters、selected run/case 和 promotion context 留给下一阶段深链。
+- `/skills` 支持第二阶段 URL state：可以直达某个 skill 的 `概览 / 变体 / 测评 / 差异 / 历史 / 审计 / 评审`，并恢复 diff pair/file/filter、eval target/case、history filters、selected run、run comparison、matrix controls、audit filters 和 promotion review context；刷新、复制链接和浏览器 Back/Forward 都能还原这些证据上下文。
 - 工作台有基础 accessibility 护栏：键盘用户可用 skip link 直接进入主内容；全局 focus ring 更醒目；`prefers-reduced-motion` 会压低非必要动效；操作结果通过 `role=status` 暴露给读屏软件；命令菜单、Workbench mode tabs、Run matrix 和 Inspector action 焦点交接已有 E2E 回归。
 - 高频写入表单第一阶段已统一字段基础件：`SkillLaunchpad` 和 `WorkbenchInspector` 使用共享 `TextField/TextAreaField/SelectField/FileField`，业务 text/textarea 默认显式 `autocomplete="off"`，局部焦点样式收敛到 `:focus-visible`。
 - `测评` 页支持单条快速添加和批量粘贴 case；批量写入会生成一个新的 `EvalSetVersion`，避免逐条添加制造版本噪音。
@@ -74,7 +74,7 @@ npm run dev -- --hostname 127.0.0.1 --port 3000
 1. 打开 `http://127.0.0.1:3000/skills`。
 2. 用左侧 catalog 切换 skill。
 3. 右侧 inspector 顶部的 `Local session` 显示当前本地 actor。需要模拟另一个维护者时，输入如 `release-manager` 并点击 `切换 actor`，之后创建、导入、授权、promotion 和审计都会使用这个 actor。
-4. 空工作台会在主内容区显示 `SkillLaunchpad`：可以直接导入标准 Skill bundle，也可以先创建空白 skill。移动端 first-run 默认不再重复展示右侧 inspector 的第二份导入表单；需要低频入口时，点左侧 catalog 或 `Cmd/Ctrl+K` 命令菜单即可展开 inspector 表单并把焦点送过去。已有 skill 时，也可以继续用右侧 inspector 或命令菜单触发同类动作。顶部工作区模式按 tablist 建模，聚焦当前模式后可用左右方向键、Home、End 在 `概览 / 变体 / 测评 / 差异 / 历史` 间移动；切换 skill 或 mode 后地址栏会同步为 `/skills?skill=<slug>&mode=<mode>`，方便复制当前工作区；中等桌面宽度下进入 `差异 / 历史 / 审计 / 评审` 时，右侧会自动收成 verification rail，方便扫读证据。
+4. 空工作台会在主内容区显示 `SkillLaunchpad`：可以直接导入标准 Skill bundle，也可以先创建空白 skill。移动端 first-run 默认不再重复展示右侧 inspector 的第二份导入表单；需要低频入口时，点左侧 catalog 或 `Cmd/Ctrl+K` 命令菜单即可展开 inspector 表单并把焦点送过去。已有 skill 时，也可以继续用右侧 inspector 或命令菜单触发同类动作。顶部工作区模式按 tablist 建模，聚焦当前模式后可用左右方向键、Home、End 在 `概览 / 变体 / 测评 / 差异 / 历史` 间移动；切换 skill、mode、diff pair、history filters、selected run 或 promotion review 后，地址栏会同步为可分享链接；中等桌面宽度下进入 `差异 / 历史 / 审计 / 评审` 时，右侧会自动收成 verification rail，方便扫读证据。
 5. 导入 bundle 后先看 `概览` 里的 `验证清单`：没有 case 时点击 `添加首批 case`；有 case 但没有 run 时点击 `打开手工测评`；完成 run 后点击 `查看证据历史`。
 6. 在 `概览` 页的 `身份与默认分发` 中可直接修改 skill ID、归属，并选择哪个 variant 作为默认分发入口。
 7. 在 `概览` 页的 `访问控制` 中可查看当前 skill 的 owner/maintainer/evaluator/viewer，并添加或移除成员角色。

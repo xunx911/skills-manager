@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 
 import { passRate } from "@/lib/api";
 import { emptySkillDetail } from "@/lib/empty-state";
@@ -23,6 +23,7 @@ import { PromotionReviewPane } from "@/components/promotion-review/promotion-rev
 import type { RunMatrixControls } from "@/components/run-matrix/run-matrix-panel";
 import { SkillAuditExplorer, type AuditExplorerFilters } from "@/components/skills/skill-audit-explorer";
 import { SkillCatalog } from "@/components/skills/skill-catalog";
+import { useWorkbenchUrlStateSync } from "@/components/url-state/use-workbench-url-state";
 import { WorkbenchVariantsPane } from "@/components/variants/workbench-variants-pane";
 import {
   WorkbenchTabs,
@@ -49,6 +50,12 @@ import type {
   VariantDetail,
   VariantVersion,
 } from "@/lib/types";
+import {
+  DEFAULT_AUDIT_FILTERS,
+  DEFAULT_RUN_FILTERS,
+  DEFAULT_RUN_MATRIX_CONTROLS,
+  type PromotionUrlTarget,
+} from "@/lib/workbench-url-state";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_SKILLHUB_API_URL ?? "http://127.0.0.1:8000";
 const DEFAULT_ACTOR = "product-operator";
@@ -72,23 +79,6 @@ type CommandResult = string | void | {
   mode?: Mode;
   selectedSkillId?: string;
 };
-const DEFAULT_RUN_FILTERS: RunFilters = {
-  variant_version_id: "all",
-  eval_set_version_id: "all",
-  strategy: "all",
-  status: "all",
-};
-const DEFAULT_RUN_MATRIX_CONTROLS: RunMatrixControls = {
-  matrix_group_by: "none",
-  matrix_impact: "all",
-  matrix_show_score: "true",
-};
-const DEFAULT_AUDIT_FILTERS: AuditExplorerFilters = {
-  actor: "",
-  action: "",
-  resource_type: "all",
-};
-const SHAREABLE_MODES: Mode[] = ["overview", "variants", "evals", "diff", "history", "audit"];
 type BundleSource =
   | { kind: "zip"; name: string; zip_base64: string }
   | {
@@ -147,11 +137,11 @@ export function DecisionWorkbench({
   const [caseHistoryLoading, setCaseHistoryLoading] = useState(false);
   const [evalTargetVersionId, setEvalTargetVersionId] = useState<string | null>(null);
   const [promotionReview, setPromotionReview] = useState<PromotionReview | null>(null);
+  const [promotionTarget, setPromotionTarget] = useState<PromotionUrlTarget | null>(null);
   const [promotionLoading, setPromotionLoading] = useState(false);
   const [notice, setNotice] = useState<Notice>(null);
   const [busy, setBusy] = useState(false);
   const [actor, setActor] = useState(DEFAULT_ACTOR);
-  const hasSyncedUrlRef = useRef(false);
 
   const visibleSkills = useMemo(() => {
     const query = catalogQuery.trim().toLowerCase();
@@ -211,42 +201,6 @@ export function DecisionWorkbench({
   }, []);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    const nextUrl = workbenchUrlForState({
-      hash: window.location.hash,
-      mode,
-      pathname: window.location.pathname,
-      search: window.location.search,
-      skill: selectedSkillUrlKey,
-    });
-    const currentUrl = `${window.location.pathname}${window.location.search}${window.location.hash}`;
-    if (nextUrl === currentUrl) {
-      hasSyncedUrlRef.current = true;
-      return;
-    }
-    const method = hasSyncedUrlRef.current ? "pushState" : "replaceState";
-    window.history[method](window.history.state, "", nextUrl);
-    hasSyncedUrlRef.current = true;
-  }, [mode, selectedSkillUrlKey]);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    function applyUrlState() {
-      const params = new URLSearchParams(window.location.search);
-      const requestedSkill = params.get("skill");
-      const nextSkill = requestedSkill
-        ? skills.find((summary) => summary.skill.id === requestedSkill || summary.skill.slug === requestedSkill)
-        : skills[0];
-      const nextSkillId = nextSkill?.skill.id ?? emptySkillDetail.skill.id;
-      setSelectedSkillId((current) => (current === nextSkillId ? current : nextSkillId));
-      const nextMode = parseShareableMode(params.get("mode"));
-      setMode((current) => (current === nextMode ? current : nextMode));
-    }
-    window.addEventListener("popstate", applyUrlState);
-    return () => window.removeEventListener("popstate", applyUrlState);
-  }, [skills]);
-
-  useEffect(() => {
     void loadSkill(selectedSkillId);
     setBundleDiff(null);
     setDiffLeftVersionId(null);
@@ -272,9 +226,45 @@ export function DecisionWorkbench({
     setCaseHistoryCaseId(null);
     setEvalTargetVersionId(null);
     setPromotionReview(null);
+    setPromotionTarget(null);
     setPromotionLoading(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedSkillId]);
+
+  useWorkbenchUrlStateSync({
+    auditFilters,
+    compareBaselineRunId,
+    compareCandidateRunId,
+    diffFilter,
+    diffLeftVersionId,
+    diffRightVersionId,
+    evalTargetVersionId,
+    mode,
+    promotionTarget,
+    runFilters,
+    runMatrixControls,
+    selectedCaseId,
+    selectedDiffPath,
+    selectedRunId,
+    selectedSkillId,
+    selectedSkillUrlKey,
+    setAuditFilters,
+    setCompareBaselineRunId,
+    setCompareCandidateRunId,
+    setDiffFilter,
+    setDiffLeftVersionId,
+    setDiffRightVersionId,
+    setEvalTargetVersionId,
+    setMode,
+    setPromotionTarget,
+    setRunFilters,
+    setRunMatrixControls,
+    setSelectedCaseId,
+    setSelectedDiffPath,
+    setSelectedRunId,
+    setSelectedSkillId,
+    skills,
+  });
 
   useEffect(() => {
     if (variantVersionOptions.length === 0) {
@@ -358,6 +348,32 @@ export function DecisionWorkbench({
     void loadRunComparison(compareBaselineRunId, compareCandidateRunId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode, compareBaselineRunId, compareCandidateRunId]);
+
+  useEffect(() => {
+    if (mode !== "diff" || diffLeftVersionId || diffRightVersionId) return;
+    const pair = defaultDiffPair(defaultVariant);
+    if (!pair) {
+      setBundleDiff(null);
+      setSelectedDiffPath(null);
+      return;
+    }
+    setDiffLeftVersionId(pair.left.id);
+    setDiffRightVersionId(pair.right.id);
+  }, [defaultVariant, diffLeftVersionId, diffRightVersionId, mode]);
+
+  useEffect(() => {
+    if (mode !== "diff" || !diffLeftVersionId || !diffRightVersionId || diffLeftVersionId === diffRightVersionId) {
+      return;
+    }
+    void loadBundleDiff(diffLeftVersionId, diffRightVersionId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode, diffLeftVersionId, diffRightVersionId]);
+
+  useEffect(() => {
+    if (mode !== "promotion" || !promotionTarget) return;
+    void loadPromotionReview(promotionTarget);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode, promotionTarget?.variantId, promotionTarget?.candidateVersionId, promotionTarget?.evalSetVersionId]);
 
   useEffect(() => {
     if (!runHistory) return;
@@ -682,33 +698,37 @@ export function DecisionWorkbench({
     const pair = defaultDiffPair(variant);
     if (!pair) {
       setBundleDiff(null);
+      setDiffLeftVersionId(null);
+      setDiffRightVersionId(null);
       setSelectedDiffPath(null);
       return;
     }
     setDiffLeftVersionId(pair.left.id);
     setDiffRightVersionId(pair.right.id);
-    void loadBundleDiff(pair.left.id, pair.right.id);
   }
 
   function updateDiffPair(leftVariantVersionId: string, rightVariantVersionId: string) {
     setDiffLeftVersionId(leftVariantVersionId);
     setDiffRightVersionId(rightVariantVersionId);
-    if (leftVariantVersionId && rightVariantVersionId && leftVariantVersionId !== rightVariantVersionId) {
-      void loadBundleDiff(leftVariantVersionId, rightVariantVersionId);
-    }
   }
 
-  async function openPromotionReview(variantId: string, candidateVersionId: string) {
-    setMode("promotion");
-    setPromotionLoading(true);
+  function openPromotionReview(variantId: string, candidateVersionId: string, evalSetVersionId = currentEvalSetVersion?.id ?? null) {
+    setPromotionTarget({ candidateVersionId, evalSetVersionId, variantId });
     setPromotionReview(null);
+    setMode("promotion");
+  }
+
+  async function loadPromotionReview(target: PromotionUrlTarget) {
+    setPromotionLoading(true);
     setNotice(null);
     try {
-      const params = new URLSearchParams({ candidate_version_id: candidateVersionId });
-      if (currentEvalSetVersion?.id) params.set("eval_set_version_id", currentEvalSetVersion.id);
-      const review = await apiGet<PromotionReview>(`/api/variants/${variantId}/promotion-review?${params.toString()}`);
+      const params = new URLSearchParams({ candidate_version_id: target.candidateVersionId });
+      const evalSetVersionId = target.evalSetVersionId ?? currentEvalSetVersion?.id;
+      if (evalSetVersionId) params.set("eval_set_version_id", evalSetVersionId);
+      const review = await apiGet<PromotionReview>(`/api/variants/${target.variantId}/promotion-review?${params.toString()}`);
       setPromotionReview(review);
     } catch (error) {
+      setPromotionReview(null);
       setNotice({ tone: "bad", message: error instanceof Error ? error.message : "加载设为当前版本评审失败" });
     } finally {
       setPromotionLoading(false);
@@ -733,6 +753,7 @@ export function DecisionWorkbench({
         },
       });
       setPromotionReview(null);
+      setPromotionTarget(null);
       setMode("variants");
       return "已设为当前版本。";
     });
@@ -1299,7 +1320,10 @@ export function DecisionWorkbench({
             <PromotionReviewPane
               busy={busy}
               loading={promotionLoading}
-              onBack={() => setMode("variants")}
+              onBack={() => {
+                setPromotionTarget(null);
+                setMode("variants");
+              }}
               onOpenEvals={() => setMode("evals")}
               onPromote={promoteFromReview}
               review={promotionReview}
@@ -1480,38 +1504,6 @@ function textValue(form: FormData, key: string) {
 
 function tagList(value: string) {
   return value.split(",").map((item) => item.trim()).filter(Boolean);
-}
-
-function parseShareableMode(value: string | null): Mode {
-  return SHAREABLE_MODES.includes(value as Mode) ? (value as Mode) : "overview";
-}
-
-function workbenchUrlForState({
-  hash,
-  mode,
-  pathname,
-  search,
-  skill,
-}: {
-  hash: string;
-  mode: Mode;
-  pathname: string;
-  search: string;
-  skill: string;
-}) {
-  const params = new URLSearchParams(search);
-  if (skill) {
-    params.set("skill", skill);
-  } else {
-    params.delete("skill");
-  }
-  if (SHAREABLE_MODES.includes(mode) && mode !== "overview") {
-    params.set("mode", mode);
-  } else {
-    params.delete("mode");
-  }
-  const query = params.toString();
-  return `${pathname}${query ? `?${query}` : ""}${hash}`;
 }
 
 async function digestText(value: string) {

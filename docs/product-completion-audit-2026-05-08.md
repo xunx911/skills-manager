@@ -2,7 +2,7 @@
 
 日期：2026-05-14
 
-状态：尚未达到“成熟产品完成”。当前已经是一个强的正式垂直切片：主工作区 Skill Launchpad、移动端 first-run 单主路径、中等桌面证据视图 compact inspector rail、URL state 第一阶段、高频写入表单字段基础件第一阶段、Command menu mode-aware 排序、Diff / Promotion 文件 reviewed progress 第一阶段、主工作区 Skill 设置、Skill 作用域访问控制、本地 session actor、基础 accessibility 护栏、Workbench mode tablist、Inspector action 焦点交接、Skill 治理与审计面板、Skill 审计 Explorer quick filters/readable timeline/structured detail、标准 Skill bundle 导入、导入后验证清单、variant/version、candidate verification handoff、eval set version、manual eval review queue、历史查看、run matrix 多维控制与表格语义、保存历史筛选视图、run-to-run comparison、accepted verification、bundle diff、candidate promotion review、上下文命令菜单 ARIA 和快速添加 case 都能闭环。但距离成熟产品还缺少真实认证、多用户协作、自动测评策略和更深的可访问性验证。
+状态：尚未达到“成熟产品完成”。当前已经是一个强的正式垂直切片：主工作区 Skill Launchpad、移动端 first-run 单主路径、中等桌面证据视图 compact inspector rail、URL state 第二阶段、高频写入表单字段基础件第一阶段、Command menu mode-aware 排序、Diff / Promotion 文件 reviewed progress 第一阶段、主工作区 Skill 设置、Skill 作用域访问控制、本地 session actor、基础 accessibility 护栏、Workbench mode tablist、Inspector action 焦点交接、Skill 治理与审计面板、Skill 审计 Explorer quick filters/readable timeline/structured detail、标准 Skill bundle 导入、导入后验证清单、variant/version、candidate verification handoff、eval set version、manual eval review queue、历史查看、run matrix 多维控制与表格语义、保存历史筛选视图、run-to-run comparison、accepted verification、bundle diff、candidate promotion review、上下文命令菜单 ARIA 和快速添加 case 都能闭环。但距离成熟产品还缺少真实认证、多用户协作、自动测评策略和更深的可访问性验证。
 
 ## 目标拆解
 
@@ -46,6 +46,7 @@
 | Command menu ARIA | `CommandMenu` 使用 `role=dialog`、editable `combobox`、`listbox/option`、`aria-activedescendant`、关闭按钮和 Tab trap；E2E 覆盖方向键、弹层内焦点循环和关闭回焦点。 | 完成 |
 | Workbench mode tablist | 工作区模式切换使用 `role=tablist/tab/tabpanel`、`aria-selected`、roving `tabIndex` 和 Left/Right/Home/End 键盘导航；E2E 覆盖 tablist 语义和方向键切换。 | 完成 |
 | URL state 第一阶段 | `/skills` 服务端读取 `skill` 与 `mode` query；前端 History API 同步 selected skill/mode，并监听 `popstate` 支持 Back/Forward；E2E 覆盖直达、刷新、URL 更新和浏览器历史恢复。 | 完成 |
+| URL state 第二阶段 | `parseWorkbenchUrlState/workbenchUrlForState` 统一 query 契约；URL 可恢复 diff pair/file/filter、eval target/case、history filters、selected run、run comparison、matrix controls、audit filters 和 promotion review context；E2E 覆盖刷新恢复。 | 完成 |
 | Inspector action 焦点交接 | Catalog button 和 command menu 触发 Inspector action 后，焦点进入对应表单首个可操作控件；E2E 覆盖 `导入 bundle` 和 `添加 case` 两条路径。 | 完成 |
 | 新建 variant | `POST /api/variants`；E2E 创建 `Strict reviewer`。 | 完成 |
 | 主工作区创建 variant | `VariantCreationComposer` 在 `变体` 主面板直接创建 tags 约束 variant；E2E 覆盖创建后 variant map 出现新卡片和 v1。 | 完成 |
@@ -94,7 +95,7 @@ cd apps/web && npm run build
 cd apps/web && npm audit --omit=dev
 cd apps/web && npm run e2e
 git diff --check
-jq empty .agent/tasks.json .agent/tasks/TASK-046.json
+jq empty .agent/tasks.json .agent/tasks/TASK-047.json
 ```
 
 结果：
@@ -103,10 +104,10 @@ jq empty .agent/tasks.json .agent/tasks/TASK-046.json
 - Web typecheck：通过。
 - Web production build：通过。
 - Web audit：0 vulnerabilities。
-- Playwright E2E：56 passed。
+- Playwright E2E：58 passed。
 - API pytest：90 passed。
 - `git diff --check`：通过。
-- `.agent/tasks.json` 和 `.agent/tasks/TASK-046.json` JSON 结构检查：通过。
+- `.agent/tasks.json` 和 `.agent/tasks/TASK-047.json` JSON 结构检查：通过。
 
 本轮相关视觉资产：
 
@@ -136,7 +137,7 @@ jq empty .agent/tasks.json .agent/tasks/TASK-046.json
 1. **真实认证和多用户协作还没实现。** 当前已有 skill 作用域 owner/maintainer/evaluator/viewer、受保护动作门禁和签名本地 actor session，但它仍是开发期身份切换，不是真正的登录、token rotation 或组织级身份系统。
 2. **部分操作仍偏表单。** 移动端 first-run 已去掉重复入口，中等桌面证据视图已把 inspector 收成 verification rail；Launchpad/Inspector 高频写入字段已有共享基础件；Command menu 已按当前 mode 把高频动作前置；导入后清单、case 新增、case 详情内联编辑、主区创建 variant、主区追加候选版本、主区创建 skill、主区 skill 设置、访问控制、治理审计、记录 run 和 candidate 验证已更连续，但部分低频设置和筛选控件仍主要依赖局部表单或尚未产品化。
 3. **自动测评策略还没产品化。** 当前支持手工 pass/fail 和外部结果导入，但还没有内置 strategy registry、runner 调度和自动优化流水线。
-4. **深层 URL state 还没完成。** selected skill 和 mode 已经可以分享、刷新和 Back/Forward 恢复，但 diff pair、history filters、selected run/case、run comparison、eval target version 和 promotion context 还不能深链。
+4. **URL sharing 还有协作层缺口。** 深层证据上下文已进 URL，但还没有短链接、权限感知分享提示，也没有草稿恢复策略。
 5. **Run matrix 还不是完整多维表格。** 现在能保存筛选视图、看 case x run pass/fail、高亮对照/候选的修复和回退，并支持 impact 过滤/分组/分数显示控制，但还不能配置列、自定义指标、导出或保存对照/候选 run 指针。
 6. **Accessibility 深水区还没完整覆盖。** 已有 skip link、可见 focus ring、reduced-motion、status notice、command menu ARIA、Workbench mode tablist、Run matrix table semantics 和 Inspector action focus handoff 回归，但更广的全路径焦点巡检和人工读屏验收仍未完成。
 7. **Ralph Loop 未真正持续运行。** 配置已安装，但本地 Docker Sandboxes 需要 `sbx login` 授权；没有登录就不能让 Ralph 持续接管任务。
@@ -148,7 +149,7 @@ jq empty .agent/tasks.json .agent/tasks/TASK-046.json
 下一轮最有价值的方向：
 
 1. 接入真实认证：用真实登录 session/token 替换本地 actor cookie，前端只展示 capability，不再自由切换开发身份。
-2. 做 URL state 第二阶段：补齐 diff pair、history filters、selected run/case、run comparison、eval target version 和 promotion context。
+2. 做表单字段基础件第二阶段：迁移 QuickAddCases、EvalCaseDetailPanel、SkillSettingsPanel、SkillAccessPanel、history filters、run matrix controls 和 diff selectors。
 3. 把 run matrix 升级为多维表格：支持列配置、更多指标列、导出，并评估是否保存对照/候选 run 指针。
 4. 把 audit events 升级为跨 skill/组织级查询、可导出、可配置保留策略的审计系统。
 5. 把 eval strategy / runner registry 产品化。

@@ -2,7 +2,7 @@
 
 日期：2026-05-14
 
-状态：当前产品闭环已经强于普通 demo，但还不是成熟产品。主要缺口不在“能不能跑通”，而在信息架构密度、历史/发布证据的可扫读性，以及部分表单/焦点/深层 URL 状态的产品级细节。移动端 first-run、证据视图 inspector 折叠、URL state 第一阶段、Audit Explorer 扫读重构、表单字段基础件第一阶段、Command menu mode-aware 排序和 Diff / Promotion 文件 reviewed progress 第一阶段已经按本审计后续任务完成。
+状态：当前产品闭环已经强于普通 demo，但还不是成熟产品。主要缺口不在“能不能跑通”，而在信息架构密度、历史/发布证据的可扫读性，以及部分表单/焦点/权限协作的产品级细节。移动端 first-run、证据视图 inspector 折叠、URL state 第二阶段、Audit Explorer 扫读重构、表单字段基础件第一阶段、Command menu mode-aware 排序和 Diff / Promotion 文件 reviewed progress 第一阶段已经按本审计后续任务完成。
 
 ## 审计输入
 
@@ -69,23 +69,24 @@
 - 在 1280 到 1440 宽之间使用两栏布局：catalog + main，inspector 作为 drawer。
 - 给 inspector 做“当前 action only”模式：无 action 时显示 compact summary，不展示完整表单栈。
 
-### P1 - 深层 URL state 仍未完成，复杂证据上下文还不能分享
+### 已解决第二阶段 / 仍需后续 - 深层 URL state 已覆盖核心证据上下文
 
 证据：
 
 - TASK-042 已完成第一阶段：`/skills?skill=<slug-or-id>&mode=<mode>` 可以恢复 selected skill 和 mode。
 - Vercel guideline 明确要求 filters、tabs、pagination、expanded panels 等 state 进入 URL。
-- 当前 `/skills` 仍不能深链到 `history?variant_version=...`、`mode=diff&left=...&right=...`、selected run/case、run comparison 或 `promotion candidate`。
+- TASK-047 已完成第二阶段：`/skills` 可以恢复 diff pair/file/filter、eval target/case、history filters、selected run、run comparison、matrix controls、audit filters 和 promotion review context。
+- E2E 覆盖 diff/evals/history/promotion 深链刷新恢复，以及浏览器 Back/Forward 恢复 mode。
 
 影响：
 
-- 用户已经可以把“某个 skill 的历史页”发给同事，但还不能分享“某次候选版本测评结果”或“某组 diff pair”。
-- 刷新页面不会丢 selected skill/mode，但仍会丢历史筛选、diff pair 或 candidate review 上下文。
+- 用户已经可以分享“某组 diff pair”“某次候选版本评审”“某组 run comparison”这类具体证据上下文。
+- 当前 URL 仍不承担草稿保存；未提交 pass/fail 草稿、批量 case 输入和 viewed progress 不进入 URL。
 
 建议：
 
-- 第二阶段同步 `selected_case_id`、`eval_target_version_id`、`diff_left/right`、`run filters`、selected run 和 run comparison。
-- Promotion review 需要候选版本、目标测试集和 evidence run 共同确定上下文，建议单独设计 permalink。
+- 第三阶段再考虑短链接、权限感知分享提示，以及草稿是否进入 local/session storage。
+- 不建议把未提交测评草稿写进 URL；那会让链接变长并泄露临时数据。
 
 ### 已解决 - Audit Explorer 可扫读性不足，payload 过重
 
@@ -178,14 +179,14 @@
 
 ## 下一轮任务排序
 
-1. **URL state 第二阶段。** 补齐 diff pair、history filters、selected case/run、run comparison、eval target version 和 promotion permalink。
-2. **表单字段基础件第二阶段。** 迁移 QuickAddCases、EvalCaseDetailPanel、SkillSettingsPanel、SkillAccessPanel、history filters、run matrix controls 和 diff selectors。
-3. **Command menu 第二阶段。** 增加最近使用/selection-aware 排序和命令 preview。
-4. **组织级 Audit Explorer。** 跨 skill 查询、日期范围、分页、导出和保留策略。
-5. **Diff / Promotion reviewed progress 第二阶段。** 决定是否服务端持久化、自动折叠已查看文件或纳入 promotion checklist。
+1. **表单字段基础件第二阶段。** 迁移 QuickAddCases、EvalCaseDetailPanel、SkillSettingsPanel、SkillAccessPanel、history filters、run matrix controls 和 diff selectors。
+2. **Command menu 第二阶段。** 增加最近使用/selection-aware 排序和命令 preview。
+3. **组织级 Audit Explorer。** 跨 skill 查询、日期范围、分页、导出和保留策略。
+4. **Diff / Promotion reviewed progress 第二阶段。** 决定是否服务端持久化、自动折叠已查看文件或纳入 promotion checklist。
+5. **URL state 第三阶段。** 短链接、权限感知分享提示和草稿恢复策略。
 
 ## 不建议马上做的事
 
 - 不建议先大改颜色、字体或动画。当前更大的问题是空间分配和操作优先级，不是装饰不足。
-- 不建议马上做复杂多维表格，除非先解决 history/promotion 的可分享 URL 和 inspector 折叠。
+- 不建议马上做复杂多维表格，除非先解决表单基础件第二阶段和 command menu selection-aware 操作。
 - 不建议继续在 inspector 里堆新表单。新动作如果是高频主路径，应优先进入对应主 pane 或 drawer。

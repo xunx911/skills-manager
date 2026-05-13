@@ -10,6 +10,16 @@
 
 ## Session Log
 
+### 2026-05-14 02:43 CST - TASK-047 URL State 第二阶段
+
+- 新增 `docs/superpowers/specs/2026-05-14-url-state-second-stage-design.md` 和执行计划，记录 Vercel URL-as-state、Next.js search params 和 MDN History API 对 SkillHub 的适配方案。
+- 新增 `apps/web/lib/workbench-url-state.ts`，集中处理 `/skills` query parse/serialize，server page 和 client workbench 复用同一契约。
+- URL 现在可恢复 diff pair/file/filter、eval target/case、history filters、selected run、run comparison、matrix controls、audit filters 和 promotion review context；非当前 mode 的深层参数会从 URL 中清理。
+- `DecisionWorkbench` 增加 URL hydrate gate；`popstate` 同 skill 时立即应用 deep state，不再被同步 effect 推回旧 state。
+- Diff pair 和 Promotion review 改为 state-driven effects，按钮点击、URL hydrate 和 Back/Forward 复用同一加载路径。
+- 新增 E2E 红绿覆盖 evals/diff/history/promotion deep link 和刷新恢复；更新 README、产品体验评审、完成度审计、摩擦审计和 TASK-047 任务记录。
+- 已验证：红灯 E2E 先失败于缺少 `eval_target` 与 `promotion` URL params；绿色后 `url-state.spec.ts` 4 passed；`npm run test:unit` 1 file/6 tests passed；`npm run typecheck` passed；`npm run build` passed；`npm audit --omit=dev` found 0 vulnerabilities；`uv run pytest` 90 passed；`npm run e2e` 58 passed；`git diff --check` passed；任务 JSON 结构检查 passed。
+
 ### 2026-05-14 02:27 CST - TASK-046 Diff / Promotion review 文件 viewed progress
 
 - 新增 `docs/superpowers/specs/2026-05-14-diff-review-progress-design.md` 和执行计划，记录借鉴 GitHub/GitLab file viewed progress 后的会话级适配方案。

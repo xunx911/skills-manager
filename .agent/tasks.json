@@ -320,5 +320,12 @@
     "priority": 46,
     "passes": true,
     "spec": ".agent/tasks/TASK-046.json"
+  },
+  {
+    "id": "047",
+    "title": "URL State 第二阶段",
+    "priority": 47,
+    "passes": true,
+    "spec": ".agent/tasks/TASK-047.json"
   }
 ]
