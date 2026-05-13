@@ -17,6 +17,7 @@ import { PromotionReviewPane } from "@/components/promotion-review/promotion-rev
 import { RunComparisonPanel } from "@/components/run-comparison/run-comparison-panel";
 import { RunMatrixPanel } from "@/components/run-matrix/run-matrix-panel";
 import { SavedRunViews } from "@/components/saved-views/saved-run-views";
+import { VariantCreationComposer } from "@/components/variants/variant-creation-composer";
 import { WorkspaceVersionComposer } from "@/components/variants/workspace-version-composer";
 import type {
   BundleDiff,
@@ -778,6 +779,8 @@ export function DecisionWorkbench({ skills: initialSkills, featuredSkill }: Deci
     await runCommand("Variant 已创建。", async () => {
       const label = textValue(form, "label");
       const summary = textValue(form, "summary");
+      const baseContentRef = defaultVariant?.current_version?.content_ref ?? null;
+      const copyCurrent = form.get("copy_current") === "on" && baseContentRef;
       await apiSend("/api/variants", {
         method: "POST",
         body: {
@@ -786,11 +789,13 @@ export function DecisionWorkbench({ skills: initialSkills, featuredSkill }: Deci
           label,
           summary,
           tags: tagList(textValue(form, "tags")),
-          content_ref: {
-            kind: "skill_bundle",
-            locator: `inline:${selectedDetail.skill.slug}/${label}`,
-            digest: await digestText(summary + textValue(form, "tags")),
-          },
+          content_ref: copyCurrent
+            ? baseContentRef
+            : {
+                kind: "skill_bundle",
+                locator: `inline:${selectedDetail.skill.slug}/${label}`,
+                digest: await digestText(summary + textValue(form, "tags")),
+              },
           change_summary: textValue(form, "change_summary"),
           actor: ACTOR,
           make_default: form.get("make_default") === "on",
@@ -1081,6 +1086,7 @@ export function DecisionWorkbench({ skills: initialSkills, featuredSkill }: Deci
             busy={busy}
             defaultVariant={defaultVariant}
             onAction={chooseAction}
+            onCreateVariant={createVariant}
             onCreateVersion={createVariantVersion}
             onDiff={() => openDiffMode()}
             onPromotionReview={openPromotionReview}
@@ -1353,6 +1359,7 @@ function VariantsPane({
   busy,
   defaultVariant,
   onAction,
+  onCreateVariant,
   onCreateVersion,
   onDiff,
   onPromotionReview,
@@ -1361,6 +1368,7 @@ function VariantsPane({
   busy: boolean;
   defaultVariant: VariantDetail | null;
   onAction: (mode: ActionMode) => void;
+  onCreateVariant: (event: FormEvent<HTMLFormElement>) => void;
   onCreateVersion: (event: FormEvent<HTMLFormElement>) => void;
   onDiff: () => void;
   onPromotionReview: (variantId: string, candidateVersionId: string) => void;
@@ -1381,6 +1389,11 @@ function VariantsPane({
           <button disabled={!defaultVariant || defaultVariant.versions.length < 2} onClick={onDiff} type="button">比较版本</button>
         </div>
       </div>
+      <VariantCreationComposer
+        busy={busy}
+        hasBaseVersion={Boolean(defaultVariant?.current_version)}
+        onCreateVariant={onCreateVariant}
+      />
       <WorkspaceVersionComposer
         busy={busy}
         defaultVariantId={defaultVariant?.id}

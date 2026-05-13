@@ -33,6 +33,7 @@
 | 导入后验证引导 | E2E `imported skill is guided into its first verification run` 覆盖导入后清单、添加首条 case、自动进入测评、记录 run 和查看历史。 | 完成 |
 | 新建 skill | `POST /api/skills`；右侧 inspector `新建 skill`；键盘 smoke 能打开入口。 | 基础完成 |
 | 新建 variant | `POST /api/variants`；E2E 创建 `Strict reviewer`。 | 完成 |
+| 主工作区创建 variant | `VariantCreationComposer` 在 `变体` 主面板直接创建 tags 约束 variant；E2E 覆盖创建后 variant map 出现新卡片和 v1。 | 完成 |
 | 追加 candidate version | `POST /api/variant-versions` 支持 `make_current=false`；E2E 创建候选版本并保持 current 不变。 | 完成 |
 | 主工作区追加候选版本 | `WorkspaceVersionComposer` 在 `变体` 主面板直接上传标准 Skill bundle；E2E 覆盖保存 candidate 后自动进入候选测评。 | 完成 |
 | Candidate 验证交接 | E2E 覆盖追加 candidate 后自动切到测评页、自动选择新版本、清空旧草稿，并从 banner 进入 promotion review。 | 完成 |
@@ -79,7 +80,7 @@ cd apps/web && npm run e2e
 
 - Web typecheck：通过。
 - Web production build：通过。
-- Playwright E2E：28 passed。
+- Playwright E2E：30 passed。
 - API pytest：80 passed。
 
 本轮新增视觉资产：
@@ -87,6 +88,7 @@ cd apps/web && npm run e2e
 - `apps/web/e2e/visual-workbench.spec.ts-snapshots/empty-skill-workbench-chromium-darwin.png`
 - `apps/web/e2e/visual-workbench.spec.ts-snapshots/imported-skill-overview-chromium-darwin.png`
 - `apps/web/e2e/visual-workbench.spec.ts-snapshots/manual-eval-review-chromium-darwin.png`
+- `apps/web/e2e/visual-workbench.spec.ts-snapshots/variants-workspace-composers-chromium-darwin.png`
 - `apps/web/e2e/visual-workbench.spec.ts-snapshots/promotion-review-ready-chromium-darwin.png`
 - `apps/web/e2e/visual-workbench.spec.ts-snapshots/run-comparison-ready-chromium-darwin.png`
 - `apps/web/e2e/visual-workbench.spec.ts-snapshots/mobile-empty-workbench-chromium-darwin.png`
@@ -94,11 +96,12 @@ cd apps/web && npm run e2e
 - `.agent/screenshots/TASK-007-1.png`
 - `.agent/screenshots/TASK-008-1.png`
 - `.agent/screenshots/TASK-009-1.png`
+- `.agent/screenshots/TASK-016-1.png`
 
 ## 仍然阻塞“成熟产品完成”的风险
 
 1. **权限和多用户协作还没实现。** 当前仍是单用户工作台；没有 owner/maintainer/evaluator/viewer 的 scoped role enforcement。
-2. **部分操作仍偏表单。** 导入后清单、case 新增、case 详情内联编辑、主区追加候选版本、记录 run 和 candidate 验证已更连续，但 skill 创建、variant 创建和部分设置仍主要依赖 inspector 表单。
+2. **部分操作仍偏表单。** 导入后清单、case 新增、case 详情内联编辑、主区创建 variant、主区追加候选版本、记录 run 和 candidate 验证已更连续，但 skill 创建和部分设置仍主要依赖 inspector 表单。
 3. **自动测评策略还没产品化。** 当前支持手工 pass/fail 和外部结果导入，但还没有内置 strategy registry、runner 调度和自动优化流水线。
 4. **Run matrix 还不是完整多维表格。** 现在能保存筛选视图、看 case x run pass/fail，并高亮对照/候选的修复和回退，但还不能配置列或分组。
 5. **Accessibility 覆盖还浅。** 有键盘 smoke 和可见 label，但缺少系统化 focus order、screen reader、reduced-motion 验证。
@@ -110,7 +113,7 @@ cd apps/web && npm run e2e
 
 下一轮最有价值的方向：
 
-1. 把 skill 创建、variant 创建和设置体验继续从 inspector 表单迁到主内容区或内联抽屉，减少上下文跳转。
+1. 把 skill 创建和设置体验继续从 inspector 表单迁到主内容区或内联抽屉，减少上下文跳转。
 2. 开始权限模型和 scoped role assignment，尤其是 accepted verification / promotion 权限。
 3. 把 run matrix 升级为多维表格：支持列配置、分组和更多指标列。
 4. 把 eval strategy / runner registry 产品化。

@@ -1,0 +1,27 @@
+{
+  "id": "016",
+  "title": "实现主工作区创建 variant",
+  "status": "complete",
+  "goal": "让用户在变体主工作区直接创建新的 tags 约束 variant，减少依赖右侧 inspector 的创建摩擦。",
+  "scope": [
+    "在 Variants 主面板中新增 variant 创建 composer",
+    "复用现有 POST /api/variants 创建逻辑",
+    "支持填写 label、tags、summary、change summary、是否设为 default",
+    "默认从当前 default variant 的 current version 复制内容引用作为新 variant v1 的基线",
+    "新增 E2E 覆盖从主工作区创建 variant",
+    "更新中文 README、UX 复盘和完成度审计"
+  ],
+  "out_of_scope": [
+    "新增后端接口",
+    "创建 variant 时上传新 bundle",
+    "强制 tag 组合唯一",
+    "重做 variant map"
+  ],
+  "verification": [
+    "cd apps/api && uv run pytest",
+    "cd apps/web && npm run typecheck",
+    "cd apps/web && npm run build",
+    "cd apps/web && UV_CACHE_DIR=/Users/xx/Documents/code/skills-manager/.uv-cache npm run e2e",
+    "git diff --check"
+  ]
+}

@@ -42,6 +42,17 @@ test("visual baseline: imported skill overview and eval review", async ({ page }
   });
 });
 
+test("visual baseline: variants workspace composers", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await importSkillBundle(page, "visual-variants-workspace");
+  await page.getByRole("button", { name: "变体", exact: true }).click();
+  await hideVolatileUi(page);
+
+  await expect(page.locator(".linearWorkbench")).toHaveScreenshot("variants-workspace-composers.png", {
+    animations: "disabled",
+  });
+});
+
 test("visual baseline: promotion review", async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 720 });
   await importSkillBundle(page, "visual-promotion-reviewing");

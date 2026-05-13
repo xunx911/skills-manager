@@ -12,6 +12,7 @@
 - `测评` 页的 case 详情面板支持内联编辑，用户可以在当前测评上下文中修改 title、input、expected output、notes，并保存为新的 case version。
 - `概览` 页新增导入后验证清单，用户导入 bundle 后可以直接补首批 case、进入手工测评、再查看证据历史。
 - 追加 candidate 版本后会自动进入候选版本测评上下文；测评页 banner 可以直接打开 `设为当前版本评审`。
+- `变体` 主面板现在提供 `新建约束 variant` composer，用户不必进入右侧 inspector 就能创建新的 tags 组合，并默认从当前版本复制基线。
 - `变体` 主面板现在提供 `追加候选版本` composer，用户不必进入右侧 inspector 就能上传新的标准 Skill bundle 并进入候选测评。
 - 手工测评现在可以选择 `测评目标版本`，因此候选 `VariantVersion` 可以先被测评，再决定是否成为 current。
 - `变体` 页会列出每个 variant 的历史版本。current 版本显示 `Current`，非 current 版本提供 `设为当前版本评审`。
@@ -43,6 +44,8 @@
 - **Airtable record detail sidesheet:** Airtable 让用户从表格选中记录后在详情中直接编辑字段。SkillHub 适配为测评 case 详情内联编辑，保持“左侧选择、右侧/主区编辑”的连续工作流。
 - **Linear Peek / inline issue fields:** Linear 的 Peek 和 issue detail 让用户不离开列表上下文就能改标题/描述等字段。SkillHub 适配为选中 case 后直接编辑 input 和 expected output，但保存仍显式生成新版本。
 - **Linear issue creation:** Linear 把创建 issue 做成顶层按钮、快捷键和全屏创建入口。SkillHub 适配为在变体主上下文中直接追加版本，让高频创建动作贴近用户正在看的对象。
+- **Figma variants:** Figma 用属性和值组织同一 component set 的不同 variant，强调每个 variant 是唯一属性组合。SkillHub 适配为在创建 variant 时突出 tags，让用户把 tags 理解为约束组合，而不是 Git 分支血缘。
+- **Airtable record detail actions:** Airtable 在 record detail 中放字段、历史和按钮动作。SkillHub 适配为在 variant map 附近直接创建 variant，创建后立刻在当前空间看到新增卡片。
 - **Vercel project import:** Vercel 的导入流程把选择来源、配置项目和生成 preview 串在一起。SkillHub 适配为“选择 variant -> 上传 bundle -> 生成候选版本 -> 自动进入测评”。
 - **GitHub / VS Code diff:** 版本变化用文件列表 + 行级 additions/removals 展示，而不是只给 change summary。Skill 本质上是文件夹，必须让用户看到真实文件变化。
 - **GitHub protected branch / release review:** “设为当前版本”不是普通字段更新，而是有证据的指针移动。promotion review 借鉴 release 前检查，把测试结果、diff、风险说明合在一起。
@@ -80,10 +83,11 @@
 15. 以前矩阵只展示原始 pass/fail；现在选择对照/候选后，每个 case 行直接标出修复、回退或稳定状态。
 16. 以前编辑 case 主要依赖右侧 inspector；现在可在测评详情面板内直接编辑并保存为新版本，减少测评执行中的上下文跳转。
 17. 以前追加版本主要依赖右侧 inspector；现在变体主面板有候选版本 composer，版本维护动作更靠近 variant map 和历史版本列表。
+18. 以前创建 variant 主要依赖右侧 inspector；现在变体主面板有约束 variant composer，并默认复用当前版本作为 v1 基线。
 
 ## 仍然存在的摩擦
 
-1. 右侧 inspector 仍然偏表单化。case 编辑和候选版本追加已经迁入主区，但 skill 创建、variant 创建和部分设置仍需要更成熟的主区或内联抽屉体验。
+1. 右侧 inspector 仍然偏表单化。case 编辑、variant 创建和候选版本追加已经迁入主区，但 skill 创建和部分设置仍需要更成熟的主区或内联抽屉体验。
 2. Promotion review 已经展示 case impact 和 diff，但还没有把具体 diff hunk 关联到具体 eval case。
 3. Run matrix 已经提供 read-only 多 run x case 浏览、保存筛选视图和对照/候选 impact，但还没有列配置和分组。
 4. Zip import 预览仍然依赖后端校验；folder import 的浏览器侧预览更丰富。

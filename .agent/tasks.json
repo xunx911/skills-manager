@@ -103,5 +103,12 @@
     "priority": 15,
     "passes": true,
     "spec": ".agent/tasks/TASK-015.json"
+  },
+  {
+    "id": "016",
+    "title": "实现主工作区创建 variant",
+    "priority": 16,
+    "passes": true,
+    "spec": ".agent/tasks/TASK-016.json"
   }
 ]

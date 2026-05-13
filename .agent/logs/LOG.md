@@ -10,6 +10,14 @@
 
 ## Session Log
 
+### 2026-05-13 19:31 CST - TASK-016 主工作区创建 Variant
+
+- 在 `变体` 主工作区新增 `VariantCreationComposer`，可直接填写 label、tags、summary、change summary，并选择是否设为 default。
+- 主区创建 variant 默认从当前 default variant 的 current version 复制内容引用，让新 variant 的 v1 有真实基线；右侧 inspector 创建路径保留。
+- 新增 E2E 覆盖主工作区创建 variant，并新增 `variants-workspace-composers` 视觉基线。
+- 已验证：`uv run pytest` 80 passed；`npm run typecheck` passed；`npm run build` passed；`npm run e2e` 30 passed；`git diff --check` passed。
+- 截图：`.agent/screenshots/TASK-016-1.png`。
+
 ### 2026-05-12 21:45 CST - TASK-015 主工作区追加 VariantVersion
 
 - 在 `变体` 主工作区新增 `WorkspaceVersionComposer`，可直接选择 variant、上传标准 Skill 文件夹或 zip、填写 change summary，并选择是否直接设为 current。

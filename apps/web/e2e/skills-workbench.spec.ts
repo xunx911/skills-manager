@@ -91,6 +91,25 @@ test("operator can import a zipped standard skill bundle", async ({ page }) => {
   }
 });
 
+test("operator can create a variant from the variants workspace", async ({ page }) => {
+  const skillName = `workspace-variant-${Date.now()}`;
+  await importSkillBundle(page, skillName);
+
+  await page.getByRole("button", { name: "变体", exact: true }).click();
+
+  const composer = page.locator(".variantCreationComposer");
+  await composer.getByRole("button", { name: "新建约束 variant" }).click();
+  await composer.getByPlaceholder("Codex + stricter auth").fill("Workspace reviewer");
+  await composer.getByPlaceholder("codex, strict-auth").fill("codex, strict-auth");
+  await composer.getByPlaceholder("这个约束组合下的最优解说明").fill("Use stricter criteria for authorization-sensitive diffs.");
+  await composer.getByPlaceholder("为什么要创建这个 variant").fill("Create a stricter workspace-managed reviewer.");
+  await composer.getByRole("button", { name: "创建约束 variant" }).click();
+
+  const variantCard = page.locator(".variantMapCard").filter({ hasText: "Workspace reviewer" });
+  await expect(variantCard).toBeVisible();
+  await expect(variantCard).toContainText("v1");
+});
+
 test("imported skill is guided into its first verification run", async ({ page }) => {
   await importSkillBundle(page, `first-verification-${Date.now()}`);
 
