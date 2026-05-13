@@ -10,6 +10,15 @@
 
 ## Session Log
 
+### 2026-05-14 01:48 CST - TASK-043 Audit Explorer 扫读重构
+
+- 新增 `docs/superpowers/specs/2026-05-14-audit-explorer-scan-design.md` 和执行计划，记录借鉴 Linear audit log、GitHub audit log、Stripe request logs 和 Vercel Web Interface Guidelines 后的适配方案。
+- 扩展 `operator can filter skill audit events in the explorer` E2E，红灯先失败于缺少 `role.assigned` quick filter；绿色后覆盖 action quick filter、可读事件标题、actor、payload 摘要、结构化详情和默认折叠的 Raw payload。
+- `SkillAuditExplorer` 增加 action chips、readable timeline、`aria-pressed` selected event、结构化 detail facts/key-value fields，并把 Raw JSON 收进 native `details`。
+- 更新 Audit Explorer CSS 和视觉基线；视觉测试 helper 将 volatile resource id/time 替换为稳定占位，避免截图因随机 skill id 和时间抖动。
+- 更新 README、产品体验评审、完成度审计和摩擦审计；下一轮队列移到表单字段组件化、command menu 上下文化、diff/promotion reviewed progress、URL state 第二阶段和组织级 audit。
+- 已验证：`skills-workbench.spec.ts -g "operator can filter skill audit events in the explorer"` 1 passed；`visual-workbench.spec.ts -g "visual baseline: skill audit explorer" --update-snapshots` 1 passed；`npm run test:unit` 1 file/3 tests passed；`npm run typecheck` passed；`npm run build` passed；`npm audit --omit=dev` found 0 vulnerabilities；`uv run pytest` 90 passed；`npm run e2e` 54 passed。
+
 ### 2026-05-14 01:31 CST - TASK-042 URL State 同步第一阶段
 
 - 新增 `apps/web/e2e/url-state.spec.ts`，红绿覆盖 `/skills?skill=<slug>&mode=history` 直达、刷新恢复、用户切换 mode 后 URL 同步，以及浏览器 Back 恢复历史 tab。

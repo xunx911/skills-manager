@@ -1,0 +1,34 @@
+{
+  "id": "043",
+  "title": "Audit Explorer 扫读重构",
+  "status": "complete",
+  "goal": "把当前 skill 的 Audit Explorer 从 Raw JSON 优先的日志页，改成 quick filters、readable timeline、structured detail 和 Raw payload disclosure 的治理审计视图。",
+  "scope": [
+    "新增 Playwright E2E 覆盖 action quick filter",
+    "新增 Playwright E2E 覆盖 timeline row 的可读标题、actor 和 payload 摘要",
+    "新增 Playwright E2E 覆盖 detail panel 默认结构化摘要且 Raw payload 默认折叠",
+    "前端基于已有 AuditEvent[] 派生 action chips、action label 和 payload key/value fields",
+    "更新 Audit Explorer CSS，保证 1280px 与移动端不重叠",
+    "更新视觉基线、README、产品体验评审、完成度审计、摩擦审计、任务日志和本任务规格/计划"
+  ],
+  "out_of_scope": [
+    "后端 audit event schema 变更",
+    "跨 skill 或组织级审计搜索",
+    "日期范围、分页、导出、SIEM 集成",
+    "审计事件 URL 深链",
+    "promotion permalink"
+  ],
+  "verification": [
+    "Red: cd apps/web && UV_CACHE_DIR=/Users/xx/Documents/code/skills-manager/.uv-cache npx playwright test e2e/skills-workbench.spec.ts --project=chromium -g \"operator can filter skill audit events in the explorer\" -> 1 failed because quick filter button was missing",
+    "Green: cd apps/web && UV_CACHE_DIR=/Users/xx/Documents/code/skills-manager/.uv-cache npx playwright test e2e/skills-workbench.spec.ts --project=chromium -g \"operator can filter skill audit events in the explorer\" -> 1 passed",
+    "cd apps/web && UV_CACHE_DIR=/Users/xx/Documents/code/skills-manager/.uv-cache npx playwright test e2e/visual-workbench.spec.ts --project=chromium -g \"visual baseline: skill audit explorer\" --update-snapshots -> 1 passed, snapshot updated and visually inspected",
+    "cd apps/web && npm run test:unit -> 1 file / 3 tests passed",
+    "cd apps/web && npm run typecheck -> passed",
+    "cd apps/web && npm run build -> passed",
+    "cd apps/web && npm audit --omit=dev -> 0 vulnerabilities",
+    "cd apps/api && uv run pytest -> 90 passed",
+    "cd apps/web && UV_CACHE_DIR=/Users/xx/Documents/code/skills-manager/.uv-cache npm run e2e -> 54 passed",
+    "git diff --check -> passed",
+    "jq empty .agent/tasks.json .agent/tasks/TASK-043.json -> passed"
+  ]
+}

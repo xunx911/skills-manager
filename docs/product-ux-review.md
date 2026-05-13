@@ -15,7 +15,7 @@
 - 用户可以创建 skill、导入标准 Skill 文件夹或 zip、创建 variant、追加 bundle version、添加/编辑/归档 eval case，并记录手工通过/不通过测评。
 - `概览` 页现在提供 `身份与默认分发` 设置面板，用户可以直接修改 skill ID、归属，并选择默认分发 variant。
 - `概览` 页现在提供 `访问控制` 面板，用户可以查看 skill 作用域角色，并添加或移除 owner/maintainer/evaluator/viewer。
-- `概览` 页现在提供 `治理与审计` 面板，集中展示 lifecycle、角色态势、最近 audit events，并把归档放进需要输入当前 skill ID 的危险区；用户也可以进入 `审计 Explorer`，按 actor/action/resource type 过滤事件并查看 payload。
+- `概览` 页现在提供 `治理与审计` 面板，集中展示 lifecycle、角色态势、最近 audit events，并把归档放进需要输入当前 skill ID 的危险区；用户也可以进入 `审计 Explorer`，用 action quick filters、actor/action/resource type 过滤、可读时间线和结构化详情追踪事件，Raw payload 默认折叠。
 - 右侧 inspector 顶部新增 `Local session` 面板，显示当前本地 actor，并允许切换为 `release-manager` 等本地身份；后端用签名 HttpOnly cookie 承载 actor，前端 mutation 不再硬编码身份 header。
 - 工作台新增基础 accessibility 护栏：首个 Tab 可聚焦 `跳到主要内容`，焦点 ring 更高对比，reduced-motion 下非必要 transition 被压低，异步操作结果用 `role=status` 暴露。
 - `测评` 页支持单条快速添加和批量粘贴 case；批量写入只产生一个新的 `EvalSetVersion`，不会把一次整理工作拆成多段版本噪音。
@@ -60,8 +60,8 @@
 - **Linear members and roles:** Linear 把成员管理集中到清晰的 administration surface，并限制危险操作。SkillHub 适配为概览页 `访问控制`，让权限状态靠近 skill 身份设置。
 - **Linear audit log:** Linear 的 audit log 把成员、权限和关键管理动作放到可追溯时间线中。SkillHub 适配为 skill 详情里的最近 audit events，先服务当前对象的治理理解，再考虑全局审计搜索。
 - **GitHub Enterprise Audit Log:** GitHub 用 actor、action、repo、created 等结构化限定符查询审计事件。SkillHub 适配为当前 skill 的 actor/action/resource_type 过滤，避免无边界全文搜索。
+- **Stripe request logs:** Stripe Workbench 把常用过滤、时间/状态摘要和单条日志下钻分层，payload 是排障细节，不是第一视觉层。SkillHub 适配为 Audit Explorer 的 quick filters、readable timeline、结构化详情和 Raw payload disclosure。
 - **GitHub Danger Zone:** GitHub 把危险操作放到 repository settings 底部，并要求明确确认。SkillHub 适配为 `治理与审计` 面板中的危险区，输入当前 skill ID 才能归档。
-- **Stripe request logs:** Stripe 把关键请求用时间、actor/action 和 payload 摘要组织为可追踪事件。SkillHub 适配为短 audit event row，展示 actor、action、时间和 payload 摘要。
 - **本地开发 session 面板:** 参考很多开发者工具把环境身份、workspace 或 account switcher 放在固定侧栏的做法。SkillHub 适配为 inspector 顶部的 `Local session`，让用户明确“接下来写入和审计会以谁的身份发生”，同时把真实认证留给下一阶段。
 - **W3C WCAG / Vercel Web Interface Guidelines:** WCAG 强调可见焦点、焦点外观和 reduced-motion；Vercel guidelines 强调 skip link、`:focus-visible`、`aria-live` 和 icon/button label。SkillHub 适配为可测试的键盘和读屏护栏，而不是只写文档承诺。
 - **WAI-ARIA APG Combobox / Dialog:** APG 对 editable combobox 的建议是把 DOM focus 留在输入框，并用 `aria-activedescendant` 报告当前 option；modal dialog 要求 Tab 不离开弹层、Escape 可关闭、关闭后焦点回到触发点。SkillHub 适配为命令菜单搜索框控制 listbox，option 不进入 Tab 序列，关闭按钮提供明确出口。
@@ -133,25 +133,24 @@
 30. 以前移动端 first-run 会先看到主区 Launchpad，继续向下又看到 inspector 的第二份完整导入表单；现在默认只保留主区接入路径，显式请求 inspector action 时再展开右侧表单。
 31. 以前 1280px 桌面下 promotion/history/audit 仍被 300px 以上 inspector 挤压；现在证据模式在中等桌面宽度使用 compact verification rail，把主证据区放宽。
 32. 以前用户无法把“某个 skill 的历史页”直接发给别人，也不能刷新后回到同一 mode；现在 `/skills?skill=<slug>&mode=history` 可以直达并恢复 selected skill + mode，用户切换 tab 或 skill 时地址栏同步更新。
+33. 以前 Audit Explorer 默认让 Raw JSON 占据详情区，列表行容易截断；现在先给 action quick filters、可读事件标题、actor/resource/time 和结构化 payload 摘要，Raw JSON 默认折叠。
 
 ## 仍然存在的摩擦
 
 1. URL state 只完成第一阶段：selected skill 和 mode 可以分享与刷新恢复；diff pair、history filters、selected run/case、run comparison、eval target version 和 promotion 上下文还不能深链。
-2. Audit Explorer 已有过滤和 payload inspect，但列表项过早截断、Raw JSON 默认占据右侧，扫读治理事件还不够快。
-3. 表单细节还未完全产品化：部分业务字段缺少显式 `autoComplete`，局部 focus 样式仍和全局 `:focus-visible` 策略不统一。
-4. Command menu 已有分组、快捷键和单元测试，但排序还没有根据当前 mode/焦点上下文化。
-5. Promotion review 已经展示 case impact 和 diff，但还没有文件 reviewed progress，也没有把具体 diff hunk 关联到具体 eval case。
-6. Run matrix 已经提供 read-only 多 run x case 浏览、保存筛选视图、对照/候选 impact、impact 过滤和分组，但还没有列配置、自定义指标列、导出或保存对照/候选 run 指针。
-7. 权限还没有真实认证来源。当前 actor 已从请求体和前端硬编码 header 收敛到后端签名的本地 cookie session，但仍不是多用户登录、token rotation 或组织级身份系统。
-8. Accessibility 仍未完整覆盖全路径。现在已有 skip link、focus ring、reduced-motion、status notice、command menu combobox/listbox、Workbench mode tablist、Run matrix 表格语义和 Inspector action focus handoff 回归，但更广的全路径焦点巡检和人工读屏验收还需要继续补。
+2. 表单细节还未完全产品化：部分业务字段缺少显式 `autoComplete`，局部 focus 样式仍和全局 `:focus-visible` 策略不统一。
+3. Command menu 已有分组、快捷键和单元测试，但排序还没有根据当前 mode/焦点上下文化。
+4. Promotion review 已经展示 case impact 和 diff，但还没有文件 reviewed progress，也没有把具体 diff hunk 关联到具体 eval case。
+5. Run matrix 已经提供 read-only 多 run x case 浏览、保存筛选视图、对照/候选 impact、impact 过滤和分组，但还没有列配置、自定义指标列、导出或保存对照/候选 run 指针。
+6. 权限还没有真实认证来源。当前 actor 已从请求体和前端硬编码 header 收敛到后端签名的本地 cookie session，但仍不是多用户登录、token rotation 或组织级身份系统。
+7. Accessibility 仍未完整覆盖全路径。现在已有 skip link、focus ring、reduced-motion、status notice、command menu combobox/listbox、Workbench mode tablist、Run matrix 表格语义和 Inspector action focus handoff 回归，但更广的全路径焦点巡检和人工读屏验收还需要继续补。
 
 ## 下一轮优化队列
 
 1. URL state 第二阶段：补齐 diff pair、history filters、selected run/case、run comparison、eval target version 和 promotion context 深链。
-2. Audit Explorer 扫读重构：摘要优先，Raw JSON 后置，关键动作可快速过滤。
-3. 表单字段组件化：统一 label、`autoComplete`、placeholder、错误展示和 `:focus-visible`。
-4. Command menu 当前 mode 上下文化排序：测评页优先 case/run 命令，变体页优先 variant/version/diff 命令。
-5. Diff / Promotion review 文件 reviewed progress：按文件标记已查看，显示 x/y reviewed。
-6. 做 run matrix 多维表格：支持列配置、自定义指标列、导出，并考虑是否保存对照/候选 run 指针。
-7. 接入真实认证：用真正的登录 session/token 替换本地 actor cookie，前端只展示 capability，不再允许自由切换开发身份。
-8. 扩展 accessibility E2E：继续覆盖更广的全路径焦点巡检和人工读屏验收。
+2. 表单字段组件化：统一 label、`autoComplete`、placeholder、错误展示和 `:focus-visible`。
+3. Command menu 当前 mode 上下文化排序：测评页优先 case/run 命令，变体页优先 variant/version/diff 命令。
+4. Diff / Promotion review 文件 reviewed progress：按文件标记已查看，显示 x/y reviewed。
+5. 做 run matrix 多维表格：支持列配置、自定义指标列、导出，并考虑是否保存对照/候选 run 指针。
+6. 接入真实认证：用真正的登录 session/token 替换本地 actor cookie，前端只展示 capability，不再允许自由切换开发身份。
+7. 扩展 accessibility E2E：继续覆盖更广的全路径焦点巡检和人工读屏验收。

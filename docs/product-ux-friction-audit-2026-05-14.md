@@ -2,7 +2,7 @@
 
 日期：2026-05-14
 
-状态：当前产品闭环已经强于普通 demo，但还不是成熟产品。主要缺口不在“能不能跑通”，而在信息架构密度、审计/历史的可扫读性，以及部分表单/焦点/深层 URL 状态的产品级细节。移动端 first-run、证据视图 inspector 折叠和 URL state 第一阶段已经按本审计后续任务完成。
+状态：当前产品闭环已经强于普通 demo，但还不是成熟产品。主要缺口不在“能不能跑通”，而在信息架构密度、历史/发布证据的可扫读性，以及部分表单/焦点/深层 URL 状态的产品级细节。移动端 first-run、证据视图 inspector 折叠、URL state 第一阶段和 Audit Explorer 扫读重构已经按本审计后续任务完成。
 
 ## 审计输入
 
@@ -87,24 +87,22 @@
 - 第二阶段同步 `selected_case_id`、`eval_target_version_id`、`diff_left/right`、`run filters`、selected run 和 run comparison。
 - Promotion review 需要候选版本、目标测试集和 evidence run 共同确定上下文，建议单独设计 permalink。
 
-### P2 - Audit Explorer 可扫读性不足，payload 过重
+### 已解决 - Audit Explorer 可扫读性不足，payload 过重
 
 证据：
 
-- `skill-audit-explorer` 截图中列表行大量 `role.assig...`、`product-ope...` 截断，用户必须点每条才能理解差异。
-- `apps/web/app/globals.css:5123` 到 `5167` 把事件行设为三列并强制 ellipsis。
-- `apps/web/components/skills/skill-audit-explorer.tsx:120` 到 `129` 默认用大块 JSON payload 占据右侧。
+- TASK-043 已把 `SkillAuditExplorer` 改成 action quick filters、可读时间线、结构化详情和默认折叠的 Raw payload。
+- `apps/web/e2e/skills-workbench.spec.ts` 覆盖 quick filter、可读事件标题、actor、payload 摘要和 Raw payload disclosure。
+- `skill-audit-explorer` 视觉基线已更新，右侧默认展示 readable summary，不再让 Raw JSON 抢占第一视觉层。
 
 影响：
 
-- 审计页现在像“日志查看器”，还不像“治理审计产品”。
-- 用户无法快速回答：谁改了权限？影响了哪个对象？是不是关键动作？
+- 当前 skill 范围内，用户已经可以更快回答：谁改了权限、影响了哪个对象、是否属于关键动作。
+- 后续更大的审计产品缺口转移到跨 skill/组织级查询、日期范围、分页、导出和保留策略。
 
 建议：
 
-- Timeline 行改成两行布局：`action + actor + resource + summary + time`，避免关键字段过早截断。
-- Payload panel 默认先显示结构化摘要；JSON 放到 “Raw payload” disclosure。
-- Key actions 用 chip 和过滤快捷按钮，而不是只显示计数。
+- 将来做组织级审计时，沿用这套信息架构，并补日期范围、分页、导出和保留策略。
 
 ### P2 - 表单细节还没达到产品级
 
@@ -177,11 +175,11 @@
 
 ## 下一轮任务排序
 
-1. **TASK-043：Audit Explorer 扫读重构。** 摘要优先，Raw JSON 后置。
-2. **TASK-044：表单字段组件化和 autocomplete/focus-visible 统一。**
-3. **TASK-045：Command menu 当前 mode 上下文化排序。**
-4. **TASK-046：Diff / Promotion review file viewed progress。**
-5. **URL state 第二阶段。** 补齐 diff pair、history filters、selected case/run、run comparison、eval target version 和 promotion permalink。
+1. **TASK-044：表单字段组件化和 autocomplete/focus-visible 统一。**
+2. **TASK-045：Command menu 当前 mode 上下文化排序。**
+3. **TASK-046：Diff / Promotion review file viewed progress。**
+4. **URL state 第二阶段。** 补齐 diff pair、history filters、selected case/run、run comparison、eval target version 和 promotion permalink。
+5. **组织级 Audit Explorer。** 跨 skill 查询、日期范围、分页、导出和保留策略。
 
 ## 不建议马上做的事
 

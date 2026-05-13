@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { auditPayloadSummary, formatAuditDate } from "@/components/skills/audit-event-format";
+import { shortId } from "@/lib/format";
 import type { AuditEvent } from "@/lib/types";
 
 export type AuditExplorerFilters = {
@@ -21,6 +22,13 @@ type SkillAuditExplorerProps = {
 };
 
 const resourceTypes = ["all", "skill", "variant", "eval_run"] as const;
+const ACTION_LABELS: Record<string, string> = {
+  "eval_run.accepted_verification_set": "Verification accepted",
+  "role.assigned": "Access role assigned",
+  "role.revoked": "Access role revoked",
+  "skill.archived": "Skill archived",
+  "variant.promoted": "Variant promoted",
+};
 
 export function SkillAuditExplorer({
   events,
@@ -33,6 +41,8 @@ export function SkillAuditExplorer({
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const selectedEvent = events.find((event) => event.id === selectedEventId) ?? events[0] ?? null;
   const summary = useMemo(() => auditSummary(events), [events]);
+  const actionChips = useMemo(() => auditActionChips(events), [events]);
+  const selectedPayloadFields = selectedEvent ? auditPayloadFields(selectedEvent) : [];
 
   useEffect(() => {
     if (!selectedEventId || events.some((event) => event.id === selectedEventId)) return;
@@ -56,6 +66,24 @@ export function SkillAuditExplorer({
         <AuditMetric label="Resources" value={String(summary.resourceTypeCount)} />
         <AuditMetric label="Key actions" value={String(summary.keyActionCount)} />
       </div>
+
+      {actionChips.length > 0 ? (
+        <div aria-label="Action quick filters" className="auditActionChips">
+          {actionChips.map((chip) => (
+            <button
+              aria-label={`筛选 ${chip.action} ${chip.count} 条事件`}
+              aria-pressed={filters.action === chip.action}
+              key={chip.action}
+              onClick={() => onFilterChange("action", chip.action)}
+              type="button"
+            >
+              <span>{auditActionLabel(chip.action)}</span>
+              <code>{chip.action}</code>
+              <b>{chip.count}</b>
+            </button>
+          ))}
+        </div>
+      ) : null}
 
       <div className="auditExplorerFilters">
         <label>
@@ -102,17 +130,19 @@ export function SkillAuditExplorer({
               className={`auditExplorerEvent ${event.id === selectedEvent?.id ? "auditExplorerEventActive" : ""}`}
               key={event.id}
               onClick={() => setSelectedEventId(event.id)}
+              aria-pressed={event.id === selectedEvent?.id}
               type="button"
             >
-              <span>
-                <strong>{event.action}</strong>
-                <small>{auditPayloadSummary(event)}</small>
+              <span className="auditEventActionLine">
+                <strong>{auditActionLabel(event.action)}</strong>
+                <code>{event.action}</code>
               </span>
-              <span>
-                <b>{event.actor_ref}</b>
-                <small>{event.resource_type}</small>
+              <span className="auditEventSummary">{auditPayloadSummary(event)}</span>
+              <span className="auditEventMetaLine">
+                <small><b>Actor</b>{event.actor_ref}</small>
+                <small><b>Resource</b>{formatAuditResource(event)}</small>
+                <time>{formatAuditDate(event.created_at)}</time>
               </span>
-              <time>{formatAuditDate(event.created_at)}</time>
             </button>
           ))}
         </div>
@@ -121,11 +151,44 @@ export function SkillAuditExplorer({
           {selectedEvent ? (
             <>
               <div className="auditPayloadHead">
-                <span>Selected event</span>
-                <strong>{selectedEvent.action}</strong>
-                <small>{selectedEvent.actor_ref} · {selectedEvent.resource_type}</small>
+                <span>Readable summary</span>
+                <strong>{auditActionLabel(selectedEvent.action)}</strong>
+                <small>{selectedEvent.action}</small>
               </div>
-              <pre>{JSON.stringify(selectedEvent.payload, null, 2)}</pre>
+              <div className="auditPayloadBody">
+                <dl className="auditPayloadFacts">
+                  <div>
+                    <dt>Actor</dt>
+                    <dd>{selectedEvent.actor_ref}</dd>
+                  </div>
+                  <div>
+                    <dt>Resource</dt>
+                    <dd>{formatAuditResource(selectedEvent)}</dd>
+                  </div>
+                  <div>
+                    <dt>Time</dt>
+                    <dd>{formatAuditDate(selectedEvent.created_at)}</dd>
+                  </div>
+                </dl>
+                <div className="auditPayloadSummaryCard">
+                  <span>Readable summary</span>
+                  <p>{auditPayloadSummary(selectedEvent)}</p>
+                </div>
+                {selectedPayloadFields.length > 0 ? (
+                  <dl className="auditPayloadFields">
+                    {selectedPayloadFields.map(([key, value]) => (
+                      <div key={key}>
+                        <dt>{key}</dt>
+                        <dd>{String(value)}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                ) : null}
+                <details className="auditRawPayload">
+                  <summary>Raw payload</summary>
+                  <pre>{JSON.stringify(selectedEvent.payload, null, 2)}</pre>
+                </details>
+              </div>
             </>
           ) : (
             <p className="auditExplorerEmpty">选择一条事件后查看 payload。</p>
@@ -143,6 +206,32 @@ function AuditMetric({ label, value }: { label: string; value: string }) {
       <strong>{value}</strong>
     </div>
   );
+}
+
+function auditActionLabel(action: string) {
+  return ACTION_LABELS[action] ?? action;
+}
+
+function formatAuditResource(event: AuditEvent) {
+  return `${event.resource_type} / ${shortId(event.resource_id)}`;
+}
+
+function auditActionChips(events: AuditEvent[]) {
+  const counts = new Map<string, number>();
+  for (const event of events) {
+    counts.set(event.action, (counts.get(event.action) ?? 0) + 1);
+  }
+  return Array.from(counts.entries())
+    .map(([action, count]) => ({ action, count }))
+    .sort((left, right) => right.count - left.count || left.action.localeCompare(right.action))
+    .slice(0, 6);
+}
+
+function auditPayloadFields(event: AuditEvent) {
+  return Object.entries(event.payload).filter(([, value]) => {
+    const valueType = typeof value;
+    return valueType === "string" || valueType === "number" || valueType === "boolean";
+  }).slice(0, 6);
 }
 
 function auditSummary(events: AuditEvent[]) {

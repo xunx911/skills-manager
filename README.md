@@ -18,7 +18,7 @@
 - 中等桌面宽度下，`差异 / 历史 / 审计 / 评审` 这类证据视图会把右侧 inspector 压成 compact verification rail，把空间让给 diff、run matrix、audit payload 和 promotion evidence。
 - 工作台内可以查看 bundle 文件内容、在主工作区编辑 skill 身份和默认分发 variant、管理 skill 作用域角色、创建约束 variant、追加候选版本、版本 diff、run 历史、run matrix、保存历史筛选视图、run-to-run 比较、accepted verification、case 详情内联编辑、case 版本历史、case 历史版本恢复和 promotion review。
 - 创建或导入 skill 的本地 actor 会自动成为该 skill 的 `owner`；`promotion` 和 `accepted verification` 需要 `owner` 或 `maintainer`。前端本地开发身份来自后端签名的 HttpOnly cookie session，JSON body 中不再传 actor；直接调 API 的脚本仍可用 `X-SkillHub-Actor` 作为兼容 fallback。
-- `概览` 页提供 `治理与审计` 面板，集中展示 lifecycle、角色态势、最近 audit events，并把归档收进需要输入当前 skill ID 的危险区；归档需要 `owner` 权限并写入 `skill.archived` audit event。治理面板也能打开 `审计 Explorer`，按 actor、action、resource_type 过滤当前 skill 的治理、发布和验证事件。
+- `概览` 页提供 `治理与审计` 面板，集中展示 lifecycle、角色态势、最近 audit events，并把归档收进需要输入当前 skill ID 的危险区；归档需要 `owner` 权限并写入 `skill.archived` audit event。治理面板也能打开 `审计 Explorer`，用 action quick filters、actor/action/resource_type 过滤、可读时间线和结构化详情追踪当前 skill 的治理、发布和验证事件，Raw payload 默认折叠在下钻区。
 - 工作台支持 `Cmd/Ctrl+K` 上下文命令菜单，可搜索并执行导入、创建、测评、历史、差异等高频动作；菜单使用 `dialog + combobox + listbox` 语义，方向键移动 active option，Tab 会限制在弹层内，关闭后焦点回到触发按钮。
 - `/skills?skill=<slug-or-id>&mode=<mode>` 支持第一阶段 URL state：可以直达某个 skill 的 `概览 / 变体 / 测评 / 差异 / 历史 / 审计` 视图，刷新和浏览器 Back/Forward 会恢复 selected skill 与 mode；更细的 diff pair、history filters、selected run/case 和 promotion context 留给下一阶段深链。
 - 工作台有基础 accessibility 护栏：键盘用户可用 skip link 直接进入主内容；全局 focus ring 更醒目；`prefers-reduced-motion` 会压低非必要动效；操作结果通过 `role=status` 暴露给读屏软件；命令菜单、Workbench mode tabs、Run matrix 和 Inspector action 焦点交接已有 E2E 回归。
@@ -76,7 +76,7 @@ npm run dev -- --hostname 127.0.0.1 --port 3000
 5. 导入 bundle 后先看 `概览` 里的 `验证清单`：没有 case 时点击 `添加首批 case`；有 case 但没有 run 时点击 `打开手工测评`；完成 run 后点击 `查看证据历史`。
 6. 在 `概览` 页的 `身份与默认分发` 中可直接修改 skill ID、归属，并选择哪个 variant 作为默认分发入口。
 7. 在 `概览` 页的 `访问控制` 中可查看当前 skill 的 owner/maintainer/evaluator/viewer，并添加或移除成员角色。
-8. 在 `概览` 页的 `治理与审计` 中查看最近权限/发布/归档事件；点击 `查看全部审计` 可以进入 `审计 Explorer`，按 actor、action 和 resource type 过滤，并查看事件 payload。确实要归档时，需要输入当前 skill ID 后才能执行。
+8. 在 `概览` 页的 `治理与审计` 中查看最近权限/发布/归档事件；点击 `查看全部审计` 可以进入 `审计 Explorer`，先用 action chip 快速收窄，再按 actor、action 和 resource type 精确过滤。选中事件后先看 actor/resource/time/summary 和 payload key/value，只有排障时再展开 `Raw payload`。确实要归档时，需要输入当前 skill ID 后才能执行。
 9. 在 `测评` 页可以直接用快速添加面板录入单条 case，或切到 `批量` 后粘贴多行 `title | input | expected output | notes`。
 10. 在 `变体` 页可直接用 `新建约束 variant` 创建新的 tags 组合；默认会从当前 default variant 的 current version 复制基线，创建后在同一张 variant map 中出现。
 11. 在 `变体` 页可直接用 `追加候选版本` 上传新的标准 Skill 文件夹或 zip；默认不会设为 current，保存后会自动切到 candidate 的测评上下文。

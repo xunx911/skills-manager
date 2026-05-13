@@ -117,6 +117,21 @@ export async function hideVolatileUi(page: Page) {
       element.scrollTop = 0;
     }
   });
+  await page.locator(".auditEventMetaLine small:nth-of-type(2)").evaluateAll((elements) => {
+    for (const element of elements) {
+      element.textContent = "Resource skill / skill_...";
+    }
+  });
+  await page.locator(".auditPayloadFacts div:nth-child(2) dd").evaluateAll((elements) => {
+    for (const element of elements) {
+      element.textContent = "skill / skill_...";
+    }
+  });
+  await page.locator(".auditPayloadFacts div:nth-child(3) dd").evaluateAll((elements) => {
+    for (const element of elements) {
+      element.textContent = "05/13 00:00";
+    }
+  });
   await page.addStyleTag({
     content: [
       '[aria-label="Open Next.js Dev Tools"] { display: none !important; }',

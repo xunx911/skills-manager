@@ -5108,6 +5108,69 @@ body {
   font-size: 18px;
 }
 
+.auditActionChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  border: 1px solid #e4eaf1;
+  border-radius: 12px;
+  background: #ffffff;
+  padding: 10px;
+}
+
+.auditActionChips button {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 2px 8px;
+  min-width: 174px;
+  border: 1px solid #d6dde8;
+  border-radius: 9px;
+  background: #f8fafc;
+  color: #111827;
+  cursor: pointer;
+  padding: 9px 10px;
+  text-align: left;
+  transition: background 140ms ease, border-color 140ms ease, transform 140ms ease;
+}
+
+.auditActionChips button:hover,
+.auditActionChips button[aria-pressed="true"] {
+  border-color: #9aa8b8;
+  background: #ffffff;
+  transform: translateY(-1px);
+}
+
+.auditActionChips span {
+  overflow: hidden;
+  font-size: 12px;
+  font-weight: 950;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.auditActionChips code {
+  grid-column: 1;
+  overflow: hidden;
+  color: #667085;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 850;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.auditActionChips b {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: center;
+  border-radius: 999px;
+  background: #e8eef6;
+  color: #334155;
+  font-size: 11px;
+  font-weight: 950;
+  padding: 3px 7px;
+}
+
 .auditExplorerFilters {
   display: grid;
   grid-template-columns: minmax(160px, 1fr) minmax(180px, 1fr) minmax(150px, 0.8fr) auto;
@@ -5145,7 +5208,7 @@ body {
 
 .auditExplorerGrid {
   display: grid;
-  grid-template-columns: minmax(340px, 0.52fr) minmax(0, 1fr);
+  grid-template-columns: minmax(380px, 0.58fr) minmax(0, 1fr);
   min-height: 440px;
   overflow: hidden;
   border: 1px solid #dde4ed;
@@ -5165,10 +5228,8 @@ body {
 
 .auditExplorerEvent {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(120px, 0.42fr) 78px;
-  gap: 10px;
-  align-items: center;
-  min-height: 64px;
+  gap: 7px;
+  min-height: 92px;
   border: 1px solid transparent;
   border-radius: 10px;
   background: transparent;
@@ -5184,14 +5245,23 @@ body {
   background: #ffffff;
 }
 
-.auditExplorerEvent span {
-  display: grid;
-  gap: 3px;
+.auditExplorerEvent[aria-pressed="true"] {
+  box-shadow: inset 3px 0 0 #3b82f6;
+}
+
+.auditEventActionLine,
+.auditEventMetaLine {
+  display: flex;
   min-width: 0;
 }
 
-.auditExplorerEvent strong,
-.auditExplorerEvent b {
+.auditEventActionLine {
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.auditEventActionLine strong {
   overflow: hidden;
   color: #111827;
   font-size: 13px;
@@ -5199,18 +5269,56 @@ body {
   white-space: nowrap;
 }
 
-.auditExplorerEvent small,
-.auditExplorerEvent time {
+.auditEventActionLine code {
   overflow: hidden;
-  color: #667085;
-  font-size: 11px;
-  font-weight: 850;
+  border-radius: 999px;
+  background: #edf2f7;
+  color: #475467;
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 950;
+  max-width: 180px;
+  padding: 3px 7px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.auditExplorerEvent time {
-  text-align: right;
+.auditEventSummary {
+  color: #334155;
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1.35;
+}
+
+.auditEventMetaLine {
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 0;
+}
+
+.auditEventMetaLine small,
+.auditEventMetaLine time {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+  min-width: 0;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #667085;
+  font-size: 11px;
+  font-weight: 850;
+  padding: 3px 7px;
+}
+
+.auditEventMetaLine b {
+  color: #344054;
+  font-weight: 950;
+}
+
+.auditEventMetaLine small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .auditPayloadPanel {
@@ -5238,7 +5346,75 @@ body {
   font-weight: 850;
 }
 
-.auditPayloadPanel pre {
+.auditPayloadBody {
+  overflow: auto;
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  padding: 14px;
+}
+
+.auditPayloadFacts,
+.auditPayloadFields {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+}
+
+.auditPayloadFacts {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.auditPayloadFields {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.auditPayloadFacts div,
+.auditPayloadFields div,
+.auditPayloadSummaryCard {
+  min-width: 0;
+  border: 1px solid #e3e9f1;
+  border-radius: 10px;
+  background: #fbfcfd;
+  padding: 10px;
+}
+
+.auditPayloadFacts dt,
+.auditPayloadFields dt,
+.auditPayloadSummaryCard span {
+  color: #667085;
+  font-size: 10px;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.auditPayloadFacts dd,
+.auditPayloadFields dd,
+.auditPayloadSummaryCard p {
+  overflow-wrap: anywhere;
+  margin: 4px 0 0;
+  color: #111827;
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1.4;
+}
+
+.auditRawPayload {
+  border: 1px solid #d6dde8;
+  border-radius: 10px;
+  background: #ffffff;
+  overflow: hidden;
+}
+
+.auditRawPayload summary {
+  cursor: pointer;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 950;
+  padding: 10px 12px;
+}
+
+.auditRawPayload pre {
   overflow: auto;
   margin: 0;
   background: #0f172a;

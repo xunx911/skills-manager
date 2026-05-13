@@ -250,11 +250,25 @@ test("operator can filter skill audit events in the explorer", async ({ page }) 
   await expect(explorer.getByRole("heading", { name: "审计 Explorer" })).toBeVisible();
   await expect(explorer).toContainText("role.assigned");
 
+  await expect(explorer.getByRole("button", { name: /筛选 role.assigned/ })).toBeVisible();
+  await explorer.getByRole("button", { name: /筛选 role.assigned/ }).click();
+  await expect(explorer.getByLabel("Action filter")).toHaveValue("role.assigned");
+  await expect(explorer.locator(".auditExplorerEvent")).toHaveCount(2);
+
   await explorer.getByLabel("Action filter").fill("role.assigned");
   await expect(explorer.locator(".auditExplorerEvent")).toHaveCount(2);
 
-  await explorer.locator(".auditExplorerEvent").filter({ hasText: "qa-reviewer" }).click();
-  await expect(explorer.locator(".auditPayloadPanel")).toContainText('"subject_id": "qa-reviewer"');
+  const qaEvent = explorer.locator(".auditExplorerEvent").filter({ hasText: "qa-reviewer" });
+  await expect(qaEvent).toContainText("Access role assigned");
+  await expect(qaEvent).toContainText("product-operator");
+  await qaEvent.click();
+
+  const payloadPanel = explorer.locator(".auditPayloadPanel");
+  await expect(payloadPanel).toContainText("Readable summary");
+  await expect(payloadPanel).toContainText("qa-reviewer");
+  await expect(payloadPanel.locator(".auditRawPayload pre")).toBeHidden();
+  await payloadPanel.getByText("Raw payload").click();
+  await expect(payloadPanel.locator(".auditRawPayload pre")).toContainText('"subject_id": "qa-reviewer"');
 });
 
 test("operator can archive a skill from the governance danger zone", async ({ page, request }) => {

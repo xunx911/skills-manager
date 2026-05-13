@@ -2,7 +2,7 @@
 
 日期：2026-05-14
 
-状态：尚未达到“成熟产品完成”。当前已经是一个强的正式垂直切片：主工作区 Skill Launchpad、移动端 first-run 单主路径、中等桌面证据视图 compact inspector rail、URL state 第一阶段、主工作区 Skill 设置、Skill 作用域访问控制、本地 session actor、基础 accessibility 护栏、Workbench mode tablist、Inspector action 焦点交接、Skill 治理与审计面板、Skill 审计 Explorer、标准 Skill bundle 导入、导入后验证清单、variant/version、candidate verification handoff、eval set version、manual eval review queue、历史查看、run matrix 多维控制与表格语义、保存历史筛选视图、run-to-run comparison、accepted verification、bundle diff、candidate promotion review、上下文命令菜单 ARIA 和快速添加 case 都能闭环。但距离成熟产品还缺少真实认证、多用户协作、自动测评策略和更深的可访问性验证。
+状态：尚未达到“成熟产品完成”。当前已经是一个强的正式垂直切片：主工作区 Skill Launchpad、移动端 first-run 单主路径、中等桌面证据视图 compact inspector rail、URL state 第一阶段、主工作区 Skill 设置、Skill 作用域访问控制、本地 session actor、基础 accessibility 护栏、Workbench mode tablist、Inspector action 焦点交接、Skill 治理与审计面板、Skill 审计 Explorer quick filters/readable timeline/structured detail、标准 Skill bundle 导入、导入后验证清单、variant/version、candidate verification handoff、eval set version、manual eval review queue、历史查看、run matrix 多维控制与表格语义、保存历史筛选视图、run-to-run comparison、accepted verification、bundle diff、candidate promotion review、上下文命令菜单 ARIA 和快速添加 case 都能闭环。但距离成熟产品还缺少真实认证、多用户协作、自动测评策略和更深的可访问性验证。
 
 ## 目标拆解
 
@@ -39,7 +39,7 @@
 | Skill 作用域访问控制 | 创建 skill 自动授予 actor `owner`；`GET/POST /api/skills/{skill_id}/role-assignments` 和 `DELETE /api/role-assignments/{id}` 支持查看、授予、撤销角色；概览页 `SkillAccessPanel` 覆盖添加/移除 evaluator。 | 完成 |
 | 本地 session ActorContext | Mutation endpoint 优先从签名 `skillhub_actor` HttpOnly cookie 获取本地 actor，前端 `apiSend/apiGet` 统一带 credentials，不再硬编码 actor header；直接 API 调用仍可用 `X-SkillHub-Actor` fallback，JSON body 中的 actor 被忽略。 | 完成 |
 | Skill 治理与审计 | `GET /api/skills/{skill_id}/audit-events` 和 skill detail 返回最近审计事件；`DELETE /api/skills/{skill_id}` 需要 owner 权限、写入 `skill.archived`；概览页 `SkillGovernancePanel` 展示治理摘要、审计时间线和 slug 确认危险区。 | 完成 |
-| Skill 审计 Explorer | `GET /api/skills/{skill_id}/audit-events` 支持 actor/action/resource_type filters，并纳入当前 skill 关联的 variant/eval_run audit events；前端 `SkillAuditExplorer` 支持过滤、事件列表和 payload 检查。 | 完成 |
+| Skill 审计 Explorer | `GET /api/skills/{skill_id}/audit-events` 支持 actor/action/resource_type filters，并纳入当前 skill 关联的 variant/eval_run audit events；前端 `SkillAuditExplorer` 支持 action quick filters、可读时间线、结构化详情和默认折叠的 Raw payload。 | 完成 |
 | Local session 面板 | 右侧 inspector 显示当前本地 actor，可切换为 `release-manager` 等身份；E2E 覆盖切换后导入 skill，owner role 来自 session actor；视觉回归覆盖 session 面板。 | 完成 |
 | Accessibility 基础护栏 | `AppShell` 提供 skip link；全局 `:focus-visible` 使用高对比双层 ring；`prefers-reduced-motion` 压低非必要 transition；`linearNotice` 使用 `role=status`；E2E 覆盖四条回归。 | 完成 |
 | Command menu ARIA | `CommandMenu` 使用 `role=dialog`、editable `combobox`、`listbox/option`、`aria-activedescendant`、关闭按钮和 Tab trap；E2E 覆盖方向键、弹层内焦点循环和关闭回焦点。 | 完成 |

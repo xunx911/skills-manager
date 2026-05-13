@@ -292,5 +292,12 @@
     "priority": 42,
     "passes": true,
     "spec": ".agent/tasks/TASK-042.json"
+  },
+  {
+    "id": "043",
+    "title": "Audit Explorer 扫读重构",
+    "priority": 43,
+    "passes": true,
+    "spec": ".agent/tasks/TASK-043.json"
   }
 ]
