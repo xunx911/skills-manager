@@ -6,6 +6,7 @@ import { GlobalCommandButton } from "@/components/command-menu/global-command-bu
 export function AppShell({ children }: { children: ReactNode }) {
   return (
     <div className="shell">
+      <a className="skipLink" href="#main-content">跳到主要内容</a>
       <aside className="sidebar">
         <div>
           <Link href="/skills" className="brand">
@@ -32,7 +33,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <strong>Exact version evidence</strong>
         </div>
       </aside>
-      <main className="main">
+      <main className="main" id="main-content" tabIndex={-1}>
         <div className="topbar">
           <div>
             <span className="topbarLabel">Production workspace</span>

@@ -10,6 +10,14 @@
 
 ## Session Log
 
+### 2026-05-13 23:15 CST - TASK-025 Accessibility 回归护栏
+
+- 新增 `apps/web/e2e/accessibility-workbench.spec.ts`，覆盖 skip link、可见焦点、reduced-motion 和 status notice 四条回归。
+- `AppShell` 增加 `跳到主要内容` skip link，并让 `main#main-content` 可被键盘焦点定位。
+- 全局 `:focus-visible` 改为高对比双层 focus ring；`prefers-reduced-motion: reduce` 下把非必要 transition/animation 收敛到近似无动画。
+- `linearNotice` 增加 `role=status` 和 `aria-live=polite`，让保存、切换 actor 等异步反馈能被读屏感知。
+- 已验证：`uv run pytest` 90 passed；`npm run typecheck` passed；`npm run build` passed；`npm run e2e` 45 passed；`git diff --check` passed。
+
 ### 2026-05-13 22:42 CST - TASK-024 本地 Session Actor
 
 - 新增 `GET/POST/DELETE /api/session`，用 HMAC 签名的 HttpOnly `skillhub_actor` cookie 承载本地 actor；cookie 被篡改时返回 400，不回退默认身份。

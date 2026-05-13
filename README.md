@@ -18,6 +18,7 @@
 - 创建或导入 skill 的本地 actor 会自动成为该 skill 的 `owner`；`promotion` 和 `accepted verification` 需要 `owner` 或 `maintainer`。前端本地开发身份来自后端签名的 HttpOnly cookie session，JSON body 中不再传 actor；直接调 API 的脚本仍可用 `X-SkillHub-Actor` 作为兼容 fallback。
 - `概览` 页提供 `治理与审计` 面板，集中展示 lifecycle、角色态势、最近 audit events，并把归档收进需要输入当前 skill ID 的危险区；归档需要 `owner` 权限并写入 `skill.archived` audit event。治理面板也能打开 `审计 Explorer`，按 actor、action、resource_type 过滤当前 skill 的治理、发布和验证事件。
 - 工作台支持 `Cmd/Ctrl+K` 上下文命令菜单，可搜索并执行导入、创建、测评、历史、差异等高频动作。
+- 工作台有基础 accessibility 护栏：键盘用户可用 skip link 直接进入主内容；全局 focus ring 更醒目；`prefers-reduced-motion` 会压低非必要动效；操作结果通过 `role=status` 暴露给读屏软件。
 - `测评` 页支持单条快速添加和批量粘贴 case；批量写入会生成一个新的 `EvalSetVersion`，避免逐条添加制造版本噪音。
 - `测评` 页的手工确认区是 review queue：可按全部/未确认/通过/不通过筛选，点击通过/不通过后自动前进到下一条未确认 case，并支持把未确认项批量标为通过。
 - 导入标准 Skill bundle 后，`概览` 会显示验证清单，引导用户补首批 case、记录首轮手工测评，再进入历史页沉淀证据。

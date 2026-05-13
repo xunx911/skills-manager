@@ -166,5 +166,12 @@
     "priority": 24,
     "passes": true,
     "spec": ".agent/tasks/TASK-024.json"
+  },
+  {
+    "id": "025",
+    "title": "补齐 Accessibility 回归护栏",
+    "priority": 25,
+    "passes": true,
+    "spec": ".agent/tasks/TASK-025.json"
   }
 ]

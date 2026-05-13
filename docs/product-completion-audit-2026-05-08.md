@@ -2,7 +2,7 @@
 
 日期：2026-05-13
 
-状态：尚未达到“成熟产品完成”。当前已经是一个强的正式垂直切片：主工作区 Skill Launchpad、主工作区 Skill 设置、Skill 作用域访问控制、本地 session actor、Skill 治理与审计面板、Skill 审计 Explorer、标准 Skill bundle 导入、导入后验证清单、variant/version、candidate verification handoff、eval set version、manual eval review queue、历史查看、run matrix 多维控制、保存历史筛选视图、run-to-run comparison、accepted verification、bundle diff、candidate promotion review、上下文命令菜单和快速添加 case 都能闭环。但距离成熟产品还缺少真实认证、多用户协作、自动测评策略和更深的可访问性验证。
+状态：尚未达到“成熟产品完成”。当前已经是一个强的正式垂直切片：主工作区 Skill Launchpad、主工作区 Skill 设置、Skill 作用域访问控制、本地 session actor、基础 accessibility 护栏、Skill 治理与审计面板、Skill 审计 Explorer、标准 Skill bundle 导入、导入后验证清单、variant/version、candidate verification handoff、eval set version、manual eval review queue、历史查看、run matrix 多维控制、保存历史筛选视图、run-to-run comparison、accepted verification、bundle diff、candidate promotion review、上下文命令菜单和快速添加 case 都能闭环。但距离成熟产品还缺少真实认证、多用户协作、自动测评策略和更深的可访问性验证。
 
 ## 目标拆解
 
@@ -39,6 +39,7 @@
 | Skill 治理与审计 | `GET /api/skills/{skill_id}/audit-events` 和 skill detail 返回最近审计事件；`DELETE /api/skills/{skill_id}` 需要 owner 权限、写入 `skill.archived`；概览页 `SkillGovernancePanel` 展示治理摘要、审计时间线和 slug 确认危险区。 | 完成 |
 | Skill 审计 Explorer | `GET /api/skills/{skill_id}/audit-events` 支持 actor/action/resource_type filters，并纳入当前 skill 关联的 variant/eval_run audit events；前端 `SkillAuditExplorer` 支持过滤、事件列表和 payload 检查。 | 完成 |
 | Local session 面板 | 右侧 inspector 显示当前本地 actor，可切换为 `release-manager` 等身份；E2E 覆盖切换后导入 skill，owner role 来自 session actor；视觉回归覆盖 session 面板。 | 完成 |
+| Accessibility 基础护栏 | `AppShell` 提供 skip link；全局 `:focus-visible` 使用高对比双层 ring；`prefers-reduced-motion` 压低非必要 transition；`linearNotice` 使用 `role=status`；E2E 覆盖四条回归。 | 完成 |
 | 新建 variant | `POST /api/variants`；E2E 创建 `Strict reviewer`。 | 完成 |
 | 主工作区创建 variant | `VariantCreationComposer` 在 `变体` 主面板直接创建 tags 约束 variant；E2E 覆盖创建后 variant map 出现新卡片和 v1。 | 完成 |
 | 追加 candidate version | `POST /api/variant-versions` 支持 `make_current=false`；E2E 创建候选版本并保持 current 不变。 | 完成 |
@@ -87,7 +88,7 @@ cd apps/web && npm run e2e
 
 - Web typecheck：通过。
 - Web production build：通过。
-- Playwright E2E：41 passed。
+- Playwright E2E：45 passed。
 - API pytest：90 passed。
 
 本轮新增视觉资产：
@@ -119,7 +120,7 @@ cd apps/web && npm run e2e
 2. **部分操作仍偏表单。** 导入后清单、case 新增、case 详情内联编辑、主区创建 variant、主区追加候选版本、主区创建 skill、主区 skill 设置、访问控制、治理审计、记录 run 和 candidate 验证已更连续，但部分低频设置仍主要依赖 inspector 或尚未产品化。
 3. **自动测评策略还没产品化。** 当前支持手工 pass/fail 和外部结果导入，但还没有内置 strategy registry、runner 调度和自动优化流水线。
 4. **Run matrix 还不是完整多维表格。** 现在能保存筛选视图、看 case x run pass/fail、高亮对照/候选的修复和回退，并支持 impact 过滤/分组/分数显示控制，但还不能配置列、自定义指标、导出或保存对照/候选 run 指针。
-5. **Accessibility 覆盖还浅。** 有键盘 smoke 和可见 label，但缺少系统化 focus order、screen reader、reduced-motion 验证。
+5. **Accessibility 深水区还没完整覆盖。** 已有 skip link、可见 focus ring、reduced-motion 和 status notice 回归，但 command menu 的完整 ARIA 模式、矩阵语义、全路径 focus order 和人工读屏验收仍未完成。
 6. **Ralph Loop 未真正持续运行。** 配置已安装，但本地 Docker Sandboxes 需要 `sbx login` 授权；没有登录就不能让 Ralph 持续接管任务。
 
 ## 下一步建议
@@ -132,4 +133,4 @@ cd apps/web && npm run e2e
 2. 把 run matrix 升级为多维表格：支持列配置、更多指标列、导出，并评估是否保存对照/候选 run 指针。
 3. 把 audit events 升级为跨 skill/组织级查询、可导出、可配置保留策略的审计系统。
 4. 把 eval strategy / runner registry 产品化。
-5. 系统补 accessibility 和可用性测试。
+5. 继续补 accessibility：command menu ARIA、矩阵表格语义、完整焦点顺序和人工读屏验收。

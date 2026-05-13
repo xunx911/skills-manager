@@ -1,0 +1,27 @@
+{
+  "id": "025",
+  "title": "补齐 Accessibility 回归护栏",
+  "status": "complete",
+  "goal": "为 SkillHub 工作台补上可测试的键盘、焦点、读屏通知和 reduced-motion 回归护栏。",
+  "scope": [
+    "新增 skip link 并允许键盘用户直接进入 main content",
+    "强化全局 focus-visible，避免浅色卡片上焦点不可见",
+    "支持 prefers-reduced-motion: reduce",
+    "让异步 notice 通过 aria-live/role=status 暴露",
+    "新增 Playwright accessibility 回归测试",
+    "更新中文 README、UX 复盘和完成度审计"
+  ],
+  "out_of_scope": [
+    "完整 axe 扫描依赖",
+    "重写 command menu ARIA 模式",
+    "完整屏幕阅读器人工验收",
+    "重新设计视觉系统"
+  ],
+  "verification": [
+    "cd apps/api && uv run pytest # 90 passed",
+    "cd apps/web && npm run typecheck # passed",
+    "cd apps/web && npm run build # passed",
+    "cd apps/web && UV_CACHE_DIR=/Users/xx/Documents/code/skills-manager/.uv-cache npm run e2e # 45 passed",
+    "git diff --check # passed"
+  ]
+}

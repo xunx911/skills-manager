@@ -32,6 +32,8 @@
   --workbench-danger-soft: #fff0ed;
   --workbench-warning: #ad6f00;
   --workbench-warning-soft: #fff7df;
+  --focus-ring: #111827;
+  --focus-ring-soft: #bfdbfe;
   --shadow: 0 24px 80px rgba(17, 17, 17, 0.12);
   --shadow-tight: 0 12px 32px rgba(17, 17, 17, 0.08);
   color-scheme: light;
@@ -70,12 +72,43 @@ input:focus-visible,
 select:focus-visible,
 textarea:focus-visible,
 a:focus-visible {
-  outline: 2px solid rgba(37, 99, 235, 0.38);
-  outline-offset: 2px;
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 3px;
+  box-shadow: 0 0 0 6px var(--focus-ring-soft);
 }
 
 .shell {
   min-height: 100vh;
+}
+
+.skipLink {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  z-index: 1000;
+  border: 1px solid var(--focus-ring);
+  border-radius: 8px;
+  background: #ffffff;
+  color: var(--focus-ring);
+  font-weight: 900;
+  padding: 9px 12px;
+  transform: translateY(-180%);
+}
+
+.skipLink:focus-visible {
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-delay: 0ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 .sidebar {

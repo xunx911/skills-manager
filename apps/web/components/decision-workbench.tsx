@@ -1190,7 +1190,11 @@ export function DecisionWorkbench({ skills: initialSkills, featuredSkill }: Deci
           </div>
         </header>
 
-        {notice ? <div className={`linearNotice linearNotice-${notice.tone}`}>{notice.message}</div> : null}
+        {notice ? (
+          <div aria-live="polite" className={`linearNotice linearNotice-${notice.tone}`} role="status">
+            {notice.message}
+          </div>
+        ) : null}
 
         {mode === "overview" ? (
           <OverviewPane
