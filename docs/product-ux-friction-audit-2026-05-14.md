@@ -2,7 +2,7 @@
 
 日期：2026-05-14
 
-状态：当前产品闭环已经强于普通 demo，但还不是成熟产品。主要缺口不在“能不能跑通”，而在信息架构密度、移动端主路径、审计/历史的可扫读性，以及部分表单/焦点/URL 状态的产品级细节。
+状态：当前产品闭环已经强于普通 demo，但还不是成熟产品。主要缺口不在“能不能跑通”，而在信息架构密度、审计/历史的可扫读性，以及部分表单/焦点/深层 URL 状态的产品级细节。移动端 first-run、证据视图 inspector 折叠和 URL state 第一阶段已经按本审计后续任务完成。
 
 ## 审计输入
 
@@ -69,23 +69,23 @@
 - 在 1280 到 1440 宽之间使用两栏布局：catalog + main，inspector 作为 drawer。
 - 给 inspector 做“当前 action only”模式：无 action 时显示 compact summary，不展示完整表单栈。
 
-### P1 - URL 没反映核心工作状态，分享和恢复上下文能力弱
+### P1 - 深层 URL state 仍未完成，复杂证据上下文还不能分享
 
 证据：
 
-- `DecisionWorkbench` 在 `apps/web/components/decision-workbench.tsx:1100` 到 `1301` 用本地 `mode` 切换概览/变体/测评/差异/历史/审计/评审。
+- TASK-042 已完成第一阶段：`/skills?skill=<slug-or-id>&mode=<mode>` 可以恢复 selected skill 和 mode。
 - Vercel guideline 明确要求 filters、tabs、pagination、expanded panels 等 state 进入 URL。
-- 当前 `/skills` 不能深链到某个 skill 的 `history?variant_version=...`、`mode=diff&left=...&right=...` 或 `promotion candidate`。
+- 当前 `/skills` 仍不能深链到 `history?variant_version=...`、`mode=diff&left=...&right=...`、selected run/case、run comparison 或 `promotion candidate`。
 
 影响：
 
-- 用户无法把“某个候选版本的测评结果”发给同事。
-- 刷新页面后回到默认视图，容易丢失审计、历史筛选、diff pair 或 candidate review 上下文。
+- 用户已经可以把“某个 skill 的历史页”发给同事，但还不能分享“某次候选版本测评结果”或“某组 diff pair”。
+- 刷新页面不会丢 selected skill/mode，但仍会丢历史筛选、diff pair 或 candidate review 上下文。
 
 建议：
 
-- 第一阶段只同步 `skill_id`、`mode`、`selected_case_id`、`eval_target_version_id`、`diff_left/right`、`run filters`。
-- 后续再考虑 saved view 和 promotion review 的深链。
+- 第二阶段同步 `selected_case_id`、`eval_target_version_id`、`diff_left/right`、`run filters`、selected run 和 run comparison。
+- Promotion review 需要候选版本、目标测试集和 evidence run 共同确定上下文，建议单独设计 permalink。
 
 ### P2 - Audit Explorer 可扫读性不足，payload 过重
 
@@ -177,13 +177,11 @@
 
 ## 下一轮任务排序
 
-1. **TASK-040：移动端 first-run/inspector 去重。** 先解决最明显的重复主路径。
-2. **TASK-041：工作台 inspector 响应式折叠。** 让 promotion/diff/history/audit 把中间证据面板让出来。
-3. **TASK-042：URL state 同步第一阶段。** 支持 `mode`、selected skill、diff pair、history filters、selected case/run 深链。
-4. **TASK-043：Audit Explorer 扫读重构。** 摘要优先，Raw JSON 后置。
-5. **TASK-044：表单字段组件化和 autocomplete/focus-visible 统一。**
-6. **TASK-045：Command menu 当前 mode 上下文化排序。**
-7. **TASK-046：Diff / Promotion review file viewed progress。**
+1. **TASK-043：Audit Explorer 扫读重构。** 摘要优先，Raw JSON 后置。
+2. **TASK-044：表单字段组件化和 autocomplete/focus-visible 统一。**
+3. **TASK-045：Command menu 当前 mode 上下文化排序。**
+4. **TASK-046：Diff / Promotion review file viewed progress。**
+5. **URL state 第二阶段。** 补齐 diff pair、history filters、selected case/run、run comparison、eval target version 和 promotion permalink。
 
 ## 不建议马上做的事
 

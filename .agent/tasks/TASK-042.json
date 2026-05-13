@@ -1,0 +1,33 @@
+{
+  "id": "042",
+  "title": "URL State 同步第一阶段",
+  "status": "complete",
+  "goal": "把 /skills 工作台的 selected skill 和 mode 放进 URL，使用户能打开、分享、刷新恢复某个 skill 的概览/变体/测评/差异/历史/审计视图。",
+  "scope": [
+    "新增 Playwright E2E 覆盖 /skills?skill=<slug>&mode=history 直接打开和刷新恢复",
+    "新增 Playwright E2E 覆盖用户切换 mode 后 URL 同步 skill 与 mode",
+    "服务端 /skills page 从 searchParams 选择初始 skill 和 mode",
+    "客户端 DecisionWorkbench 在 selected skill/mode 变化时同步 URL",
+    "客户端支持浏览器 Back/Forward 的 popstate 恢复 selected skill 和 mode",
+    "更新 README、产品体验评审、完成度审计、任务日志和本任务规格/计划"
+  ],
+  "out_of_scope": [
+    "diff_left/diff_right 深链",
+    "history filters、selected run、run comparison 深链",
+    "selected eval case、eval target version 深链",
+    "promotion review candidate context 深链",
+    "saved view permalink"
+  ],
+  "verification": [
+    "Red: cd apps/web && UV_CACHE_DIR=/Users/xx/Documents/code/skills-manager/.uv-cache npx playwright test e2e/url-state.spec.ts --project=chromium -> 2 failed because URL state was ignored/not updated",
+    "Green: cd apps/web && UV_CACHE_DIR=/Users/xx/Documents/code/skills-manager/.uv-cache npx playwright test e2e/url-state.spec.ts --project=chromium -> 2 passed, covering direct open, reload, URL sync, and Back/Forward restore",
+    "cd apps/web && npm run test:unit -> 1 file / 3 tests passed",
+    "cd apps/web && npm run typecheck -> passed",
+    "cd apps/web && npm run build -> passed",
+    "cd apps/web && npm audit --omit=dev -> 0 vulnerabilities",
+    "cd apps/api && uv run pytest -> 90 passed",
+    "cd apps/web && UV_CACHE_DIR=/Users/xx/Documents/code/skills-manager/.uv-cache npm run e2e -> 54 passed",
+    "git diff --check -> passed",
+    "jq empty .agent/tasks.json .agent/tasks/TASK-042.json -> passed"
+  ]
+}

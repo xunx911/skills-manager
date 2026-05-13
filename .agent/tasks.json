@@ -285,5 +285,12 @@
     "priority": 41,
     "passes": true,
     "spec": ".agent/tasks/TASK-041.json"
+  },
+  {
+    "id": "042",
+    "title": "URL State 同步第一阶段",
+    "priority": 42,
+    "passes": true,
+    "spec": ".agent/tasks/TASK-042.json"
   }
 ]

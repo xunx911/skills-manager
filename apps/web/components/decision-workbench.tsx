@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 
 import { passRate } from "@/lib/api";
 import { emptySkillDetail } from "@/lib/empty-state";
@@ -56,6 +56,8 @@ const DEFAULT_ACTOR = "product-operator";
 type DecisionWorkbenchProps = {
   skills: SkillSummary[];
   featuredSkill: SkillDetail;
+  initialMode?: Mode;
+  initialSkillId?: string;
 };
 
 type Mode = WorkbenchMode;
@@ -86,6 +88,7 @@ const DEFAULT_AUDIT_FILTERS: AuditExplorerFilters = {
   action: "",
   resource_type: "all",
 };
+const SHAREABLE_MODES: Mode[] = ["overview", "variants", "evals", "diff", "history", "audit"];
 type BundleSource =
   | { kind: "zip"; name: string; zip_base64: string }
   | {
@@ -97,13 +100,18 @@ type BundleSource =
       >;
 };
 
-export function DecisionWorkbench({ skills: initialSkills, featuredSkill }: DecisionWorkbenchProps) {
+export function DecisionWorkbench({
+  skills: initialSkills,
+  featuredSkill,
+  initialMode = "overview",
+  initialSkillId,
+}: DecisionWorkbenchProps) {
   const [skills, setSkills] = useState(initialSkills);
-  const [selectedSkillId, setSelectedSkillId] = useState(initialSkills[0]?.skill.id ?? featuredSkill.skill.id);
+  const [selectedSkillId, setSelectedSkillId] = useState(initialSkillId ?? initialSkills[0]?.skill.id ?? featuredSkill.skill.id);
   const [selectedDetail, setSelectedDetail] = useState<SkillDetail>(featuredSkill);
   const [evalSetDetail, setEvalSetDetail] = useState<EvalSetVersionDetail | null>(null);
   const [caseResults, setCaseResults] = useState<Record<string, boolean | null>>({});
-  const [mode, setMode] = useState<Mode>("overview");
+  const [mode, setMode] = useState<Mode>(initialMode);
   const [actionMode, setActionMode] = useState<ActionMode>(initialSkills.length > 0 ? "skill" : "import-skill");
   const [inspectorFocusRequest, setInspectorFocusRequest] = useState(0);
   const [catalogQuery, setCatalogQuery] = useState("");
@@ -143,6 +151,7 @@ export function DecisionWorkbench({ skills: initialSkills, featuredSkill }: Deci
   const [notice, setNotice] = useState<Notice>(null);
   const [busy, setBusy] = useState(false);
   const [actor, setActor] = useState(DEFAULT_ACTOR);
+  const hasSyncedUrlRef = useRef(false);
 
   const visibleSkills = useMemo(() => {
     const query = catalogQuery.trim().toLowerCase();
@@ -185,6 +194,7 @@ export function DecisionWorkbench({ skills: initialSkills, featuredSkill }: Deci
   const failedDraft = cases.filter((item) => caseResults[item.case_version.id] === false).length;
   const confirmedDraft = passedDraft + failedDraft;
   const hasPersistedSkill = selectedDetail.skill.lifecycle_status !== "empty";
+  const selectedSkillUrlKey = hasPersistedSkill ? selectedSummary.skill.slug || selectedSkillId : "";
   const commandItems = useWorkbenchCommands({
     canCompareVersions: Boolean(defaultVariant && defaultDiffPair(defaultVariant)),
     casesCount: cases.length,
@@ -198,6 +208,42 @@ export function DecisionWorkbench({ skills: initialSkills, featuredSkill }: Deci
     void loadSession();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const nextUrl = workbenchUrlForState({
+      hash: window.location.hash,
+      mode,
+      pathname: window.location.pathname,
+      search: window.location.search,
+      skill: selectedSkillUrlKey,
+    });
+    const currentUrl = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+    if (nextUrl === currentUrl) {
+      hasSyncedUrlRef.current = true;
+      return;
+    }
+    const method = hasSyncedUrlRef.current ? "pushState" : "replaceState";
+    window.history[method](window.history.state, "", nextUrl);
+    hasSyncedUrlRef.current = true;
+  }, [mode, selectedSkillUrlKey]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    function applyUrlState() {
+      const params = new URLSearchParams(window.location.search);
+      const requestedSkill = params.get("skill");
+      const nextSkill = requestedSkill
+        ? skills.find((summary) => summary.skill.id === requestedSkill || summary.skill.slug === requestedSkill)
+        : skills[0];
+      const nextSkillId = nextSkill?.skill.id ?? emptySkillDetail.skill.id;
+      setSelectedSkillId((current) => (current === nextSkillId ? current : nextSkillId));
+      const nextMode = parseShareableMode(params.get("mode"));
+      setMode((current) => (current === nextMode ? current : nextMode));
+    }
+    window.addEventListener("popstate", applyUrlState);
+    return () => window.removeEventListener("popstate", applyUrlState);
+  }, [skills]);
 
   useEffect(() => {
     void loadSkill(selectedSkillId);
@@ -1433,6 +1479,38 @@ function textValue(form: FormData, key: string) {
 
 function tagList(value: string) {
   return value.split(",").map((item) => item.trim()).filter(Boolean);
+}
+
+function parseShareableMode(value: string | null): Mode {
+  return SHAREABLE_MODES.includes(value as Mode) ? (value as Mode) : "overview";
+}
+
+function workbenchUrlForState({
+  hash,
+  mode,
+  pathname,
+  search,
+  skill,
+}: {
+  hash: string;
+  mode: Mode;
+  pathname: string;
+  search: string;
+  skill: string;
+}) {
+  const params = new URLSearchParams(search);
+  if (skill) {
+    params.set("skill", skill);
+  } else {
+    params.delete("skill");
+  }
+  if (SHAREABLE_MODES.includes(mode) && mode !== "overview") {
+    params.set("mode", mode);
+  } else {
+    params.delete("mode");
+  }
+  const query = params.toString();
+  return `${pathname}${query ? `?${query}` : ""}${hash}`;
 }
 
 async function digestText(value: string) {

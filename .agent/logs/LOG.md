@@ -10,6 +10,14 @@
 
 ## Session Log
 
+### 2026-05-14 01:31 CST - TASK-042 URL State 同步第一阶段
+
+- 新增 `apps/web/e2e/url-state.spec.ts`，红绿覆盖 `/skills?skill=<slug>&mode=history` 直达、刷新恢复、用户切换 mode 后 URL 同步，以及浏览器 Back 恢复历史 tab。
+- `/skills` 服务端读取 `searchParams`，按 skill id/slug 选择初始 skill，并只接受第一阶段 shareable modes。
+- `DecisionWorkbench` 用 History API 同步 selected skill 和 mode，并监听 `popstate` 支持浏览器 Back/Forward 恢复。
+- 更新 README、产品体验评审、完成度审计和 TASK-042 规格/计划；下一轮 URL state 重点是 diff pair、history filters、selected run/case、run comparison、eval target version 和 promotion context。
+- 已验证：红灯测试先失败于 URL state 被忽略；绿色后 `url-state.spec.ts` 2 passed；`npm run test:unit` 1 file/3 tests passed；`npm run typecheck` passed；`npm run build` passed；`npm audit --omit=dev` found 0 vulnerabilities；`uv run pytest` 90 passed；`npm run e2e` 54 passed；`git diff --check` passed；任务 JSON 结构检查 passed。
+
 ### 2026-05-14 01:18 CST - TASK-041 证据视图 Inspector 响应式折叠
 
 - 新增 `apps/web/e2e/responsive-inspector.spec.ts`，用红绿测试覆盖 1280px 下 overview 保持完整 inspector，而 history 证据视图收成 compact verification rail。

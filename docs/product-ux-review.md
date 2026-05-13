@@ -5,6 +5,7 @@
 ## 当前可用流程
 
 - `/skills` 是一个正式的三栏工作台：左侧 catalog、中间 focused workspace、右侧 contextual inspector。它借鉴 Linear 的“选中对象 + 上下文操作”模型，避免把所有表单堆在一个页面里。
+- `/skills?skill=<slug-or-id>&mode=<mode>` 已支持第一阶段 URL state，用户可以分享、刷新恢复某个 skill 的概览、变体、测评、差异、历史或审计视图；地址栏会随 skill/mode 操作同步，浏览器 Back/Forward 也能恢复该层上下文。
 - 空工作台现在在主内容区展示 `SkillLaunchpad`，用户可以直接导入标准 Skill bundle 或创建空白 skill，不需要先理解右侧 inspector。
 - 移动端 first-run 默认折叠 inspector action menu/form，只保留主区 `SkillLaunchpad` 作为导入/创建主路径；用户从 catalog 或命令菜单显式触发 action 后，inspector 表单会重新展开并接收焦点。
 - 中等桌面宽度下，`差异 / 历史 / 审计 / 评审` 会把 inspector 折成 compact verification rail，主证据面板获得更多横向空间；`概览 / 变体 / 测评` 仍保留完整 inspector。
@@ -51,6 +52,7 @@
 - **Vercel project settings:** Vercel 的 General Settings 把项目名、构建配置和项目 ID 放在同一个项目设置上下文中。SkillHub 适配为 `身份与默认分发`：只编辑 skill 入口指针和归属，不把 bundle 内容改写混进来。
 - **Linear project overview:** Linear 允许在 Project overview 直接编辑项目属性、名称和描述，也保留详情侧栏。SkillHub 适配为主区设置面板加 inspector 双入口。
 - **Linear Command Menu:** 同一动作可以通过按钮、快捷键、上下文菜单和命令菜单触发；SkillHub 第一版把“导入/创建/测评/历史/差异”收进 `Cmd/Ctrl+K`，让新手可发现、熟手少移动鼠标。
+- **Vercel Web Interface Guidelines / GitHub query views:** 可分享的工作状态应进入 URL，例如 GitHub issues/PR 的 query、labels、page，或 Vercel guidelines 对 tabs、filters、pagination、expanded panel URL state 的建议。SkillHub 第一阶段先把 selected skill 和 mode 写进 URL，避免刷新或转发链接时丢失工作上下文。
 - **GitHub new repository:** GitHub 新建仓库把 owner、name 和初始化选项收束在一个短表单。SkillHub 适配为主区空白 skill 创建，只要求 skill ID、归属、初始变体、tags、简介和版本说明。
 - **GitHub repository topics:** GitHub 把 topics 展示在仓库主页的 About 区域，用于发现和分类。SkillHub 适配为在 skill 概览展示默认 variant 的 tags，并允许切换默认分发。
 - **Notion database properties:** Notion 既有集中属性管理，也允许直接点击单个属性编辑。SkillHub 适配为保留 inspector，同时把高频 skill 属性放在概览主区。
@@ -130,10 +132,11 @@
 29. 以前工作区模式是一排普通按钮，键盘用户要逐个 Tab 经过；现在它是一个 tablist，当前 mode 是唯一 tab stop，方向键负责组内移动。
 30. 以前移动端 first-run 会先看到主区 Launchpad，继续向下又看到 inspector 的第二份完整导入表单；现在默认只保留主区接入路径，显式请求 inspector action 时再展开右侧表单。
 31. 以前 1280px 桌面下 promotion/history/audit 仍被 300px 以上 inspector 挤压；现在证据模式在中等桌面宽度使用 compact verification rail，把主证据区放宽。
+32. 以前用户无法把“某个 skill 的历史页”直接发给别人，也不能刷新后回到同一 mode；现在 `/skills?skill=<slug>&mode=history` 可以直达并恢复 selected skill + mode，用户切换 tab 或 skill 时地址栏同步更新。
 
 ## 仍然存在的摩擦
 
-1. `/skills` 的核心工作状态仍主要在本地 state 中，mode、diff pair、history filters、selected case/run 和 promotion 上下文还不能深链分享或刷新恢复。
+1. URL state 只完成第一阶段：selected skill 和 mode 可以分享与刷新恢复；diff pair、history filters、selected run/case、run comparison、eval target version 和 promotion 上下文还不能深链。
 2. Audit Explorer 已有过滤和 payload inspect，但列表项过早截断、Raw JSON 默认占据右侧，扫读治理事件还不够快。
 3. 表单细节还未完全产品化：部分业务字段缺少显式 `autoComplete`，局部 focus 样式仍和全局 `:focus-visible` 策略不统一。
 4. Command menu 已有分组、快捷键和单元测试，但排序还没有根据当前 mode/焦点上下文化。
@@ -144,7 +147,7 @@
 
 ## 下一轮优化队列
 
-1. URL state 同步第一阶段：支持 `mode`、selected skill、diff pair、history filters、selected case/run 深链。
+1. URL state 第二阶段：补齐 diff pair、history filters、selected run/case、run comparison、eval target version 和 promotion context 深链。
 2. Audit Explorer 扫读重构：摘要优先，Raw JSON 后置，关键动作可快速过滤。
 3. 表单字段组件化：统一 label、`autoComplete`、placeholder、错误展示和 `:focus-visible`。
 4. Command menu 当前 mode 上下文化排序：测评页优先 case/run 命令，变体页优先 variant/version/diff 命令。
