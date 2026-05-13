@@ -10,6 +10,14 @@
 
 ## Session Log
 
+### 2026-05-13 23:55 CST - TASK-031 Workbench Inspector 组件抽离
+
+- 新增 `WorkbenchInspector`，把右侧 Verification、Local Session、action menu 和 Inspector 表单从 `DecisionWorkbench` 抽离。
+- `DecisionWorkbench` 继续保留 API mutation、状态编排和主区 mode 切换；Inspector 只负责右侧展示、表单 DOM 和焦点交接。
+- 导出 `InspectorActionMode` 和 `InspectorImportPreview`，避免父子组件各自维护一份 action/preview 类型。
+- 保留表单字段名、CSS class、文案、禁用逻辑和焦点交接行为；主文件从 2890 行降到 2616 行，新 Inspector 文件 293 行。
+- 已验证：`npm run typecheck` passed；`npm run build` passed；`uv run pytest` 90 passed；`npm run e2e` 50 passed；`git diff --check` passed。
+
 ### 2026-05-13 23:35 CST - TASK-030 Skill Catalog 组件抽离
 
 - 新增 `SkillCatalog` 组件，把左侧 skill 目录、筛选、导入、新建和选择入口从 `DecisionWorkbench` 中抽离。

@@ -208,5 +208,12 @@
     "priority": 30,
     "passes": true,
     "spec": ".agent/tasks/TASK-030.json"
+  },
+  {
+    "id": "031",
+    "title": "抽离 Workbench Inspector 组件",
+    "priority": 31,
+    "passes": true,
+    "spec": ".agent/tasks/TASK-031.json"
   }
 ]
