@@ -159,5 +159,12 @@
     "priority": 23,
     "passes": true,
     "spec": ".agent/tasks/TASK-023.json"
+  },
+  {
+    "id": "024",
+    "title": "引入本地 Session Actor",
+    "priority": 24,
+    "passes": true,
+    "spec": ".agent/tasks/TASK-024.json"
   }
 ]

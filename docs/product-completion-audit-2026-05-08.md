@@ -2,7 +2,7 @@
 
 日期：2026-05-13
 
-状态：尚未达到“成熟产品完成”。当前已经是一个强的正式垂直切片：主工作区 Skill Launchpad、主工作区 Skill 设置、Skill 作用域访问控制、Skill 治理与审计面板、Skill 审计 Explorer、标准 Skill bundle 导入、导入后验证清单、variant/version、candidate verification handoff、eval set version、manual eval review queue、历史查看、run matrix 多维控制、保存历史筛选视图、run-to-run comparison、accepted verification、bundle diff、candidate promotion review、上下文命令菜单和快速添加 case 都能闭环。但距离成熟产品还缺少真实认证、多用户协作、自动测评策略和更深的可访问性验证。
+状态：尚未达到“成熟产品完成”。当前已经是一个强的正式垂直切片：主工作区 Skill Launchpad、主工作区 Skill 设置、Skill 作用域访问控制、本地 session actor、Skill 治理与审计面板、Skill 审计 Explorer、标准 Skill bundle 导入、导入后验证清单、variant/version、candidate verification handoff、eval set version、manual eval review queue、历史查看、run matrix 多维控制、保存历史筛选视图、run-to-run comparison、accepted verification、bundle diff、candidate promotion review、上下文命令菜单和快速添加 case 都能闭环。但距离成熟产品还缺少真实认证、多用户协作、自动测评策略和更深的可访问性验证。
 
 ## 目标拆解
 
@@ -35,9 +35,10 @@
 | 主工作区 Skill Launchpad | 空工作台主内容区可直接导入 folder/zip 标准 Skill bundle 或创建空白 skill；E2E 覆盖两条 first-run 路径。 | 完成 |
 | 主工作区 Skill 设置 | `SkillSettingsPanel` 在概览主区编辑 skill ID、owner 和默认分发 variant；`PATCH /api/skills/{skill_id}` 校验 default variant 同 skill；API/E2E 覆盖。 | 完成 |
 | Skill 作用域访问控制 | 创建 skill 自动授予 actor `owner`；`GET/POST /api/skills/{skill_id}/role-assignments` 和 `DELETE /api/role-assignments/{id}` 支持查看、授予、撤销角色；概览页 `SkillAccessPanel` 覆盖添加/移除 evaluator。 | 完成 |
-| 请求级 ActorContext | Mutation endpoint 从 `X-SkillHub-Actor` 请求头获取本地 actor；前端 `apiSend` 统一发送 header，JSON body 中的 actor 被忽略。 | 完成 |
+| 本地 session ActorContext | Mutation endpoint 优先从签名 `skillhub_actor` HttpOnly cookie 获取本地 actor，前端 `apiSend/apiGet` 统一带 credentials，不再硬编码 actor header；直接 API 调用仍可用 `X-SkillHub-Actor` fallback，JSON body 中的 actor 被忽略。 | 完成 |
 | Skill 治理与审计 | `GET /api/skills/{skill_id}/audit-events` 和 skill detail 返回最近审计事件；`DELETE /api/skills/{skill_id}` 需要 owner 权限、写入 `skill.archived`；概览页 `SkillGovernancePanel` 展示治理摘要、审计时间线和 slug 确认危险区。 | 完成 |
 | Skill 审计 Explorer | `GET /api/skills/{skill_id}/audit-events` 支持 actor/action/resource_type filters，并纳入当前 skill 关联的 variant/eval_run audit events；前端 `SkillAuditExplorer` 支持过滤、事件列表和 payload 检查。 | 完成 |
+| Local session 面板 | 右侧 inspector 显示当前本地 actor，可切换为 `release-manager` 等身份；E2E 覆盖切换后导入 skill，owner role 来自 session actor；视觉回归覆盖 session 面板。 | 完成 |
 | 新建 variant | `POST /api/variants`；E2E 创建 `Strict reviewer`。 | 完成 |
 | 主工作区创建 variant | `VariantCreationComposer` 在 `变体` 主面板直接创建 tags 约束 variant；E2E 覆盖创建后 variant map 出现新卡片和 v1。 | 完成 |
 | 追加 candidate version | `POST /api/variant-versions` 支持 `make_current=false`；E2E 创建候选版本并保持 current 不变。 | 完成 |
@@ -86,8 +87,8 @@ cd apps/web && npm run e2e
 
 - Web typecheck：通过。
 - Web production build：通过。
-- Playwright E2E：39 passed。
-- API pytest：88 passed。
+- Playwright E2E：41 passed。
+- API pytest：90 passed。
 
 本轮新增视觉资产：
 
@@ -96,6 +97,7 @@ cd apps/web && npm run e2e
 - `apps/web/e2e/visual-workbench.spec.ts-snapshots/manual-eval-review-chromium-darwin.png`
 - `apps/web/e2e/visual-workbench.spec.ts-snapshots/variants-workspace-composers-chromium-darwin.png`
 - `apps/web/e2e/visual-workbench.spec.ts-snapshots/skill-access-panel-chromium-darwin.png`
+- `apps/web/e2e/visual-workbench.spec.ts-snapshots/local-session-panel-chromium-darwin.png`
 - `apps/web/e2e/visual-workbench.spec.ts-snapshots/skill-governance-panel-chromium-darwin.png`
 - `apps/web/e2e/visual-workbench.spec.ts-snapshots/skill-audit-explorer-chromium-darwin.png`
 - `apps/web/e2e/visual-workbench.spec.ts-snapshots/promotion-review-ready-chromium-darwin.png`
@@ -113,7 +115,7 @@ cd apps/web && npm run e2e
 
 ## 仍然阻塞“成熟产品完成”的风险
 
-1. **真实认证和多用户协作还没实现。** 当前已有 skill 作用域 owner/maintainer/evaluator/viewer、受保护动作门禁和请求级 ActorContext，但 actor 仍是本地开发 header，不是真正的服务端 session/token。
+1. **真实认证和多用户协作还没实现。** 当前已有 skill 作用域 owner/maintainer/evaluator/viewer、受保护动作门禁和签名本地 actor session，但它仍是开发期身份切换，不是真正的登录、token rotation 或组织级身份系统。
 2. **部分操作仍偏表单。** 导入后清单、case 新增、case 详情内联编辑、主区创建 variant、主区追加候选版本、主区创建 skill、主区 skill 设置、访问控制、治理审计、记录 run 和 candidate 验证已更连续，但部分低频设置仍主要依赖 inspector 或尚未产品化。
 3. **自动测评策略还没产品化。** 当前支持手工 pass/fail 和外部结果导入，但还没有内置 strategy registry、runner 调度和自动优化流水线。
 4. **Run matrix 还不是完整多维表格。** 现在能保存筛选视图、看 case x run pass/fail、高亮对照/候选的修复和回退，并支持 impact 过滤/分组/分数显示控制，但还不能配置列、自定义指标、导出或保存对照/候选 run 指针。
@@ -126,7 +128,7 @@ cd apps/web && npm run e2e
 
 下一轮最有价值的方向：
 
-1. 接入真实认证：actor 从 session/token 来，前端只展示 capability，不再声明本地开发 actor。
+1. 接入真实认证：用真实登录 session/token 替换本地 actor cookie，前端只展示 capability，不再自由切换开发身份。
 2. 把 run matrix 升级为多维表格：支持列配置、更多指标列、导出，并评估是否保存对照/候选 run 指针。
 3. 把 audit events 升级为跨 skill/组织级查询、可导出、可配置保留策略的审计系统。
 4. 把 eval strategy / runner registry 产品化。

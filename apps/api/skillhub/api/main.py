@@ -4,7 +4,7 @@ from dataclasses import asdict, is_dataclass
 from os import environ
 from typing import Any
 
-from fastapi import Depends, FastAPI, Request
+from fastapi import Depends, FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
@@ -12,7 +12,14 @@ from sqlalchemy import Engine, create_engine, event
 from sqlalchemy.pool import StaticPool
 
 from skillhub.application.skill_imports import parse_skill_import_source
-from skillhub.api.auth import ActorContext, actor_dependency
+from skillhub.api.auth import (
+    ActorContext,
+    DEFAULT_LOCAL_ACTOR,
+    actor_dependency,
+    clear_actor_cookie,
+    normalize_actor,
+    set_actor_cookie,
+)
 from skillhub.domain.errors import InvariantError, NotFoundError, PermissionDeniedError
 from skillhub.domain.models import ContentRef
 from skillhub.infrastructure.db.repositories import SqlSkillRepository
@@ -137,12 +144,16 @@ class CreateSavedViewPayload(BaseModel):
     config: dict[str, str] = Field(default_factory=dict)
 
 
+class SetSessionPayload(BaseModel):
+    actor: str
+
+
 def create_app(engine: Engine | None = None) -> FastAPI:
     app = FastAPI(title="SkillHub API", version="0.1.0")
     app.add_middleware(
         CORSMiddleware,
         allow_origin_regex=r"http://(127\.0\.0\.1|localhost):\d+",
-        allow_credentials=False,
+        allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
     )
@@ -164,6 +175,21 @@ def create_app(engine: Engine | None = None) -> FastAPI:
     @app.get("/health")
     def health() -> dict[str, bool]:
         return {"ok": True}
+
+    @app.get("/api/session")
+    def current_session(actor: ActorContext = Depends(actor_dependency)):
+        return {"actor": actor.id, "subject_type": actor.subject_type}
+
+    @app.post("/api/session")
+    def set_session(payload: SetSessionPayload, response: Response):
+        actor = normalize_actor(payload.actor)
+        set_actor_cookie(response, actor)
+        return {"actor": actor, "subject_type": "user"}
+
+    @app.delete("/api/session")
+    def clear_session(response: Response):
+        clear_actor_cookie(response)
+        return {"actor": DEFAULT_LOCAL_ACTOR, "subject_type": "user"}
 
     @app.get("/api/skills")
     def list_skills(repository: SqlSkillRepository = Depends(repository_dependency)):

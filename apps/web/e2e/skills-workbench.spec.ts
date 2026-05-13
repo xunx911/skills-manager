@@ -5,11 +5,19 @@ import { tmpdir } from "node:os";
 import { addEvalCase, appendSkillBundleVersion, createStoredZip, importSkillBundle } from "./helpers";
 
 const API_BASE_URL = `http://127.0.0.1:${process.env.SKILLHUB_E2E_API_PORT ?? 8021}`;
+const CLEANUP_ACTORS = ["product-operator", "release-manager"];
 
 async function clearSkillCatalog(request: APIRequestContext) {
   const response = await request.get(`${API_BASE_URL}/api/skills`);
   const skills = (await response.json()) as Array<{ skill: { id: string } }>;
-  await Promise.all(skills.map((summary) => request.delete(`${API_BASE_URL}/api/skills/${summary.skill.id}`)));
+  for (const summary of skills) {
+    for (const actor of CLEANUP_ACTORS) {
+      const deleted = await request.delete(`${API_BASE_URL}/api/skills/${summary.skill.id}`, {
+        headers: { "X-SkillHub-Actor": actor },
+      });
+      if (deleted.ok() || deleted.status() === 404) break;
+    }
+  }
 }
 
 test("invalid skill folders show a blocking import preview", async ({ page }) => {
@@ -223,6 +231,22 @@ test("operator can manage skill access roles from overview", async ({ page }) =>
 
   await panel.locator(".skillAccessRow").filter({ hasText: "qa-reviewer" }).getByRole("button", { name: "移除" }).click();
   await expect(panel.locator(".skillAccessRow").filter({ hasText: "qa-reviewer" })).toHaveCount(0);
+});
+
+test("operator can switch local session actor before importing a skill", async ({ page, request }) => {
+  await clearSkillCatalog(request);
+  const sessionPanel = page.locator(".localSessionPanel");
+
+  await page.goto("/skills");
+  await expect(sessionPanel).toContainText("product-operator");
+  await sessionPanel.getByPlaceholder("release-manager").fill("release-manager");
+  await sessionPanel.getByRole("button", { name: "切换 actor" }).click();
+  await expect(sessionPanel).toContainText("release-manager");
+
+  await importSkillBundle(page, `session-actor-${Date.now()}`);
+
+  const accessPanel = page.locator(".skillAccessPanel");
+  await expect(accessPanel.locator(".skillAccessRow").filter({ hasText: "release-manager" })).toContainText("Owner");
 });
 
 test("operator can filter skill audit events in the explorer", async ({ page }) => {

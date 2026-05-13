@@ -10,6 +10,14 @@
 
 ## Session Log
 
+### 2026-05-13 22:42 CST - TASK-024 本地 Session Actor
+
+- 新增 `GET/POST/DELETE /api/session`，用 HMAC 签名的 HttpOnly `skillhub_actor` cookie 承载本地 actor；cookie 被篡改时返回 400，不回退默认身份。
+- `actor_dependency` 优先读取 session cookie，`X-SkillHub-Actor` 仅作为直接 API/自动化脚本的兼容 fallback；本地 CORS 开启 credentials。
+- 前端移除硬编码 actor header，`apiGet/apiSend` 统一使用 `credentials: "include"`；右侧 inspector 新增 `LocalSessionPanel`，可直接切换本地 actor。
+- 新增 API、E2E 和视觉回归覆盖；修复 E2E 清理逻辑，让多 actor owner 的测试数据也能可靠归档，避免跨测试污染。
+- 已验证：`uv run pytest` 90 passed；`npm run typecheck` passed；`npm run build` passed；`npm run e2e` 41 passed；`git diff --check` passed。
+
 ### 2026-05-13 21:58 CST - TASK-023 Skill 审计事件 Explorer
 
 - 扩展 `GET /api/skills/{skill_id}/audit-events`：支持 `actor`、`action`、`resource_type` filter，并把当前 skill 关联的 `variant` / `eval_run` audit events 纳入同一时间线。

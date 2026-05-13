@@ -11,6 +11,7 @@
 - `概览` 页现在提供 `身份与默认分发` 设置面板，用户可以直接修改 skill ID、归属，并选择默认分发 variant。
 - `概览` 页现在提供 `访问控制` 面板，用户可以查看 skill 作用域角色，并添加或移除 owner/maintainer/evaluator/viewer。
 - `概览` 页现在提供 `治理与审计` 面板，集中展示 lifecycle、角色态势、最近 audit events，并把归档放进需要输入当前 skill ID 的危险区；用户也可以进入 `审计 Explorer`，按 actor/action/resource type 过滤事件并查看 payload。
+- 右侧 inspector 顶部新增 `Local session` 面板，显示当前本地 actor，并允许切换为 `release-manager` 等本地身份；后端用签名 HttpOnly cookie 承载 actor，前端 mutation 不再硬编码身份 header。
 - `测评` 页支持单条快速添加和批量粘贴 case；批量写入只产生一个新的 `EvalSetVersion`，不会把一次整理工作拆成多段版本噪音。
 - `测评` 页的手工确认区已变成 review queue：支持按状态筛选、点击结果后自动前进、未确认项批量标为通过、清空本地草稿和键盘确认。
 - `测评` 页的 case 详情面板支持内联编辑，用户可以在当前测评上下文中修改 title、input、expected output、notes，并保存为新的 case version。
@@ -53,6 +54,7 @@
 - **GitHub Enterprise Audit Log:** GitHub 用 actor、action、repo、created 等结构化限定符查询审计事件。SkillHub 适配为当前 skill 的 actor/action/resource_type 过滤，避免无边界全文搜索。
 - **GitHub Danger Zone:** GitHub 把危险操作放到 repository settings 底部，并要求明确确认。SkillHub 适配为 `治理与审计` 面板中的危险区，输入当前 skill ID 才能归档。
 - **Stripe request logs:** Stripe 把关键请求用时间、actor/action 和 payload 摘要组织为可追踪事件。SkillHub 适配为短 audit event row，展示 actor、action、时间和 payload 摘要。
+- **本地开发 session 面板:** 参考很多开发者工具把环境身份、workspace 或 account switcher 放在固定侧栏的做法。SkillHub 适配为 inspector 顶部的 `Local session`，让用户明确“接下来写入和审计会以谁的身份发生”，同时把真实认证留给下一阶段。
 - **GitHub Command Palette:** 命令菜单兼具导航、搜索和运行命令能力；SkillHub 借鉴其 scope 思路，把菜单限定在当前 skill 工作区，避免全局搜索过早膨胀。
 - **TestRail quick outline:** 测试用例管理工具会区分完整表单和快速 outline。SkillHub 借鉴“快速进入测试集”的速度，但不允许只填标题，仍要求 `input + expected output`，保证测评资产质量。
 - **TestRail Pass & Next / bulk result:** TestRail 在三栏执行视图里提供快速通过并进入下一条，也支持批量提交相同结果。SkillHub 适配为“通过/不通过后自动前进”和“仅把未确认项标为通过”，避免覆盖已发现的失败。
@@ -107,16 +109,17 @@
 20. 以前修改 skill ID、owner 或默认分发主要依赖右侧 inspector；现在概览主区可直接完成 identity/default variant 设置，保存后 catalog、header 和 hero 同步刷新。
 21. 以前矩阵只能看全部 case；现在可以把视图收窄到 `修复`、`回退`、`仍未通过` 等 impact，也可以按 impact 分组并把这个视图保存下来。
 22. 以前 role assignment 表只是 schema 占位；现在创建 skill 会自动授予 owner，概览页可管理 skill 作用域角色，promotion 和 accepted verification 已有 owner/maintainer 门禁。
-23. 以前 mutation payload 里还能传 `actor`，权限判断和业务输入混在一起；现在前端统一通过 `X-SkillHub-Actor` 进入后端 ActorContext，body actor 会被忽略。
+23. 以前 mutation payload 里还能传 `actor`，权限判断和业务输入混在一起；现在前端通过后端签名的 HttpOnly cookie 进入 ActorContext，body actor 会被忽略；直接 API 调用仍可用 `X-SkillHub-Actor` header 兼容。
 24. 以前归档 skill 是 inspector 里的普通按钮，缺少权限和确认语义；现在归档需要 owner 权限、输入当前 skill ID，并写入 `skill.archived` audit event。
 25. 以前治理面板只能看最近几条 skill 级事件；现在 `审计 Explorer` 能读取当前 skill 关联的 skill、variant、eval_run 事件，并按 actor、action、resource type 过滤后检查 payload。
+26. 以前切换本地 actor 只能改代码里的常量或请求 header；现在可以在页面右侧直接切换本地 session actor，并通过 E2E 验证新导入 skill 的 owner 来自该 session。
 
 ## 仍然存在的摩擦
 
 1. 右侧 inspector 仍然偏表单化。case 编辑、variant 创建、候选版本追加、first-run skill 创建、基础 skill 设置、访问控制、skill 归档和审计查看已经迁入主区，但部分低频设置仍需要更成熟的主区或内联抽屉体验。
 2. Promotion review 已经展示 case impact 和 diff，但还没有把具体 diff hunk 关联到具体 eval case。
 3. Run matrix 已经提供 read-only 多 run x case 浏览、保存筛选视图、对照/候选 impact、impact 过滤和分组，但还没有列配置、自定义指标列、导出或保存对照/候选 run 指针。
-4. 权限还没有真实认证来源。当前 actor 已从请求体收敛到 `X-SkillHub-Actor` 开发 header，但仍不是真正的服务端 session/token。
+4. 权限还没有真实认证来源。当前 actor 已从请求体和前端硬编码 header 收敛到后端签名的本地 cookie session，但仍不是多用户登录、token rotation 或组织级身份系统。
 5. Zip import 预览仍然依赖后端校验；folder import 的浏览器侧预览更丰富。
 6. Accessibility 覆盖仍偏浅。现在有键盘 smoke 和标签，但还需要系统化验证 focus order、screen reader label、reduced motion。
 
@@ -124,5 +127,5 @@
 
 1. 扩展审计能力：当前已支持 skill-scoped filter 和 payload inspect，后续可做跨 skill/组织级查询、导出、保留策略和 webhook。
 2. 做 run matrix 多维表格：支持列配置、自定义指标列、导出，并考虑是否保存对照/候选 run 指针。
-3. 接入真实认证：actor 从 session/token 来，前端只负责展示 capability，不再声明本地开发 actor。
+3. 接入真实认证：用真正的登录 session/token 替换本地 actor cookie，前端只展示 capability，不再允许自由切换开发身份。
 4. 扩展 accessibility E2E：覆盖焦点顺序、aria label、键盘完整路径和 reduced-motion。

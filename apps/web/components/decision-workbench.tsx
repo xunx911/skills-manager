@@ -17,6 +17,7 @@ import { PromotionReviewPane } from "@/components/promotion-review/promotion-rev
 import { RunComparisonPanel } from "@/components/run-comparison/run-comparison-panel";
 import { RunMatrixPanel, type RunMatrixControls } from "@/components/run-matrix/run-matrix-panel";
 import { SavedRunViews } from "@/components/saved-views/saved-run-views";
+import { LocalSessionPanel } from "@/components/session/local-session-panel";
 import { SkillAccessPanel } from "@/components/skills/skill-access-panel";
 import { SkillAuditExplorer, type AuditExplorerFilters } from "@/components/skills/skill-audit-explorer";
 import { SkillGovernancePanel } from "@/components/skills/skill-governance-panel";
@@ -48,7 +49,7 @@ import type {
 import { Badge } from "./chrome";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_SKILLHUB_API_URL ?? "http://127.0.0.1:8000";
-const ACTOR = "product-operator";
+const DEFAULT_ACTOR = "product-operator";
 
 type DecisionWorkbenchProps = {
   skills: SkillSummary[];
@@ -67,6 +68,7 @@ type ActionMode =
   | "run";
 type Notice = { tone: "good" | "bad" | "neutral"; message: string } | null;
 type ImportSkillResponse = { skill_id: string; slug: string; file_count: number };
+type SessionResponse = { actor: string; subject_type: string };
 type ImportPreview = {
   tone: "good" | "bad" | "neutral";
   title: string;
@@ -157,6 +159,7 @@ export function DecisionWorkbench({ skills: initialSkills, featuredSkill }: Deci
   const [promotionLoading, setPromotionLoading] = useState(false);
   const [notice, setNotice] = useState<Notice>(null);
   const [busy, setBusy] = useState(false);
+  const [actor, setActor] = useState(DEFAULT_ACTOR);
 
   const visibleSkills = useMemo(() => {
     const query = catalogQuery.trim().toLowerCase();
@@ -219,6 +222,11 @@ export function DecisionWorkbench({ skills: initialSkills, featuredSkill }: Deci
       command("compare-version", "比较版本", "证据", "打开 bundle 文件级 diff。", () => openDiffMode(), "D", !canCompareVersions, "当前 variant 至少需要两个版本。"),
     ];
   }, [cases.length, defaultVariant, hasPersistedSkill]);
+
+  useEffect(() => {
+    void loadSession();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     void loadSkill(selectedSkillId);
@@ -350,6 +358,15 @@ export function DecisionWorkbench({ skills: initialSkills, featuredSkill }: Deci
     }
     if (nextActionMode === "skill" || nextActionMode === "new-skill" || nextActionMode === "import-skill") {
       setMode("overview");
+    }
+  }
+
+  async function loadSession() {
+    try {
+      const session = await apiGet<SessionResponse>("/api/session");
+      setActor(session.actor);
+    } catch {
+      setActor(DEFAULT_ACTOR);
     }
   }
 
@@ -719,6 +736,23 @@ export function DecisionWorkbench({ skills: initialSkills, featuredSkill }: Deci
     } finally {
       setBusy(false);
     }
+  }
+
+  async function switchActor(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
+    const nextActor = textValue(form, "actor");
+    if (!nextActor) return;
+    await runCommand("Actor 已切换。", async () => {
+      const session = await apiSend<SessionResponse>("/api/session", {
+        method: "POST",
+        body: { actor: nextActor },
+      });
+      setActor(session.actor);
+      formElement.reset();
+      return "Actor 已切换。";
+    });
   }
 
   async function createSkill(event: FormEvent<HTMLFormElement>) {
@@ -1160,7 +1194,7 @@ export function DecisionWorkbench({ skills: initialSkills, featuredSkill }: Deci
 
         {mode === "overview" ? (
           <OverviewPane
-            actor={ACTOR}
+            actor={actor}
             assignSkillRole={assignSkillRole}
             busy={busy}
             caseCount={cases.length}
@@ -1343,6 +1377,8 @@ export function DecisionWorkbench({ skills: initialSkills, featuredSkill }: Deci
           selectedDetail={selectedDetail}
           updateCase={updateCase}
           updateSkill={updateSkill}
+          actor={actor}
+          switchActor={switchActor}
         />
       </aside>
     </div>
@@ -2323,6 +2359,7 @@ function isTextEntryTarget(target: EventTarget | null) {
 
 function Inspector({
   actionMode,
+  actor,
   busy,
   cases,
   confirmedDraft,
@@ -2345,10 +2382,12 @@ function Inspector({
   score,
   selectedCase,
   selectedDetail,
+  switchActor,
   updateCase,
   updateSkill,
 }: {
   actionMode: ActionMode;
+  actor: string;
   busy: boolean;
   cases: EvalSetVersionDetail["cases"];
   confirmedDraft: number;
@@ -2371,6 +2410,7 @@ function Inspector({
   score: number | null;
   selectedCase: EvalSetVersionDetail["cases"][number] | null;
   selectedDetail: SkillDetail;
+  switchActor: (event: FormEvent<HTMLFormElement>) => void;
   updateCase: (event: FormEvent<HTMLFormElement>) => void;
   updateSkill: (event: FormEvent<HTMLFormElement>) => void;
 }) {
@@ -2388,6 +2428,8 @@ function Inspector({
           <span>EvalSetVersion <b>{shortId(currentEvalSetVersionId)}</b></span>
         </div>
       </section>
+
+      <LocalSessionPanel actor={actor} busy={busy} onSwitchActor={switchActor} />
 
       <div className="actionMenu">
         {[
@@ -2798,7 +2840,10 @@ function bytesToBase64(bytes: Uint8Array) {
 }
 
 async function apiGet<T>(path: string): Promise<T> {
-  const response = await fetch(`${API_BASE_URL}${path}`, { headers: { accept: "application/json" } });
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    credentials: "include",
+    headers: { accept: "application/json" },
+  });
   if (!response.ok) throw new Error(await responseText(response));
   return response.json() as Promise<T>;
 }
@@ -2822,7 +2867,8 @@ const versionFolderInputProps = {
 async function apiSend<T = unknown>(path: string, options: { method: string; body?: unknown }): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${path}`, {
     method: options.method,
-    headers: { "content-type": "application/json", accept: "application/json", "X-SkillHub-Actor": ACTOR },
+    credentials: "include",
+    headers: { "content-type": "application/json", accept: "application/json" },
     body: options.body === undefined ? undefined : JSON.stringify(options.body),
   });
   if (!response.ok) throw new Error(await responseText(response));

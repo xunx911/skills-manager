@@ -3,11 +3,19 @@ import { expect, test } from "@playwright/test";
 import { addEvalCase, appendSkillBundleVersion, hideVolatileUi, importSkillBundle } from "./helpers";
 
 const API_BASE_URL = `http://127.0.0.1:${process.env.SKILLHUB_E2E_API_PORT ?? 8021}`;
+const CLEANUP_ACTORS = ["product-operator", "release-manager"];
 
 test.beforeEach(async ({ request }) => {
   const response = await request.get(`${API_BASE_URL}/api/skills`);
   const skills = (await response.json()) as Array<{ skill: { id: string } }>;
-  await Promise.all(skills.map((summary) => request.delete(`${API_BASE_URL}/api/skills/${summary.skill.id}`)));
+  for (const summary of skills) {
+    for (const actor of CLEANUP_ACTORS) {
+      const deleted = await request.delete(`${API_BASE_URL}/api/skills/${summary.skill.id}`, {
+        headers: { "X-SkillHub-Actor": actor },
+      });
+      if (deleted.ok() || deleted.status() === 404) break;
+    }
+  }
 });
 
 test("visual baseline: empty skill workbench", async ({ page }) => {
@@ -61,6 +69,17 @@ test("visual baseline: skill access panel", async ({ page }) => {
   const panel = page.locator(".skillAccessPanel");
   await panel.scrollIntoViewIfNeeded();
   await expect(panel).toHaveScreenshot("skill-access-panel.png", {
+    animations: "disabled",
+  });
+});
+
+test("visual baseline: local session panel", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await page.goto("/skills");
+  await hideVolatileUi(page);
+
+  const panel = page.locator(".localSessionPanel");
+  await expect(panel).toHaveScreenshot("local-session-panel.png", {
     animations: "disabled",
   });
 });

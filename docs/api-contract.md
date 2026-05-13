@@ -32,7 +32,7 @@
 
 ### RoleAssignment
 
-`RoleAssignment` 显式绑定到某个 skill，不做组织级隐式继承。本地开发环境通过 `X-SkillHub-Actor` 请求头表示当前用户；正式认证接入后，这个 actor context 应由服务端 session/token 注入。
+`RoleAssignment` 显式绑定到某个 skill，不做组织级隐式继承。本地前端通过后端签名的 `skillhub_actor` HttpOnly cookie 表示当前 actor；直接调 API 的脚本仍可用 `X-SkillHub-Actor` 请求头作为兼容 fallback。正式认证接入后，这个 actor context 应由服务端 session/token 注入。
 
 | 字段 | 类型 | 说明 |
 | --- | --- | --- |
@@ -69,13 +69,56 @@
 
 ### Actor Context
 
-所有 mutation endpoint 的操作者身份来自请求级 actor context，而不是 JSON body：
+所有 mutation endpoint 的操作者身份来自请求级 actor context，而不是 JSON body。读取优先级：
+
+1. `skillhub_actor` HttpOnly cookie，值由后端 HMAC 签名。
+2. `X-SkillHub-Actor` header，仅用于直接 API 调用和自动化脚本兼容。
+3. 缺省本地 actor：`product-operator`。
+
+如果 cookie 存在但签名无效，后端返回 `400 Invalid actor session.`，不会回退到默认 actor。旧客户端如果继续在 body 中传 `actor`，后端会忽略；审计字段 `created_by`、`actor_ref` 和权限判断都以请求级 actor context 为准。正式认证版本应把这个 dependency 替换为真实 session、JWT 或 OIDC token 校验。
+
+### Local Session
 
 ```http
-X-SkillHub-Actor: product-operator
+GET /api/session
 ```
 
-本地开发缺省 actor 为 `product-operator`，方便 `bash scripts/dev.sh` 后直接试用。旧客户端如果继续在 body 中传 `actor`，后端会忽略；审计字段 `created_by`、`actor_ref` 和权限判断都以请求级 actor context 为准。正式认证版本应把这个 dependency 替换为 session、JWT 或 OIDC token 校验。
+返回当前 actor。没有 cookie 或 header 时返回 `product-operator`。
+
+```json
+{
+  "actor": "product-operator",
+  "subject_type": "user"
+}
+```
+
+设置本地 actor：
+
+```http
+POST /api/session
+Content-Type: application/json
+
+{
+  "actor": "release-manager"
+}
+```
+
+行为：
+
+- 校验 actor 只能包含字母、数字、`.`、`_`、`@`、`-`，长度 1 到 120。
+- 写入 `skillhub_actor` HttpOnly cookie，`SameSite=Lax`，默认 30 天有效。
+- 返回设置后的 actor。
+
+清除本地 actor：
+
+```http
+DELETE /api/session
+```
+
+行为：
+
+- 删除 `skillhub_actor` cookie。
+- 响应体回到本地默认 actor `product-operator`。
 
 ### TagSet
 

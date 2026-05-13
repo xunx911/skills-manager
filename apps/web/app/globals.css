@@ -4499,6 +4499,98 @@ body {
   padding: 5px 8px;
 }
 
+.localSessionPanel {
+  display: grid;
+  gap: 10px;
+  border: 1px solid #d8e2ee;
+  border-radius: 12px;
+  background:
+    linear-gradient(135deg, rgba(20, 83, 45, 0.055), transparent 58%),
+    #ffffff;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+  padding: 14px;
+}
+
+.localSessionHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.localSessionHeader span,
+.localSessionForm label span {
+  display: block;
+  color: #667085;
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.localSessionHeader strong {
+  display: block;
+  margin-top: 3px;
+  color: #111827;
+  font-size: 18px;
+}
+
+.localSessionHeader small {
+  border: 1px solid #d7e8dd;
+  border-radius: 999px;
+  background: #f0f9f3;
+  color: #14532d;
+  font-size: 11px;
+  font-weight: 900;
+  padding: 5px 8px;
+  white-space: nowrap;
+}
+
+.localSessionPanel p {
+  margin: 0;
+  color: #536176;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.localSessionForm {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: end;
+}
+
+.localSessionForm label {
+  display: grid;
+  gap: 5px;
+}
+
+.localSessionForm input {
+  min-height: 36px;
+  min-width: 0;
+  border: 1px solid #dce2ea;
+  border-radius: 8px;
+  background: #fbfcfd;
+  color: #111827;
+  font: inherit;
+  padding: 7px 9px;
+}
+
+.localSessionForm button {
+  min-height: 36px;
+  border: 1px solid #14532d;
+  border-radius: 8px;
+  background: #14532d;
+  color: #ffffff;
+  cursor: pointer;
+  font-weight: 900;
+  padding: 0 11px;
+}
+
+.localSessionForm button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
 .skillAccessPanel {
   display: grid;
   gap: 12px;

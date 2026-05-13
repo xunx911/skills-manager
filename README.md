@@ -15,7 +15,7 @@
 - 外部 runner 可以导入标准 eval result JSON，并得到同样的 `EvalRun + CaseResult` 记录。
 - 空工作台主内容区提供 `SkillLaunchpad`，可直接导入标准 Skill bundle 或创建空白 skill，不需要先进入右侧 inspector。
 - 工作台内可以查看 bundle 文件内容、在主工作区编辑 skill 身份和默认分发 variant、管理 skill 作用域角色、创建约束 variant、追加候选版本、版本 diff、run 历史、run matrix、保存历史筛选视图、run-to-run 比较、accepted verification、case 详情内联编辑、case 版本历史、case 历史版本恢复和 promotion review。
-- 创建或导入 skill 的本地 actor 会自动成为该 skill 的 `owner`；`promotion` 和 `accepted verification` 需要 `owner` 或 `maintainer`。本地开发身份通过 `X-SkillHub-Actor` 请求头进入后端 actor context，JSON body 中不再传 actor。
+- 创建或导入 skill 的本地 actor 会自动成为该 skill 的 `owner`；`promotion` 和 `accepted verification` 需要 `owner` 或 `maintainer`。前端本地开发身份来自后端签名的 HttpOnly cookie session，JSON body 中不再传 actor；直接调 API 的脚本仍可用 `X-SkillHub-Actor` 作为兼容 fallback。
 - `概览` 页提供 `治理与审计` 面板，集中展示 lifecycle、角色态势、最近 audit events，并把归档收进需要输入当前 skill ID 的危险区；归档需要 `owner` 权限并写入 `skill.archived` audit event。治理面板也能打开 `审计 Explorer`，按 actor、action、resource_type 过滤当前 skill 的治理、发布和验证事件。
 - 工作台支持 `Cmd/Ctrl+K` 上下文命令菜单，可搜索并执行导入、创建、测评、历史、差异等高频动作。
 - `测评` 页支持单条快速添加和批量粘贴 case；批量写入会生成一个新的 `EvalSetVersion`，避免逐条添加制造版本噪音。
@@ -40,7 +40,7 @@ bash scripts/dev.sh
 
 脚本使用 `uv` 运行 Python API，并在 `apps/web/node_modules` 缺失时安装前端依赖；它不会污染全局 Python 环境。
 本地 API 数据默认持久化到 `.data/skillhub.sqlite3`。可以用 `SKILLHUB_DATABASE_URL` 或 `SKILLHUB_DATA_DIR` 覆盖。
-本地开发默认 actor 是 `product-operator`；前端 mutation 请求会统一带上 `X-SkillHub-Actor: product-operator`。如果直接调 API，可以用同名 header 模拟不同用户，后续正式认证会把这里替换成 session/token。
+本地开发默认 actor 是 `product-operator`；右侧 inspector 的 `Local session` 面板可以切换本地 actor，后端会写入签名的 HttpOnly `skillhub_actor` cookie。前端所有 API 请求都会带上 cookie，不再硬编码 actor header。直接调 API 时仍可用 `X-SkillHub-Actor` header 模拟不同用户，后续正式认证会把本地 session 替换成真实登录。
 
 ### 手动运行
 
@@ -67,19 +67,20 @@ npm run dev -- --hostname 127.0.0.1 --port 3000
 
 1. 打开 `http://127.0.0.1:3000/skills`。
 2. 用左侧 catalog 切换 skill。
-3. 空工作台会在主内容区显示 `SkillLaunchpad`：可以直接导入标准 Skill bundle，也可以先创建空白 skill。已有 skill 时，也可以继续用右侧 inspector 或 `Cmd/Ctrl+K` 命令菜单触发同类动作。
-4. 导入 bundle 后先看 `概览` 里的 `验证清单`：没有 case 时点击 `添加首批 case`；有 case 但没有 run 时点击 `打开手工测评`；完成 run 后点击 `查看证据历史`。
-5. 在 `概览` 页的 `身份与默认分发` 中可直接修改 skill ID、归属，并选择哪个 variant 作为默认分发入口。
-6. 在 `概览` 页的 `访问控制` 中可查看当前 skill 的 owner/maintainer/evaluator/viewer，并添加或移除成员角色。
-7. 在 `概览` 页的 `治理与审计` 中查看最近权限/发布/归档事件；点击 `查看全部审计` 可以进入 `审计 Explorer`，按 actor、action 和 resource type 过滤，并查看事件 payload。确实要归档时，需要输入当前 skill ID 后才能执行。
-8. 在 `测评` 页可以直接用快速添加面板录入单条 case，或切到 `批量` 后粘贴多行 `title | input | expected output | notes`。
-9. 在 `变体` 页可直接用 `新建约束 variant` 创建新的 tags 组合；默认会从当前 default variant 的 current version 复制基线，创建后在同一张 variant map 中出现。
-10. 在 `变体` 页可直接用 `追加候选版本` 上传新的标准 Skill 文件夹或 zip；默认不会设为 current，保存后会自动切到 candidate 的测评上下文。
-11. 在 `测评` 页用 `未确认` 筛选处理剩余 case；点击 `通过` / `不通过` 会自动选中下一条未确认 case，也可以用 `未确认标为通过` 快速完成低风险批次。选中 case 后可直接在详情面板点击 `编辑`，保存时会生成新的 case version 和新的 `EvalSetVersion`，不用跳到右侧 inspector。
-12. 在 `导入 bundle` 中上传以下任一来源：
+3. 右侧 inspector 顶部的 `Local session` 显示当前本地 actor。需要模拟另一个维护者时，输入如 `release-manager` 并点击 `切换 actor`，之后创建、导入、授权、promotion 和审计都会使用这个 actor。
+4. 空工作台会在主内容区显示 `SkillLaunchpad`：可以直接导入标准 Skill bundle，也可以先创建空白 skill。已有 skill 时，也可以继续用右侧 inspector 或 `Cmd/Ctrl+K` 命令菜单触发同类动作。
+5. 导入 bundle 后先看 `概览` 里的 `验证清单`：没有 case 时点击 `添加首批 case`；有 case 但没有 run 时点击 `打开手工测评`；完成 run 后点击 `查看证据历史`。
+6. 在 `概览` 页的 `身份与默认分发` 中可直接修改 skill ID、归属，并选择哪个 variant 作为默认分发入口。
+7. 在 `概览` 页的 `访问控制` 中可查看当前 skill 的 owner/maintainer/evaluator/viewer，并添加或移除成员角色。
+8. 在 `概览` 页的 `治理与审计` 中查看最近权限/发布/归档事件；点击 `查看全部审计` 可以进入 `审计 Explorer`，按 actor、action 和 resource type 过滤，并查看事件 payload。确实要归档时，需要输入当前 skill ID 后才能执行。
+9. 在 `测评` 页可以直接用快速添加面板录入单条 case，或切到 `批量` 后粘贴多行 `title | input | expected output | notes`。
+10. 在 `变体` 页可直接用 `新建约束 variant` 创建新的 tags 组合；默认会从当前 default variant 的 current version 复制基线，创建后在同一张 variant map 中出现。
+11. 在 `变体` 页可直接用 `追加候选版本` 上传新的标准 Skill 文件夹或 zip；默认不会设为 current，保存后会自动切到 candidate 的测评上下文。
+12. 在 `测评` 页用 `未确认` 筛选处理剩余 case；点击 `通过` / `不通过` 会自动选中下一条未确认 case，也可以用 `未确认标为通过` 快速完成低风险批次。选中 case 后可直接在详情面板点击 `编辑`，保存时会生成新的 case version 和新的 `EvalSetVersion`，不用跳到右侧 inspector。
+13. 在 `导入 bundle` 中上传以下任一来源：
    - 根目录包含 `SKILL.md` 的文件夹，或
    - 根目录文件夹包含 `SKILL.md` 的 zip。
-11. `SKILL.md` 必须以 frontmatter 开头：
+14. `SKILL.md` 必须以 frontmatter 开头：
 
 ```markdown
 ---

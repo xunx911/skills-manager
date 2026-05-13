@@ -848,6 +848,60 @@ class ApiCommandTest(unittest.TestCase):
         self.assertEqual(assignments[0]["subject_id"], "header-owner")
         self.assertNotEqual(assignments[0]["subject_id"], "body-attacker")
 
+    def test_session_actor_cookie_controls_created_owner(self):
+        client = TestClient(create_app(create_local_sqlite_engine()))
+
+        session = client.post("/api/session", json={"actor": "release-manager"})
+        created = client.post(
+            "/api/skills",
+            json={
+                "slug": "session-owner-skill",
+                "owner_ref": "skillhub-lab",
+                "variant_name": "Variant A",
+                "variant_label": "Baseline",
+                "variant_summary": "Baseline maintained answer.",
+                "tags": ["codex"],
+                "content_ref": {
+                    "kind": "skill_bundle",
+                    "locator": "memory:session-owner-skill",
+                    "digest": "digest-session-owner",
+                },
+                "change_summary": "Initial version.",
+            },
+        )
+
+        self.assertEqual(session.status_code, 200)
+        self.assertEqual(session.json()["actor"], "release-manager")
+        self.assertIn("skillhub_actor=", session.headers["set-cookie"])
+        self.assertEqual(created.status_code, 200)
+        assignments = client.get(f"/api/skills/{created.json()['skill_id']}/role-assignments").json()
+        self.assertEqual(assignments[0]["subject_id"], "release-manager")
+
+    def test_tampered_session_actor_cookie_is_rejected(self):
+        client = TestClient(create_app(create_local_sqlite_engine()))
+        client.cookies.set("skillhub_actor", "tampered")
+
+        response = client.post(
+            "/api/skills",
+            json={
+                "slug": "tampered-session-skill",
+                "owner_ref": "skillhub-lab",
+                "variant_name": "Variant A",
+                "variant_label": "Baseline",
+                "variant_summary": "Baseline maintained answer.",
+                "tags": ["codex"],
+                "content_ref": {
+                    "kind": "skill_bundle",
+                    "locator": "memory:tampered-session-skill",
+                    "digest": "digest-tampered-session",
+                },
+                "change_summary": "Initial version.",
+            },
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("Invalid actor session", response.json()["detail"])
+
     def test_skill_governance_archive_requires_owner_and_writes_audit_event(self):
         skill = self.create_skill("governance-archive-api")
         self.client.post(

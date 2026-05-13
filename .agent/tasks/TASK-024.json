@@ -1,0 +1,29 @@
+{
+  "id": "024",
+  "title": "引入本地 Session Actor",
+  "status": "complete",
+  "goal": "用后端签名 cookie 承载本地 actor session，移除前端 mutation 中硬编码的 X-SkillHub-Actor header。",
+  "scope": [
+    "新增 /api/session GET/POST/DELETE",
+    "actor dependency 优先读取签名 HttpOnly cookie，header 仅作为 API/测试兼容 fallback",
+    "CORS 允许本地 credentials",
+    "前端 apiSend/apiGet 使用 credentials=include，不再发送 X-SkillHub-Actor",
+    "右侧 inspector 新增 LocalSessionPanel，可切换本地 actor",
+    "新增 API、E2E 和视觉回归覆盖",
+    "更新中文 README、API contract、UX 复盘和完成度审计"
+  ],
+  "out_of_scope": [
+    "OAuth/OIDC/SSO",
+    "用户密码登录",
+    "服务端 session 表",
+    "CSRF token 双提交",
+    "组织级用户目录"
+  ],
+  "verification": [
+    "cd apps/api && uv run pytest # 90 passed",
+    "cd apps/web && npm run typecheck # passed",
+    "cd apps/web && npm run build # passed",
+    "cd apps/web && UV_CACHE_DIR=/Users/xx/Documents/code/skills-manager/.uv-cache npm run e2e # 41 passed",
+    "git diff --check # passed"
+  ]
+}
