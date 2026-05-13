@@ -5,6 +5,7 @@ from os import environ
 from typing import Any
 
 from fastapi import Depends, FastAPI, Request, Response
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
@@ -166,7 +167,17 @@ def create_app(engine: Engine | None = None) -> FastAPI:
 
     @app.exception_handler(InvariantError)
     def invariant_handler(_request, exc: InvariantError):
-        return JSONResponse(status_code=400, content={"detail": str(exc)})
+        return JSONResponse(status_code=400, content=error_payload(exc))
+
+    @app.exception_handler(RequestValidationError)
+    def validation_error_handler(_request, exc: RequestValidationError):
+        return JSONResponse(
+            status_code=422,
+            content={
+                "detail": "请求字段不完整或格式不正确。",
+                "field_errors": request_validation_field_errors(exc.errors()),
+            },
+        )
 
     @app.exception_handler(PermissionDeniedError)
     def permission_denied_handler(_request, exc: PermissionDeniedError):
@@ -686,6 +697,52 @@ def result_payload(result: Any) -> Any:
     if is_dataclass(result):
         return asdict(result)
     return result
+
+
+def error_payload(exc: InvariantError) -> dict[str, Any]:
+    content: dict[str, Any] = {"detail": str(exc)}
+    field_errors = [error.to_payload() for error in getattr(exc, "field_errors", [])]
+    if field_errors:
+        content["field_errors"] = field_errors
+    return content
+
+
+def request_validation_field_errors(errors: list[dict[str, Any]]) -> list[dict[str, str]]:
+    field_errors = []
+    for error in errors:
+        field = request_body_field(error.get("loc", ()))
+        if not field:
+            continue
+        field_errors.append(
+            {
+                "field": field,
+                "message": request_validation_message(field, str(error.get("type", "invalid"))),
+                "code": f"request.{error.get('type', 'invalid')}",
+            }
+        )
+    return field_errors or [{"field": "_form", "message": "请求字段不完整或格式不正确。", "code": "request.invalid"}]
+
+
+def request_body_field(location: Any) -> str:
+    parts = [str(part) for part in location if part != "body"]
+    return ".".join(parts)
+
+
+def request_validation_message(field: str, error_type: str) -> str:
+    label = API_FIELD_LABELS.get(field, field)
+    if error_type == "missing":
+        return f"填写 {label}"
+    return f"{label} 格式不正确。"
+
+
+API_FIELD_LABELS = {
+    "slug": "Skill ID",
+    "owner_ref": "归属",
+    "variant_label": "变体名称",
+    "variant_summary": "变体简介",
+    "tags": "约束标签",
+    "change_summary": "版本说明",
+}
 
 
 app = create_app()

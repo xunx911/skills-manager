@@ -2,7 +2,7 @@
 
 日期：2026-05-14
 
-状态：当前产品闭环已经强于普通 demo，但还不是成熟产品。主要缺口不在“能不能跑通”，而在信息架构密度、历史/发布证据的可扫读性，以及权限协作、验证策略和少量深水区可访问性细节。移动端 first-run、证据视图 inspector 折叠、URL state 第二阶段、Audit Explorer 扫读重构、表单字段基础件第二阶段、表单验证错误摘要第一阶段、Command menu 第二阶段和 Diff / Promotion 文件 reviewed progress 第一阶段已经按本审计后续任务完成。
+状态：当前产品闭环已经强于普通 demo，但还不是成熟产品。主要缺口不在“能不能跑通”，而在信息架构密度、历史/发布证据的可扫读性，以及权限协作、验证策略和少量深水区可访问性细节。移动端 first-run、证据视图 inspector 折叠、URL state 第二阶段、Audit Explorer 扫读重构、表单字段基础件第二阶段、表单验证错误摘要和后端字段错误映射第一阶段、Command menu 第二阶段和 Diff / Promotion 文件 reviewed progress 第一阶段已经按本审计后续任务完成。
 
 ## 审计输入
 
@@ -105,7 +105,7 @@
 
 - 将来做组织级审计时，沿用这套信息架构，并补日期范围、分页、导出和保留策略。
 
-### 已解决错误摘要第一阶段 / 仍需后续 - 表单字段语义已统一，验证体验还需深化
+### 已解决字段错误映射第一阶段 / 仍需后续 - 表单字段语义已统一，验证体验继续深化
 
 证据：
 
@@ -117,16 +117,18 @@
 - `accessibility-workbench.spec.ts` 覆盖主要表单字段语义，红灯先失败于 `quick_title` 缺少 autocomplete/shared shell，绿色后 11 条 accessibility 回归通过。
 - TASK-050 新增 `ValidatedForm`，高频写入表单提交缺少 required 字段时会展示 error summary、聚焦 summary、用摘要链接回字段，并在字段旁显示同一条错误文案。
 - 新增 E2E 覆盖 Launchpad 新建 skill 和 QuickAddCases 空提交的 summary focus、summary link focus 和 `aria-invalid`。
+- TASK-051 新增 API `field_errors` 契约：后端保留 `detail`，并为 skill slug 冲突、请求体校验错误返回机器可读字段错误。
+- 新建/编辑 skill 表单会捕获带 `field_errors` 的 `ApiError`，把重复 Skill ID 显示到错误摘要和 `Skill ID` 字段旁；E2E 覆盖重复 slug 后 summary focus、`aria-invalid` 和 summary link focus。
 
 影响：
 
 - 主要工作台表单已经减少浏览器自动填充误填、焦点规则分叉和字段语义漂移。
-- 用户不再被浏览器原生 required 气泡挡住，错误文案和视觉可以统一，键盘用户也能从摘要恢复到具体字段。
+- 用户不再被浏览器原生 required 气泡挡住；服务端唯一性错误也不再只出现在全局 notice，而是回到用户需要修改的字段。
 - 后续新增表单应该优先复用 `WorkbenchField`，而不是在 pane 内继续手写 label/control。
 
 建议：
 
-- 下一轮表单方向应聚焦后端字段错误映射、长度/格式/唯一性校验、批量 case 行级错误和错误统计。
+- 下一轮表单方向应聚焦长度/格式校验、导入 bundle frontmatter 错误、批量 case 行级错误和错误统计。
 - 不建议为了“更像表单系统”而改成全受控输入；SkillHub 的长文本 case input/expected output 仍适合原生 form + FormData。
 
 ### 已解决第二阶段 / 仍需后续 - Command menu 已成为工作台操作入口层
@@ -187,7 +189,7 @@
 
 ## 下一轮任务排序
 
-1. **表单验证第二阶段剩余部分。** 后端字段错误映射、长度/格式/唯一性校验、批量 case 行级错误和错误统计。
+1. **表单验证第二阶段剩余部分。** 长度/格式校验、导入 bundle frontmatter 错误、批量 case 行级错误和错误统计。
 2. **接入真实认证。** 用真实登录 session/token 替换本地 actor cookie，并把 capability 反映到 UI。
 3. **组织级 Audit Explorer。** 跨 skill 查询、日期范围、分页、导出和保留策略。
 4. **Diff / Promotion reviewed progress 第二阶段。** 决定是否服务端持久化、自动折叠已查看文件或纳入 promotion checklist。

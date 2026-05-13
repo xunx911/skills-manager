@@ -1,0 +1,38 @@
+{
+  "id": "051",
+  "title": "后端字段错误映射第一阶段",
+  "status": "completed",
+  "goal": "让后端唯一性和请求校验错误以结构化 field_errors 返回，并让前端写入表单把服务端字段错误显示到错误摘要与对应字段旁。",
+  "scope": [
+    "定义 API 字段错误响应的最小兼容契约：保留 detail，新增 field_errors",
+    "为 skill slug 创建/更新冲突返回 slug 字段错误",
+    "为 FastAPI 请求体校验错误返回字段错误摘要",
+    "让 apiSend 抛出携带 fieldErrors 的 ApiError",
+    "让 ValidatedForm 捕获服务端字段错误并映射到表单控件",
+    "让新建 skill 与编辑 skill 表单使用可冒泡的表单命令路径",
+    "新增 API 单元测试和 Playwright E2E 覆盖重复 Skill ID 的字段错误体验",
+    "更新 README、完成度审计、摩擦审计、任务日志和本任务规格"
+  ],
+  "out_of_scope": [
+    "所有领域错误的字段级映射",
+    "导入 bundle 的逐文件/逐 frontmatter 字段错误",
+    "批量 case 的逐行字段错误",
+    "前端表单视觉重设计",
+    "完整 RFC 9457 application/problem+json 切换"
+  ],
+  "verification": [
+    "Red: cd apps/api && uv run pytest tests/test_api_commands.py -k \"field_error or request_validation\" -> failed as expected because field_errors did not exist and update slug conflict raised IntegrityError",
+    "Red: cd apps/web && npm run e2e -- -g \"server field errors\" -> failed as expected because .formErrorSummary did not appear for duplicate Skill ID",
+    "Green: cd apps/api && uv run pytest tests/test_api_commands.py -k \"field_error or request_validation\" -> 3 passed",
+    "Green: cd apps/web && npm run e2e -- -g \"server field errors\" -> 1 passed",
+    "cd apps/web && npm run test:unit -> 4 files / 15 tests passed",
+    "cd apps/web && npm run typecheck -> passed",
+    "cd apps/web && npm run build -> passed",
+    "cd apps/web && npm audit --omit=dev -> found 0 vulnerabilities",
+    "cd apps/api && uv run pytest -> 93 passed",
+    "cd apps/web && npm run e2e -> 63 passed",
+    "git diff --check -> passed",
+    "jq empty .agent/tasks.json .agent/tasks/TASK-051.json -> passed",
+    "wc -l apps/api/skillhub/domain/errors.py apps/web/lib/api-errors.ts apps/web/components/forms/form-validation.tsx apps/web/lib/api-errors.test.ts apps/web/e2e/accessibility-workbench.spec.ts docs/superpowers/specs/2026-05-14-api-field-errors-design.md docs/superpowers/plans/2026-05-14-api-field-errors.md -> 37 / 57 / 182 / 24 / 300 / 58 / 37"
+  ]
+}

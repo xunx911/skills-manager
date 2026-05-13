@@ -4,10 +4,11 @@ import { createContext, useContext, useEffect, useMemo, useRef, useState } from 
 import type { FormEvent, FormHTMLAttributes, MouseEvent as ReactMouseEvent, ReactNode } from "react";
 
 import { requiredFieldMessage, type RequiredControlKind } from "@/components/forms/form-validation-copy";
+import { isApiError, type ApiFieldError } from "@/lib/api-errors";
 
 export { requiredFieldMessage };
 export type FormFieldError = {
-  fieldId: string;
+  fieldId: string | null;
   fieldName: string;
   message: string;
 };
@@ -36,15 +37,23 @@ export function ValidatedForm({
     return () => window.cancelAnimationFrame(frame);
   }, [errors]);
 
-  function submit(event: FormEvent<HTMLFormElement>) {
+  async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const nextErrors = collectRequiredFieldErrors(event.currentTarget);
+    const form = event.currentTarget;
+    const nextErrors = collectRequiredFieldErrors(form);
     if (nextErrors.length > 0) {
       setErrors(nextErrors);
       return;
     }
     setErrors([]);
-    void onValidSubmit(event);
+    try {
+      await onValidSubmit(event);
+    } catch (error) {
+      if (!isApiError(error) || error.fieldErrors.length === 0) {
+        throw error;
+      }
+      setErrors(collectApiFieldErrors(form, error.fieldErrors));
+    }
   }
 
   return (
@@ -77,13 +86,20 @@ function FormErrorSummary({
       <strong>{title}</strong>
       <p>修正后再提交。</p>
       <ul>
-        {errors.map((error) => (
-          <li key={`${error.fieldName}-${error.fieldId}`}>
-            <a href={`#${error.fieldId}`} onClick={(event) => focusLinkedField(event, error.fieldId)}>
-              {error.message}
-            </a>
-          </li>
-        ))}
+        {errors.map((error) => {
+          const fieldId = error.fieldId;
+          return (
+            <li key={`${error.fieldName}-${fieldId}`}>
+              {fieldId ? (
+                <a href={`#${fieldId}`} onClick={(event) => focusLinkedField(event, fieldId)}>
+                  {error.message}
+                </a>
+              ) : (
+                <span>{error.message}</span>
+              )}
+            </li>
+          );
+        })}
       </ul>
     </div>
   );
@@ -108,6 +124,30 @@ function collectRequiredFieldErrors(form: HTMLFormElement) {
   }
 
   return errors;
+}
+
+function collectApiFieldErrors(form: HTMLFormElement, fieldErrors: ApiFieldError[]) {
+  return fieldErrors.map((error) => {
+    const control = formControlForField(form, error.field);
+    return {
+      fieldId: control?.id ?? null,
+      fieldName: control?.name ?? error.field,
+      message: error.message,
+    };
+  });
+}
+
+function formControlForField(form: HTMLFormElement, fieldName: string) {
+  const candidate = form.elements.namedItem(fieldName);
+  if (isSupportedControl(candidate)) return candidate;
+  if (candidate instanceof RadioNodeList) return Array.from(candidate).find(isSupportedControl);
+  return undefined;
+}
+
+function isSupportedControl(
+  control: Element | RadioNodeList | null | undefined,
+): control is HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement {
+  return control instanceof HTMLInputElement || control instanceof HTMLTextAreaElement || control instanceof HTMLSelectElement;
 }
 
 function shouldValidateControl(control: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement) {

@@ -2,7 +2,7 @@
 
 日期：2026-05-14
 
-状态：尚未达到“成熟产品完成”。当前已经是一个强的正式垂直切片：主工作区 Skill Launchpad、移动端 first-run 单主路径、中等桌面证据视图 compact inspector rail、URL state 第二阶段、高频写入表单字段基础件第二阶段、表单验证错误摘要第一阶段、Command menu 第二阶段、Diff / Promotion 文件 reviewed progress 第一阶段、主工作区 Skill 设置、Skill 作用域访问控制、本地 session actor、基础 accessibility 护栏、Workbench mode tablist、Inspector action 焦点交接、Skill 治理与审计面板、Skill 审计 Explorer quick filters/readable timeline/structured detail、标准 Skill bundle 导入、导入后验证清单、variant/version、candidate verification handoff、eval set version、manual eval review queue、历史查看、run matrix 多维控制与表格语义、保存历史筛选视图、run-to-run comparison、accepted verification、bundle diff、candidate promotion review、上下文命令菜单 ARIA 和快速添加 case 都能闭环。但距离成熟产品还缺少真实认证、多用户协作、自动测评策略和更深的可访问性验证。
+状态：尚未达到“成熟产品完成”。当前已经是一个强的正式垂直切片：主工作区 Skill Launchpad、移动端 first-run 单主路径、中等桌面证据视图 compact inspector rail、URL state 第二阶段、高频写入表单字段基础件第二阶段、表单验证错误摘要和后端字段错误映射第一阶段、Command menu 第二阶段、Diff / Promotion 文件 reviewed progress 第一阶段、主工作区 Skill 设置、Skill 作用域访问控制、本地 session actor、基础 accessibility 护栏、Workbench mode tablist、Inspector action 焦点交接、Skill 治理与审计面板、Skill 审计 Explorer quick filters/readable timeline/structured detail、标准 Skill bundle 导入、导入后验证清单、variant/version、candidate verification handoff、eval set version、manual eval review queue、历史查看、run matrix 多维控制与表格语义、保存历史筛选视图、run-to-run comparison、accepted verification、bundle diff、candidate promotion review、上下文命令菜单 ARIA 和快速添加 case 都能闭环。但距离成熟产品还缺少真实认证、多用户协作、自动测评策略和更深的可访问性验证。
 
 ## 目标拆解
 
@@ -43,7 +43,7 @@
 | Local session 面板 | 右侧 inspector 显示当前本地 actor，可切换为 `release-manager` 等身份；E2E 覆盖切换后导入 skill，owner role 来自 session actor；视觉回归覆盖 session 面板。 | 完成 |
 | Accessibility 基础护栏 | `AppShell` 提供 skip link；全局 `:focus-visible` 使用高对比双层 ring；`prefers-reduced-motion` 压低非必要 transition；`linearNotice` 使用 `role=status`；E2E 覆盖四条回归。 | 完成 |
 | 高频表单字段基础件 | `WorkbenchField` 系列统一 Launchpad、Inspector、QuickAddCases、EvalCaseDetailPanel、SkillSettingsPanel、SkillAccessPanel、SkillGovernancePanel、SavedRunViews、history filters、run matrix controls 和 diff selectors 的 label、hint、error、`aria-describedby`、业务字段 `autocomplete="off"` 和局部 `:focus-visible`；E2E 覆盖主要表单字段语义。 | 完成第二阶段 |
-| 表单验证错误摘要 | `ValidatedForm` 统一高频写入表单的 required 校验；缺字段时展示 error summary、聚焦 summary、摘要链接回字段，并通过 `WorkbenchField` 显示字段旁错误和 `aria-invalid`；E2E 覆盖 Launchpad 和 QuickAddCases。 | 完成第一阶段 |
+| 表单验证与字段错误 | `ValidatedForm` 统一高频写入表单的 required 校验；缺字段时展示 error summary、聚焦 summary、摘要链接回字段，并通过 `WorkbenchField` 显示字段旁错误和 `aria-invalid`；后端保留 `detail` 并返回 `field_errors`，创建/更新 skill 的重复 Skill ID 会回填到 `slug` 字段；E2E 覆盖 Launchpad、QuickAddCases 和服务端字段错误。 | 完成后端映射第一阶段 |
 | Command menu ARIA | `CommandMenu` 使用 `role=dialog`、editable `combobox`、`listbox/option`、`aria-activedescendant`、关闭按钮和 Tab trap；E2E 覆盖方向键、弹层内焦点循环和关闭回焦点。 | 完成 |
 | Workbench mode tablist | 工作区模式切换使用 `role=tablist/tab/tabpanel`、`aria-selected`、roving `tabIndex` 和 Left/Right/Home/End 键盘导航；E2E 覆盖 tablist 语义和方向键切换。 | 完成 |
 | URL state 第一阶段 | `/skills` 服务端读取 `skill` 与 `mode` query；前端 History API 同步 selected skill/mode，并监听 `popstate` 支持 Back/Forward；E2E 覆盖直达、刷新、URL 更新和浏览器历史恢复。 | 完成 |
@@ -100,20 +100,23 @@ jq empty .agent/tasks.json .agent/tasks/TASK-049.json
 wc -l apps/web/components/command-menu/command-menu.tsx apps/web/components/command-menu/command-menu-recents.ts apps/web/components/command-menu/command-menu-preview.tsx apps/web/components/command-menu/workbench-command-config.ts
 jq empty .agent/tasks.json .agent/tasks/TASK-050.json
 wc -l apps/web/components/forms/form-validation.tsx apps/web/components/forms/workbench-field.tsx apps/web/components/skills/skill-launchpad.tsx apps/web/components/inspector/workbench-inspector.tsx apps/web/components/eval-cases/quick-add-cases.tsx
+jq empty .agent/tasks.json .agent/tasks/TASK-051.json
+wc -l apps/api/skillhub/domain/errors.py apps/web/lib/api-errors.ts apps/web/components/forms/form-validation.tsx apps/web/lib/api-errors.test.ts apps/web/e2e/accessibility-workbench.spec.ts docs/superpowers/specs/2026-05-14-api-field-errors-design.md docs/superpowers/plans/2026-05-14-api-field-errors.md
 ```
 
 结果：
 
-- Web unit：3 files / 14 tests passed。
+- Web unit：4 files / 15 tests passed。
 - Web typecheck：通过。
 - Web production build：通过。
 - Web audit：0 vulnerabilities。
-- Playwright E2E：62 passed。
-- API pytest：90 passed。
+- Playwright E2E：63 passed。
+- API pytest：93 passed。
 - `git diff --check`：通过。
-- `.agent/tasks.json`、`.agent/tasks/TASK-049.json` 和 `.agent/tasks/TASK-050.json` JSON 结构检查：通过。
+- `.agent/tasks.json`、`.agent/tasks/TASK-049.json`、`.agent/tasks/TASK-050.json` 和 `.agent/tasks/TASK-051.json` JSON 结构检查：通过。
 - 关键 command menu 文件行数：258 / 66 / 36 / 184。
-- 关键 form validation 文件行数：142 / 162 / 96 / 283 / 122。
+- 关键 form validation 文件行数：182 / 162 / 96 / 283 / 122。
+- 关键 API field error 文件行数：37 / 57 / 182 / 24 / 300 / 58 / 37。
 
 本轮相关视觉资产：
 

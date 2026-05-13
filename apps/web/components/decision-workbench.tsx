@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 
 import { passRate } from "@/lib/api";
+import { apiErrorFromResponse, isApiError } from "@/lib/api-errors";
 import { emptySkillDetail } from "@/lib/empty-state";
 import { formatBytes, percent, shortId } from "@/lib/format";
 import { CommandMenu } from "@/components/command-menu/command-menu";
@@ -786,7 +787,11 @@ export function DecisionWorkbench({
     });
   }
 
-  async function runCommand(message: string, command: () => Promise<CommandResult>) {
+  async function runCommand(
+    message: string,
+    command: () => Promise<CommandResult>,
+    options: { rethrowFieldErrors?: boolean } = {},
+  ) {
     setBusy(true);
     setNotice(null);
     try {
@@ -801,6 +806,9 @@ export function DecisionWorkbench({
       return true;
     } catch (error) {
       setNotice({ tone: "bad", message: error instanceof Error ? error.message : "操作失败" });
+      if (options.rethrowFieldErrors && isApiError(error) && error.fieldErrors.length > 0) {
+        throw error;
+      }
       return false;
     } finally {
       setBusy(false);
@@ -829,30 +837,34 @@ export function DecisionWorkbench({
     const formElement = event.currentTarget;
     const form = new FormData(formElement);
     const slug = textValue(form, "slug");
-    await runCommand("Skill 已创建。", async () => {
-      const summary = textValue(form, "summary");
-      const result = await apiSend<{ skill_id: string }>("/api/skills", {
-        method: "POST",
-        body: {
-          slug,
-          owner_ref: textValue(form, "owner_ref"),
-          variant_name: "Default",
-          variant_label: textValue(form, "variant_label"),
-          variant_summary: summary,
-          tags: tagList(textValue(form, "tags")),
-          content_ref: {
-            kind: "skill_bundle",
-            locator: `inline:${slug}`,
-            digest: await digestText(summary + slug),
+    await runCommand(
+      "Skill 已创建。",
+      async () => {
+        const summary = textValue(form, "summary");
+        const result = await apiSend<{ skill_id: string }>("/api/skills", {
+          method: "POST",
+          body: {
+            slug,
+            owner_ref: textValue(form, "owner_ref"),
+            variant_name: "Default",
+            variant_label: textValue(form, "variant_label"),
+            variant_summary: summary,
+            tags: tagList(textValue(form, "tags")),
+            content_ref: {
+              kind: "skill_bundle",
+              locator: `inline:${slug}`,
+              digest: await digestText(summary + slug),
+            },
+            change_summary: textValue(form, "change_summary"),
           },
-          change_summary: textValue(form, "change_summary"),
-        },
-      });
-      setCatalogQuery("");
-      chooseAction("skill", { focusInspector: false });
-      formElement.reset();
-      return { selectedSkillId: result.skill_id };
-    });
+        });
+        setCatalogQuery("");
+        chooseAction("skill", { focusInspector: false });
+        formElement.reset();
+        return { selectedSkillId: result.skill_id };
+      },
+      { rethrowFieldErrors: true },
+    );
   }
 
   async function importSkill(event: FormEvent<HTMLFormElement>) {
@@ -933,17 +945,21 @@ export function DecisionWorkbench({
   async function updateSkill(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
-    await runCommand("Skill 已更新。", async () => {
-      const defaultVariantId = textValue(form, "default_variant_id");
-      await apiSend(`/api/skills/${selectedDetail.skill.id}`, {
-        method: "PATCH",
-        body: {
-          slug: textValue(form, "slug"),
-          owner_ref: textValue(form, "owner_ref"),
-          ...(defaultVariantId ? { default_variant_id: defaultVariantId } : {}),
-        },
-      });
-    });
+    await runCommand(
+      "Skill 已更新。",
+      async () => {
+        const defaultVariantId = textValue(form, "default_variant_id");
+        await apiSend(`/api/skills/${selectedDetail.skill.id}`, {
+          method: "PATCH",
+          body: {
+            slug: textValue(form, "slug"),
+            owner_ref: textValue(form, "owner_ref"),
+            ...(defaultVariantId ? { default_variant_id: defaultVariantId } : {}),
+          },
+        });
+      },
+      { rethrowFieldErrors: true },
+    );
   }
 
   async function assignSkillRole(event: FormEvent<HTMLFormElement>) {
@@ -1568,7 +1584,7 @@ async function apiGet<T>(path: string): Promise<T> {
     credentials: "include",
     headers: { accept: "application/json" },
   });
-  if (!response.ok) throw new Error(await responseText(response));
+  if (!response.ok) throw await apiErrorFromResponse(response);
   return response.json() as Promise<T>;
 }
 
@@ -1579,15 +1595,6 @@ async function apiSend<T = unknown>(path: string, options: { method: string; bod
     headers: { "content-type": "application/json", accept: "application/json" },
     body: options.body === undefined ? undefined : JSON.stringify(options.body),
   });
-  if (!response.ok) throw new Error(await responseText(response));
+  if (!response.ok) throw await apiErrorFromResponse(response);
   return response.json() as Promise<T>;
-}
-
-async function responseText(response: Response) {
-  try {
-    const payload = await response.json();
-    return typeof payload.detail === "string" ? payload.detail : JSON.stringify(payload);
-  } catch {
-    return `${response.status} ${response.statusText}`;
-  }
 }

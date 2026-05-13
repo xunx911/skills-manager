@@ -348,5 +348,12 @@
     "priority": 50,
     "passes": true,
     "spec": ".agent/tasks/TASK-050.json"
+  },
+  {
+    "id": "051",
+    "title": "后端字段错误映射第一阶段",
+    "priority": 51,
+    "passes": true,
+    "spec": ".agent/tasks/TASK-051.json"
   }
 ]

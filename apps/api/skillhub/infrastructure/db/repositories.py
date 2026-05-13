@@ -11,7 +11,7 @@ from sqlalchemy.exc import IntegrityError
 
 from skillhub.application.promotion_review import build_promotion_case_comparisons, build_promotion_readiness
 from skillhub.application.run_comparison import build_run_case_comparisons, build_run_comparison_summary
-from skillhub.domain.errors import InvariantError, NotFoundError, PermissionDeniedError
+from skillhub.domain.errors import FieldError, FieldInvariantError, InvariantError, NotFoundError, PermissionDeniedError
 from skillhub.domain.models import ContentRef, digest_text, new_id, normalize_tags, utc_now
 from skillhub.domain.permissions import VALID_ROLES, permission_label, role_allows
 from skillhub.infrastructure.db import tables
@@ -232,7 +232,7 @@ class SqlSkillRepository:
                     )
                 )
         except IntegrityError as exc:
-            raise InvariantError(f"Skill slug already exists: {slug}") from exc
+            raise skill_slug_conflict(slug) from exc
 
         return CreateSkillResult(
             skill_id=skill_id,
@@ -475,20 +475,23 @@ class SqlSkillRepository:
         default_variant_id: str | None = None,
     ) -> dict[str, Any]:
         updated_at = utc_now()
-        with self.engine.begin() as connection:
-            self._skill_row(connection, skill_id)
-            values: dict[str, Any] = {"slug": slug, "owner_ref": owner_ref, "updated_at": updated_at}
-            if default_variant_id is not None:
-                variant = self._variant_row(connection, default_variant_id)
-                if variant["skill_id"] != skill_id:
-                    raise InvariantError("Default variant must belong to the same skill.")
-                values["default_variant_id"] = default_variant_id
-            connection.execute(
-                update(tables.skills)
-                .where(tables.skills.c.id == skill_id)
-                .values(**values)
-            )
-            return self._row_dict(self._skill_row(connection, skill_id))
+        try:
+            with self.engine.begin() as connection:
+                self._skill_row(connection, skill_id)
+                values: dict[str, Any] = {"slug": slug, "owner_ref": owner_ref, "updated_at": updated_at}
+                if default_variant_id is not None:
+                    variant = self._variant_row(connection, default_variant_id)
+                    if variant["skill_id"] != skill_id:
+                        raise InvariantError("Default variant must belong to the same skill.")
+                    values["default_variant_id"] = default_variant_id
+                connection.execute(
+                    update(tables.skills)
+                    .where(tables.skills.c.id == skill_id)
+                    .values(**values)
+                )
+                return self._row_dict(self._skill_row(connection, skill_id))
+        except IntegrityError as exc:
+            raise skill_slug_conflict(slug) from exc
 
     def archive_skill(self, *, skill_id: str, actor: str) -> None:
         updated_at = utc_now()
@@ -2403,3 +2406,8 @@ class SqlSkillRepository:
 
     def _row_dict(self, row) -> dict[str, Any]:
         return dict(row)
+
+
+def skill_slug_conflict(slug: str) -> FieldInvariantError:
+    message = f"Skill ID 已存在：{slug}"
+    return FieldInvariantError(message, [FieldError(field="slug", message=message, code="skill.slug_conflict")])

@@ -10,6 +10,15 @@
 
 ## Session Log
 
+### 2026-05-14 03:58 CST - TASK-051 后端字段错误映射第一阶段
+
+- 新增 `docs/superpowers/specs/2026-05-14-api-field-errors-design.md` 和执行计划，记录 RFC 9457、JSON:API error object、FastAPI exception handler 与 GOV.UK/MOJ 表单错误实践的 SkillHub 适配方案。
+- 后端新增 `FieldError` / `FieldInvariantError`，`POST /api/skills`、`PATCH /api/skills/{skill_id}` 和导入 skill 的 slug 冲突会保留 `detail` 并返回 `field_errors`；FastAPI 请求体校验错误也会映射为字段错误数组。
+- 前端新增 `ApiError` / `ApiFieldError`，`apiSend/apiGet` 不再只抛普通 `Error`；`ValidatedForm` 捕获服务端字段错误后按控件 `name` 显示 summary、字段旁错误和 `aria-invalid`。
+- 新建 skill / 编辑 skill 命令在字段错误时冒泡给表单，其他命令仍保留全局 notice 失败反馈。
+- README、API contract、产品体验评审、完成度审计、摩擦审计和 TASK-051 任务记录已更新。
+- 已验证：红灯 API 先失败于缺少 `field_errors` 和更新 slug 冲突 500；红灯 E2E 先失败于重复 Skill ID 后没有 `.formErrorSummary`；绿色后目标 API 3 passed、目标 E2E 1 passed；`npm run test:unit` 4 files/15 tests passed；`npm run typecheck` passed；`npm run build` passed；`npm audit --omit=dev` found 0 vulnerabilities；`uv run pytest` 93 passed；`npm run e2e` 63 passed；`git diff --check` passed；任务 JSON 结构检查 passed；关键文件行数 37/57/182/24/300/58/37。
+
 ### 2026-05-14 03:41 CST - TASK-050 表单验证错误摘要第一阶段
 
 - 新增 `docs/superpowers/specs/2026-05-14-form-validation-summary-design.md` 和执行计划，记录借鉴 GOV.UK、MOJ、Vercel 和 MDN 表单验证实践后的 SkillHub 适配方案。

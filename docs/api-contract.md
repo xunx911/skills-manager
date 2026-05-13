@@ -77,6 +77,31 @@
 
 如果 cookie 存在但签名无效，后端返回 `400 Invalid actor session.`，不会回退到默认 actor。旧客户端如果继续在 body 中传 `actor`，后端会忽略；审计字段 `created_by`、`actor_ref` 和权限判断都以请求级 actor context 为准。正式认证版本应把这个 dependency 替换为真实 session、JWT 或 OIDC token 校验。
 
+### Error Response
+
+错误响应保留历史兼容的 `detail` 字段；当错误可以定位到请求字段时，额外返回 `field_errors`。前端表单使用 `field` 匹配控件 `name`，不要解析 `detail` 文案推断字段。
+
+```json
+{
+  "detail": "Skill ID 已存在：code-reviewer",
+  "field_errors": [
+    {
+      "field": "slug",
+      "message": "Skill ID 已存在：code-reviewer",
+      "code": "skill.slug_conflict"
+    }
+  ]
+}
+```
+
+当前第一阶段覆盖：
+
+- `POST /api/skills` 重复 `slug`：`400`，`field_errors[0].field = "slug"`。
+- `PATCH /api/skills/{skill_id}` 重复 `slug`：`400`，`field_errors[0].field = "slug"`。
+- FastAPI 请求体校验错误：`422`，按请求体字段生成 `field_errors`。
+
+后续如果要支持嵌套 bundle frontmatter 或批量 case 行级错误，可以在保持 `field` 的同时增加 JSON Pointer，但不能破坏 `detail + field_errors` 的兼容契约。
+
 ### Local Session
 
 ```http

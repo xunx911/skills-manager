@@ -12,6 +12,63 @@ class ApiCommandTest(unittest.TestCase):
     def setUp(self) -> None:
         self.client = TestClient(create_app(create_local_sqlite_engine()), headers={"X-SkillHub-Actor": "tester"})
 
+    def test_create_skill_duplicate_slug_returns_slug_field_error(self):
+        self.create_skill("duplicate-slug-api")
+
+        response = self.client.post(
+            "/api/skills",
+            json=self.skill_payload("duplicate-slug-api", digest="digest-duplicate"),
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(
+            response.json()["field_errors"],
+            [
+                {
+                    "field": "slug",
+                    "message": "Skill ID 已存在：duplicate-slug-api",
+                    "code": "skill.slug_conflict",
+                }
+            ],
+        )
+
+    def test_update_skill_duplicate_slug_returns_slug_field_error(self):
+        first = self.create_skill("editable-slug-api")
+        self.create_skill("taken-slug-api", digest="digest-taken")
+
+        response = self.client.patch(
+            f"/api/skills/{first['skill_id']}",
+            json={
+                "slug": "taken-slug-api",
+                "owner_ref": "skillhub-lab",
+            },
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()["field_errors"][0]["field"], "slug")
+        self.assertEqual(response.json()["field_errors"][0]["code"], "skill.slug_conflict")
+
+    def test_request_validation_error_returns_field_errors(self):
+        response = self.client.post(
+            "/api/skills",
+            json={
+                "owner_ref": "skillhub-lab",
+                "variant_name": "Variant A",
+                "variant_label": "Baseline",
+                "variant_summary": "Baseline maintained answer.",
+                "tags": ["codex"],
+                "content_ref": {
+                    "kind": "skill_bundle",
+                    "locator": "memory:missing-slug",
+                    "digest": "digest-missing-slug",
+                },
+                "change_summary": "Initial version.",
+            },
+        )
+
+        self.assertEqual(response.status_code, 422)
+        self.assertEqual(response.json()["field_errors"][0]["field"], "slug")
+
     def test_command_flow_records_eval_run(self):
         skill = self.create_skill("code-reviewer")
         candidate = self.client.post(
@@ -1379,7 +1436,8 @@ class ApiCommandTest(unittest.TestCase):
         duplicate = self.client.post("/api/skill-imports", json=payload)
 
         self.assertEqual(duplicate.status_code, 400)
-        self.assertIn("already exists", duplicate.json()["detail"])
+        self.assertEqual(duplicate.json()["detail"], "Skill ID 已存在：duplicate-reviewer")
+        self.assertEqual(duplicate.json()["field_errors"][0]["code"], "skill.slug_conflict")
 
     def test_variant_version_from_bundle_source_can_be_diffed(self):
         imported = self.import_standard_skill_bundle("diff-reviewing")
@@ -1565,24 +1623,27 @@ class ApiCommandTest(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         return response.json()
 
+    def skill_payload(self, slug: str, digest: str = "digest-code"):
+        return {
+            "slug": slug,
+            "owner_ref": "skillhub-lab",
+            "variant_name": "Variant A",
+            "variant_label": "Baseline",
+            "variant_summary": "Baseline maintained answer.",
+            "tags": ["codex"],
+            "content_ref": {
+                "kind": "skill_bundle",
+                "locator": f"memory:{slug}",
+                "digest": digest,
+            },
+            "change_summary": "Initial version.",
+            "actor": "tester",
+        }
+
     def create_skill(self, slug: str, digest: str = "digest-code"):
         response = self.client.post(
             "/api/skills",
-            json={
-                "slug": slug,
-                "owner_ref": "skillhub-lab",
-                "variant_name": "Variant A",
-                "variant_label": "Baseline",
-                "variant_summary": "Baseline maintained answer.",
-                "tags": ["codex"],
-                "content_ref": {
-                    "kind": "skill_bundle",
-                    "locator": f"memory:{slug}",
-                    "digest": digest,
-                },
-                "change_summary": "Initial version.",
-                "actor": "tester",
-            },
+            json=self.skill_payload(slug, digest=digest),
         )
         self.assertEqual(response.status_code, 200)
         return response.json()
