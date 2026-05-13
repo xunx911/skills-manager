@@ -323,7 +323,8 @@ test("imported skill is guided into its first verification run", async ({ page }
   await expect(page.locator(".historyRunRow")).toHaveCount(1);
 });
 
-test("keyboard users can open primary inspector actions", async ({ page }) => {
+test("keyboard users can open primary inspector actions", async ({ page, request }) => {
+  await clearSkillCatalog(request);
   await page.goto("/skills");
   const inspector = page.getByLabel("Inspector");
 
@@ -332,6 +333,7 @@ test("keyboard users can open primary inspector actions", async ({ page }) => {
   await expect(inspector.getByRole("heading", { name: "导入标准 Skill" })).toBeVisible();
 
   await inspector.getByRole("button", { name: "新建 skill", exact: true }).focus();
+  await expect(inspector.getByRole("button", { name: "新建 skill", exact: true })).toBeFocused();
   await page.keyboard.press("Enter");
   await expect(inspector.getByRole("heading", { name: "添加 skill" })).toBeVisible();
 });

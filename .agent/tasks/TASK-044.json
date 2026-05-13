@@ -1,0 +1,36 @@
+{
+  "id": "044",
+  "title": "表单字段基础件第一阶段",
+  "status": "completed",
+  "goal": "把 SkillLaunchpad 与 WorkbenchInspector 的高频写入字段迁移到共享字段组件，统一 label、hint、autocomplete 和 focus-visible 基础行为。",
+  "scope": [
+    "新增共享 TextField、TextAreaField、SelectField、FileField 组件",
+    "迁移 SkillLaunchpad 的导入和新建 skill 表单",
+    "迁移 WorkbenchInspector 的 skill、新建 skill、导入 bundle、variant、version、case 表单",
+    "业务 text/textarea 字段默认显式 autocomplete=\"off\"",
+    "把相关局部 :focus 样式收敛为 :focus-visible",
+    "新增 Playwright E2E 覆盖 Launchpad 与 Inspector 的 autocomplete 和可见焦点",
+    "更新 README、产品体验评审、完成度审计、摩擦审计、任务日志和本任务规格/计划"
+  ],
+  "out_of_scope": [
+    "QuickAddCases 与 EvalCaseDetailPanel 迁移",
+    "SkillSettingsPanel 与 SkillAccessPanel 迁移",
+    "History filters、Run matrix controls、Diff selectors 迁移",
+    "全站表单视觉重做",
+    "真实认证或个人资料字段 autocomplete 语义"
+  ],
+  "verification": [
+    "Red: cd apps/web && UV_CACHE_DIR=/Users/xx/Documents/code/skills-manager/.uv-cache npx playwright test e2e/accessibility-workbench.spec.ts --project=chromium -g \"core write forms expose explicit autocomplete\" -> failed as expected because Launchpad owner_ref lacked autocomplete",
+    "Green: cd apps/web && UV_CACHE_DIR=/Users/xx/Documents/code/skills-manager/.uv-cache npx playwright test e2e/accessibility-workbench.spec.ts --project=chromium -g \"core write forms expose explicit autocomplete\" -> 1 passed",
+    "Targeted regression rerun: cd apps/web && UV_CACHE_DIR=/Users/xx/Documents/code/skills-manager/.uv-cache npx playwright test e2e/accessibility-workbench.spec.ts e2e/skills-workbench.spec.ts --project=chromium -g \"core write forms|keyboard users can open primary inspector actions\" -> 2 passed",
+    "Visual baseline update: cd apps/web && UV_CACHE_DIR=/Users/xx/Documents/code/skills-manager/.uv-cache npx playwright test e2e/visual-workbench.spec.ts --project=chromium -g \"imported skill overview|variants workspace composers\" --update-snapshots -> 2 passed",
+    "cd apps/web && npm run test:unit -> 1 file / 3 tests passed",
+    "cd apps/web && npm run typecheck -> passed",
+    "cd apps/web && npm run build -> passed",
+    "cd apps/web && npm audit --omit=dev -> found 0 vulnerabilities",
+    "cd apps/api && uv run pytest -> 90 passed",
+    "cd apps/web && UV_CACHE_DIR=/Users/xx/Documents/code/skills-manager/.uv-cache npm run e2e -> 55 passed",
+    "git diff --check -> passed",
+    "jq empty .agent/tasks.json .agent/tasks/TASK-044.json -> passed"
+  ]
+}

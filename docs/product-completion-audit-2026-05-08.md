@@ -2,7 +2,7 @@
 
 日期：2026-05-14
 
-状态：尚未达到“成熟产品完成”。当前已经是一个强的正式垂直切片：主工作区 Skill Launchpad、移动端 first-run 单主路径、中等桌面证据视图 compact inspector rail、URL state 第一阶段、主工作区 Skill 设置、Skill 作用域访问控制、本地 session actor、基础 accessibility 护栏、Workbench mode tablist、Inspector action 焦点交接、Skill 治理与审计面板、Skill 审计 Explorer quick filters/readable timeline/structured detail、标准 Skill bundle 导入、导入后验证清单、variant/version、candidate verification handoff、eval set version、manual eval review queue、历史查看、run matrix 多维控制与表格语义、保存历史筛选视图、run-to-run comparison、accepted verification、bundle diff、candidate promotion review、上下文命令菜单 ARIA 和快速添加 case 都能闭环。但距离成熟产品还缺少真实认证、多用户协作、自动测评策略和更深的可访问性验证。
+状态：尚未达到“成熟产品完成”。当前已经是一个强的正式垂直切片：主工作区 Skill Launchpad、移动端 first-run 单主路径、中等桌面证据视图 compact inspector rail、URL state 第一阶段、高频写入表单字段基础件第一阶段、主工作区 Skill 设置、Skill 作用域访问控制、本地 session actor、基础 accessibility 护栏、Workbench mode tablist、Inspector action 焦点交接、Skill 治理与审计面板、Skill 审计 Explorer quick filters/readable timeline/structured detail、标准 Skill bundle 导入、导入后验证清单、variant/version、candidate verification handoff、eval set version、manual eval review queue、历史查看、run matrix 多维控制与表格语义、保存历史筛选视图、run-to-run comparison、accepted verification、bundle diff、candidate promotion review、上下文命令菜单 ARIA 和快速添加 case 都能闭环。但距离成熟产品还缺少真实认证、多用户协作、自动测评策略和更深的可访问性验证。
 
 ## 目标拆解
 
@@ -42,6 +42,7 @@
 | Skill 审计 Explorer | `GET /api/skills/{skill_id}/audit-events` 支持 actor/action/resource_type filters，并纳入当前 skill 关联的 variant/eval_run audit events；前端 `SkillAuditExplorer` 支持 action quick filters、可读时间线、结构化详情和默认折叠的 Raw payload。 | 完成 |
 | Local session 面板 | 右侧 inspector 显示当前本地 actor，可切换为 `release-manager` 等身份；E2E 覆盖切换后导入 skill，owner role 来自 session actor；视觉回归覆盖 session 面板。 | 完成 |
 | Accessibility 基础护栏 | `AppShell` 提供 skip link；全局 `:focus-visible` 使用高对比双层 ring；`prefers-reduced-motion` 压低非必要 transition；`linearNotice` 使用 `role=status`；E2E 覆盖四条回归。 | 完成 |
+| 高频表单字段基础件 | `WorkbenchField` 系列统一 Launchpad/Inspector 的 label、hint、`aria-describedby`、业务字段 `autocomplete="off"` 和局部 `:focus-visible`；E2E 覆盖 Launchpad 与 Inspector autocomplete、焦点交接和可见焦点。 | 完成第一阶段 |
 | Command menu ARIA | `CommandMenu` 使用 `role=dialog`、editable `combobox`、`listbox/option`、`aria-activedescendant`、关闭按钮和 Tab trap；E2E 覆盖方向键、弹层内焦点循环和关闭回焦点。 | 完成 |
 | Workbench mode tablist | 工作区模式切换使用 `role=tablist/tab/tabpanel`、`aria-selected`、roving `tabIndex` 和 Left/Right/Home/End 键盘导航；E2E 覆盖 tablist 语义和方向键切换。 | 完成 |
 | URL state 第一阶段 | `/skills` 服务端读取 `skill` 与 `mode` query；前端 History API 同步 selected skill/mode，并监听 `popstate` 支持 Back/Forward；E2E 覆盖直达、刷新、URL 更新和浏览器历史恢复。 | 完成 |
@@ -92,7 +93,7 @@ cd apps/web && npm run build
 cd apps/web && npm audit --omit=dev
 cd apps/web && npm run e2e
 git diff --check
-jq empty .agent/tasks.json .agent/tasks/TASK-042.json
+jq empty .agent/tasks.json .agent/tasks/TASK-044.json
 ```
 
 结果：
@@ -101,17 +102,17 @@ jq empty .agent/tasks.json .agent/tasks/TASK-042.json
 - Web typecheck：通过。
 - Web production build：通过。
 - Web audit：0 vulnerabilities。
-- Playwright E2E：54 passed。
+- Playwright E2E：55 passed。
 - API pytest：90 passed。
 - `git diff --check`：通过。
-- `.agent/tasks.json` 和 `.agent/tasks/TASK-042.json` JSON 结构检查：通过。
+- `.agent/tasks.json` 和 `.agent/tasks/TASK-044.json` JSON 结构检查：通过。
 
-本轮新增视觉资产：
+本轮相关视觉资产：
 
 - `apps/web/e2e/visual-workbench.spec.ts-snapshots/empty-skill-workbench-chromium-darwin.png`
-- `apps/web/e2e/visual-workbench.spec.ts-snapshots/imported-skill-overview-chromium-darwin.png`
+- `apps/web/e2e/visual-workbench.spec.ts-snapshots/imported-skill-overview-chromium-darwin.png`（TASK-044 更新，反映 Inspector 字段基础件）
 - `apps/web/e2e/visual-workbench.spec.ts-snapshots/manual-eval-review-chromium-darwin.png`
-- `apps/web/e2e/visual-workbench.spec.ts-snapshots/variants-workspace-composers-chromium-darwin.png`
+- `apps/web/e2e/visual-workbench.spec.ts-snapshots/variants-workspace-composers-chromium-darwin.png`（TASK-044 更新，反映 Inspector 字段基础件）
 - `apps/web/e2e/visual-workbench.spec.ts-snapshots/skill-access-panel-chromium-darwin.png`
 - `apps/web/e2e/visual-workbench.spec.ts-snapshots/local-session-panel-chromium-darwin.png`
 - `apps/web/e2e/visual-workbench.spec.ts-snapshots/skill-governance-panel-chromium-darwin.png`
@@ -132,7 +133,7 @@ jq empty .agent/tasks.json .agent/tasks/TASK-042.json
 ## 仍然阻塞“成熟产品完成”的风险
 
 1. **真实认证和多用户协作还没实现。** 当前已有 skill 作用域 owner/maintainer/evaluator/viewer、受保护动作门禁和签名本地 actor session，但它仍是开发期身份切换，不是真正的登录、token rotation 或组织级身份系统。
-2. **部分操作仍偏表单。** 移动端 first-run 已去掉重复入口，中等桌面证据视图已把 inspector 收成 verification rail；导入后清单、case 新增、case 详情内联编辑、主区创建 variant、主区追加候选版本、主区创建 skill、主区 skill 设置、访问控制、治理审计、记录 run 和 candidate 验证已更连续，但部分低频设置仍主要依赖 inspector 或尚未产品化。
+2. **部分操作仍偏表单。** 移动端 first-run 已去掉重复入口，中等桌面证据视图已把 inspector 收成 verification rail；Launchpad/Inspector 高频写入字段已有共享基础件；导入后清单、case 新增、case 详情内联编辑、主区创建 variant、主区追加候选版本、主区创建 skill、主区 skill 设置、访问控制、治理审计、记录 run 和 candidate 验证已更连续，但部分低频设置和筛选控件仍主要依赖局部表单或尚未产品化。
 3. **自动测评策略还没产品化。** 当前支持手工 pass/fail 和外部结果导入，但还没有内置 strategy registry、runner 调度和自动优化流水线。
 4. **深层 URL state 还没完成。** selected skill 和 mode 已经可以分享、刷新和 Back/Forward 恢复，但 diff pair、history filters、selected run/case、run comparison、eval target version 和 promotion context 还不能深链。
 5. **Run matrix 还不是完整多维表格。** 现在能保存筛选视图、看 case x run pass/fail、高亮对照/候选的修复和回退，并支持 impact 过滤/分组/分数显示控制，但还不能配置列、自定义指标、导出或保存对照/候选 run 指针。

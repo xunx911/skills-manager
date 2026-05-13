@@ -1,6 +1,6 @@
 import { expect, test, type Locator } from "@playwright/test";
 
-import { importSkillBundle } from "./helpers";
+import { clearSkillCatalog, importSkillBundle } from "./helpers";
 
 test("keyboard users can skip chrome and move focus to main content", async ({ page }) => {
   await page.goto("/skills");
@@ -105,6 +105,27 @@ test("command menu action moves focus into the inspector form", async ({ page })
   await page.keyboard.press("Enter");
 
   await expect(page.getByLabel("Inspector").locator('input[name="title"]')).toBeFocused();
+});
+
+test("core write forms expose explicit autocomplete and visible field focus", async ({ page, request }) => {
+  await clearSkillCatalog(request);
+  await page.goto("/skills");
+
+  const launchpadForm = page.locator(".skillLaunchpadForm");
+  await expect(launchpadForm.locator('input[name="owner_ref"]')).toHaveAttribute("autocomplete", "off");
+  await expect(launchpadForm.locator('input[name="tags"]')).toHaveAttribute("autocomplete", "off");
+  await expect(launchpadForm.locator('input[name="variant_label"]')).toHaveAttribute("autocomplete", "off");
+
+  await page.getByLabel("Skill 接入方式").getByRole("button", { name: "新建 skill" }).click();
+  await expect(launchpadForm.locator('input[name="slug"]')).toHaveAttribute("autocomplete", "off");
+  await expect(launchpadForm.locator('textarea[name="summary"]')).toHaveAttribute("autocomplete", "off");
+
+  await page.getByLabel("Skill catalog").getByRole("button", { name: "导入", exact: true }).click();
+  const inspectorOwner = page.getByLabel("Inspector").locator('input[name="owner_ref"]');
+  await expect(inspectorOwner).toBeFocused();
+  await expect(inspectorOwner).toHaveAttribute("autocomplete", "off");
+  await expect(page.getByLabel("Inspector").locator('input[name="tags"]')).toHaveAttribute("autocomplete", "off");
+  await expectVisibleFocusIndicator(inspectorOwner);
 });
 
 test("workbench modes use tablist keyboard navigation", async ({ page }) => {

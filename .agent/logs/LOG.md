@@ -10,6 +10,15 @@
 
 ## Session Log
 
+### 2026-05-14 02:01 CST - TASK-044 表单字段基础件第一阶段
+
+- 新增 `WorkbenchField` 系列：`TextField`、`TextAreaField`、`SelectField`、`FileField`，统一 label/hint/aria-describedby，并让业务 text/textarea 默认 `autocomplete="off"`。
+- 迁移 `SkillLaunchpad` 与 `WorkbenchInspector` 高频写入表单，保留原 FormData name 和提交逻辑；checkbox 与其他低频表单留到第二阶段。
+- 将 command menu、search box、inline case form、inspector form 的局部焦点样式收敛到 `:focus-visible`。
+- 新增 accessibility E2E，红灯先失败于 Launchpad `owner_ref` 缺少 autocomplete；绿色后覆盖 Launchpad 和 Inspector autocomplete，以及 inspector 焦点交接/可见焦点。
+- 更新 README、产品体验评审、完成度审计、摩擦审计和 TASK-044 规格/计划；下一轮队列前移到 Command menu 上下文化、Diff/Promotion reviewed progress、URL state 第二阶段、表单字段第二阶段。
+- 已验证：红灯测试先失败于 Launchpad `owner_ref` 缺少 autocomplete；绿色目标用例 1 passed；回归子集 2 passed；视觉基线更新子集 2 passed；`npm run test:unit` 1 file/3 tests passed；`npm run typecheck` passed；`npm run build` passed；`npm audit --omit=dev` found 0 vulnerabilities；`uv run pytest` 90 passed；`npm run e2e` 55 passed。
+
 ### 2026-05-14 01:48 CST - TASK-043 Audit Explorer 扫读重构
 
 - 新增 `docs/superpowers/specs/2026-05-14-audit-explorer-scan-design.md` 和执行计划，记录借鉴 Linear audit log、GitHub audit log、Stripe request logs 和 Vercel Web Interface Guidelines 后的适配方案。

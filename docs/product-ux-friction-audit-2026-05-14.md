@@ -2,7 +2,7 @@
 
 日期：2026-05-14
 
-状态：当前产品闭环已经强于普通 demo，但还不是成熟产品。主要缺口不在“能不能跑通”，而在信息架构密度、历史/发布证据的可扫读性，以及部分表单/焦点/深层 URL 状态的产品级细节。移动端 first-run、证据视图 inspector 折叠、URL state 第一阶段和 Audit Explorer 扫读重构已经按本审计后续任务完成。
+状态：当前产品闭环已经强于普通 demo，但还不是成熟产品。主要缺口不在“能不能跑通”，而在信息架构密度、历史/发布证据的可扫读性，以及部分表单/焦点/深层 URL 状态的产品级细节。移动端 first-run、证据视图 inspector 折叠、URL state 第一阶段、Audit Explorer 扫读重构和表单字段基础件第一阶段已经按本审计后续任务完成。
 
 ## 审计输入
 
@@ -104,24 +104,25 @@
 
 - 将来做组织级审计时，沿用这套信息架构，并补日期范围、分页、导出和保留策略。
 
-### P2 - 表单细节还没达到产品级
+### 已解决第一阶段 / 仍需后续 - 表单细节还没完全产品化
 
 证据：
 
-- 多个输入只有 placeholder 和 `name`，缺少 `autoComplete`：例如 `SkillLaunchpad` 的 owner/tags/slug 字段在 `apps/web/components/skills/skill-launchpad.tsx:55` 到 `109`，Inspector 的低频表单在 `apps/web/components/inspector/workbench-inspector.tsx:161` 到 `290`。
-- Vercel guideline 要求输入设置合适 `autocomplete`，非认证字段可显式 `autocomplete="off"`，placeholder 使用示例并以 `…` 表达未完成。
-- CSS 中仍有局部 `outline: none`：`apps/web/app/globals.css:387` 到 `403`、`5556` 到 `5562`。虽然已有替代 `box-shadow`，但使用的是 `:focus` 而不是 `:focus-visible`，和全局 focus 模式不一致。
+- TASK-044 已新增 `apps/web/components/forms/workbench-field.tsx`，提供 `TextField`、`TextAreaField`、`SelectField`、`FileField`，统一 label、hint 和 `aria-describedby`。
+- `SkillLaunchpad` 与 `WorkbenchInspector` 高频写入路径已迁移到共享字段基础件；业务 text/textarea 默认显式 `autocomplete="off"`。
+- `apps/web/e2e/accessibility-workbench.spec.ts` 新增回归，红灯先失败于 Launchpad `owner_ref` 缺少 autocomplete；绿色后覆盖 Launchpad 与 Inspector 的 autocomplete、焦点交接和可见焦点。
+- CSS 已把 command menu、search box、inline case form、inspector form 的局部输入焦点样式收敛到 `:focus-visible`。
+- 仍未迁移的批次包括 `QuickAddCases`、`EvalCaseDetailPanel`、`SkillSettingsPanel`、`SkillAccessPanel`、history filters、run matrix controls 和 diff selectors。
 
 影响：
 
-- 浏览器自动填充可能干扰 `owner_ref`、`tags`、`slug` 这类非个人信息字段。
-- 焦点样式有全局/局部两套规则，后续维护容易回归。
+- Launchpad 和 Inspector 这两条高频写入路径已经减少浏览器自动填充误填、焦点规则分叉和字段语义漂移。
+- 剩余低频表单还没有共享错误展示、autocomplete 策略和 hint 规则，后续如果继续各自手写，维护成本会重新升高。
 
 建议：
 
-- 建立 `TextField/TextAreaField/FileField` 小组件，统一 label、name、autoComplete、placeholder、error、focus-visible。
-- 对非认证业务字段默认 `autoComplete="off"`。
-- 把局部 `:focus` 改为 `:focus-visible`，和全局 focus ring 统一。
+- 第二阶段继续迁移 QuickAddCases、EvalCaseDetailPanel、SkillSettingsPanel、SkillAccessPanel、history filters、run matrix controls 和 diff selectors。
+- 字段基础件第二阶段再补错误态、验证文案和 submit disabled/loading 规范，不在第一阶段扩大视觉重做范围。
 
 ### P2 - Command menu 已可用，但还不够上下文化
 
@@ -175,10 +176,10 @@
 
 ## 下一轮任务排序
 
-1. **TASK-044：表单字段组件化和 autocomplete/focus-visible 统一。**
-2. **TASK-045：Command menu 当前 mode 上下文化排序。**
-3. **TASK-046：Diff / Promotion review file viewed progress。**
-4. **URL state 第二阶段。** 补齐 diff pair、history filters、selected case/run、run comparison、eval target version 和 promotion permalink。
+1. **TASK-045：Command menu 当前 mode 上下文化排序。**
+2. **TASK-046：Diff / Promotion review file viewed progress。**
+3. **URL state 第二阶段。** 补齐 diff pair、history filters、selected case/run、run comparison、eval target version 和 promotion permalink。
+4. **表单字段基础件第二阶段。** 迁移 QuickAddCases、EvalCaseDetailPanel、SkillSettingsPanel、SkillAccessPanel、history filters、run matrix controls 和 diff selectors。
 5. **组织级 Audit Explorer。** 跨 skill 查询、日期范围、分页、导出和保留策略。
 
 ## 不建议马上做的事

@@ -397,7 +397,7 @@ a:focus-visible {
   padding: 0 13px;
 }
 
-.commandMenuSearch input:focus {
+.commandMenuSearch input:focus-visible {
   border-color: #315c8f;
   background: #ffffff;
   box-shadow: 0 0 0 3px rgba(49, 92, 143, 0.12);
@@ -532,6 +532,26 @@ a:focus-visible {
 .commandMenuTrigger:focus-visible {
   outline: 3px solid rgba(49, 92, 143, 0.22);
   outline-offset: 2px;
+}
+
+.workbenchField {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+
+.workbenchField span {
+  color: #667085;
+  font-size: 11px;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.workbenchFieldHint {
+  color: #667085;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.35;
 }
 
 .quickCaseComposer {
@@ -942,7 +962,7 @@ h2 {
   box-shadow: 4px 4px 0 rgba(17, 17, 17, 0.16);
 }
 
-.searchBox:focus {
+.searchBox:focus-visible {
   border-color: var(--mint);
   box-shadow: 4px 4px 0 rgba(0, 168, 120, 0.35);
 }
@@ -5772,8 +5792,8 @@ body {
   resize: vertical;
 }
 
-.evalCaseInlineForm input:focus,
-.evalCaseInlineForm textarea:focus {
+.evalCaseInlineForm input:focus-visible,
+.evalCaseInlineForm textarea:focus-visible {
   border-color: #111827;
   background: #ffffff;
   box-shadow: 0 0 0 3px rgba(17, 24, 39, 0.08);
@@ -5866,10 +5886,10 @@ body {
   min-height: 116px;
 }
 
-.inspectorForm input:focus,
-.inspectorForm select:focus,
-.inspectorForm textarea:focus,
-.linearSearch input:focus {
+.inspectorForm input:focus-visible,
+.inspectorForm select:focus-visible,
+.inspectorForm textarea:focus-visible,
+.linearSearch input:focus-visible {
   border-color: #94a3b8;
   background: #ffffff;
 }

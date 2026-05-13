@@ -12,6 +12,7 @@
 - 工作台支持 `Cmd/Ctrl+K` 上下文命令菜单，用户可以搜索并执行导入、创建、测评、历史、差异等高频动作；可见的 `Cmd K` 按钮也能打开同一个入口。命令菜单现在按 `dialog + combobox + listbox` 建模，搜索框保留焦点，方向键移动 active option，Tab 在弹层内循环。
 - 中间工作区的 `概览 / 变体 / 测评 / 差异 / 历史` 已按 APG Tabs Pattern 建模：Tab 只进入当前 mode tab，左右方向键、Home、End 在同组模式中移动并激活对应 panel，减少键盘用户重复 Tab 的成本。
 - 从 catalog button 或命令菜单触发 `导入 bundle`、`新建 skill`、`添加 case` 等 Inspector action 后，焦点会进入对应表单的第一个可操作控件，键盘用户不用从旧触发点一路 Tab 到右侧面板。
+- `SkillLaunchpad` 和 `WorkbenchInspector` 高频写入表单已迁移到共享字段基础件：label、hint、`aria-describedby`、业务字段 `autocomplete="off"` 和局部 `:focus-visible` 行为保持一致。
 - 用户可以创建 skill、导入标准 Skill 文件夹或 zip、创建 variant、追加 bundle version、添加/编辑/归档 eval case，并记录手工通过/不通过测评。
 - `概览` 页现在提供 `身份与默认分发` 设置面板，用户可以直接修改 skill ID、归属，并选择默认分发 variant。
 - `概览` 页现在提供 `访问控制` 面板，用户可以查看 skill 作用域角色，并添加或移除 owner/maintainer/evaluator/viewer。
@@ -67,6 +68,7 @@
 - **WAI-ARIA APG Combobox / Dialog:** APG 对 editable combobox 的建议是把 DOM focus 留在输入框，并用 `aria-activedescendant` 报告当前 option；modal dialog 要求 Tab 不离开弹层、Escape 可关闭、关闭后焦点回到触发点。SkillHub 适配为命令菜单搜索框控制 listbox，option 不进入 Tab 序列，关闭按钮提供明确出口。
 - **WAI-ARIA APG Tabs Pattern:** APG 建议 tablist 只把当前 tab 放进 Tab 顺序，方向键在 tablist 内移动，tabpanel 用 `aria-labelledby` 关联 active tab。SkillHub 适配为工作区 mode switcher，保留原生 button 和既有 click 行为，同时补齐 `role=tablist/tab/tabpanel`。
 - **WCAG Focus Order:** WCAG 2.4.3 要求顺序导航保留意义和可操作性。SkillHub 适配为 Inspector action 的焦点交接：用户请求某个右侧表单时，焦点进入该表单，而不是停在左侧或命令菜单的旧位置。
+- **Vercel / MDN / WCAG / VA.gov form guidance:** 表单字段需要稳定 label、说明、合适的 `autocomplete` 和键盘可见焦点。SkillHub 适配为轻量 `WorkbenchField` 系列，先覆盖 Launchpad 与 Inspector 的高频写入路径；业务字段不是姓名、邮箱或地址时默认关闭浏览器自动填充，防止 `owner_ref`、`tags`、`slug` 被个人资料误填。
 - **GitHub Command Palette:** 命令菜单兼具导航、搜索和运行命令能力；SkillHub 借鉴其 scope 思路，把菜单限定在当前 skill 工作区，避免全局搜索过早膨胀。
 - **TestRail quick outline:** 测试用例管理工具会区分完整表单和快速 outline。SkillHub 借鉴“快速进入测试集”的速度，但不允许只填标题，仍要求 `input + expected output`，保证测评资产质量。
 - **TestRail Pass & Next / bulk result:** TestRail 在三栏执行视图里提供快速通过并进入下一条，也支持批量提交相同结果。SkillHub 适配为“通过/不通过后自动前进”和“仅把未确认项标为通过”，避免覆盖已发现的失败。
@@ -134,11 +136,12 @@
 31. 以前 1280px 桌面下 promotion/history/audit 仍被 300px 以上 inspector 挤压；现在证据模式在中等桌面宽度使用 compact verification rail，把主证据区放宽。
 32. 以前用户无法把“某个 skill 的历史页”直接发给别人，也不能刷新后回到同一 mode；现在 `/skills?skill=<slug>&mode=history` 可以直达并恢复 selected skill + mode，用户切换 tab 或 skill 时地址栏同步更新。
 33. 以前 Audit Explorer 默认让 Raw JSON 占据详情区，列表行容易截断；现在先给 action quick filters、可读事件标题、actor/resource/time 和结构化 payload 摘要，Raw JSON 默认折叠。
+34. 以前 Launchpad 和 Inspector 高频写入字段各自手写 label/input，业务字段缺少显式 `autocomplete`；现在第一阶段统一到共享字段基础件，并用 E2E 覆盖 Launchpad 与 Inspector 的 autocomplete 和可见焦点。
 
 ## 仍然存在的摩擦
 
 1. URL state 只完成第一阶段：selected skill 和 mode 可以分享与刷新恢复；diff pair、history filters、selected run/case、run comparison、eval target version 和 promotion 上下文还不能深链。
-2. 表单细节还未完全产品化：部分业务字段缺少显式 `autoComplete`，局部 focus 样式仍和全局 `:focus-visible` 策略不统一。
+2. 表单细节还未完全产品化：第一阶段已覆盖 `SkillLaunchpad` 和 `WorkbenchInspector` 高频写入表单；`QuickAddCases`、`EvalCaseDetailPanel`、`SkillSettingsPanel`、`SkillAccessPanel`、history filters、run matrix controls 和 diff selectors 还没有迁移到同一字段基础件。
 3. Command menu 已有分组、快捷键和单元测试，但排序还没有根据当前 mode/焦点上下文化。
 4. Promotion review 已经展示 case impact 和 diff，但还没有文件 reviewed progress，也没有把具体 diff hunk 关联到具体 eval case。
 5. Run matrix 已经提供 read-only 多 run x case 浏览、保存筛选视图、对照/候选 impact、impact 过滤和分组，但还没有列配置、自定义指标列、导出或保存对照/候选 run 指针。
@@ -148,7 +151,7 @@
 ## 下一轮优化队列
 
 1. URL state 第二阶段：补齐 diff pair、history filters、selected run/case、run comparison、eval target version 和 promotion context 深链。
-2. 表单字段组件化：统一 label、`autoComplete`、placeholder、错误展示和 `:focus-visible`。
+2. 表单字段基础件第二阶段：迁移 QuickAddCases、EvalCaseDetailPanel、SkillSettingsPanel、SkillAccessPanel、history filters、run matrix controls 和 diff selectors，并补错误展示规范。
 3. Command menu 当前 mode 上下文化排序：测评页优先 case/run 命令，变体页优先 variant/version/diff 命令。
 4. Diff / Promotion review 文件 reviewed progress：按文件标记已查看，显示 x/y reviewed。
 5. 做 run matrix 多维表格：支持列配置、自定义指标列、导出，并考虑是否保存对照/候选 run 指针。

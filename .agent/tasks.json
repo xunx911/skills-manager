@@ -299,5 +299,12 @@
     "priority": 43,
     "passes": true,
     "spec": ".agent/tasks/TASK-043.json"
+  },
+  {
+    "id": "044",
+    "title": "表单字段基础件第一阶段",
+    "priority": 44,
+    "passes": true,
+    "spec": ".agent/tasks/TASK-044.json"
   }
 ]

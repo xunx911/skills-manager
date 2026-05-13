@@ -3,6 +3,8 @@
 import type { FormEvent } from "react";
 import { useState } from "react";
 
+import { FileField, TextAreaField, TextField } from "@/components/forms/workbench-field";
+
 type ImportPreview = {
   tone: "good" | "bad" | "neutral";
   title: string;
@@ -52,26 +54,11 @@ export function SkillLaunchpad({
 
       {mode === "import" ? (
         <form className="skillLaunchpadForm" onChange={onRefreshImportPreview} onSubmit={onImportSkill}>
-          <label>
-            <span>归属</span>
-            <input name="owner_ref" placeholder="skillhub-lab" required />
-          </label>
-          <label>
-            <span>约束标签</span>
-            <input name="tags" placeholder="codex, gpt5.4" required />
-          </label>
-          <label>
-            <span>变体名称</span>
-            <input defaultValue="Imported" name="variant_label" placeholder="Imported" />
-          </label>
-          <label className="skillLaunchpadDrop">
-            <span>Skill 文件夹</span>
-            <input {...launchpadFolderInputProps} />
-          </label>
-          <label className="skillLaunchpadDrop">
-            <span>或 zip</span>
-            <input accept=".zip,application/zip" name="zip_file" type="file" />
-          </label>
+          <TextField label="归属" name="owner_ref" placeholder="skillhub-lab" required />
+          <TextField label="约束标签" name="tags" placeholder="codex, gpt5.4" required />
+          <TextField defaultValue="Imported" label="变体名称" name="variant_label" placeholder="Imported" />
+          <FileField className="skillLaunchpadDrop" label="Skill 文件夹" {...launchpadFolderInputProps} />
+          <FileField accept=".zip,application/zip" className="skillLaunchpadDrop" label="或 zip" name="zip_file" type="file" />
           {importPreview ? (
             <div className={`importPreview importPreview-${importPreview.tone}`}>
               <strong>{importPreview.title}</strong>
@@ -84,30 +71,12 @@ export function SkillLaunchpad({
         </form>
       ) : (
         <form className="skillLaunchpadForm" onSubmit={onCreateSkill}>
-          <label>
-            <span>Skill ID</span>
-            <input name="slug" placeholder="security-reviewer" required />
-          </label>
-          <label>
-            <span>归属</span>
-            <input name="owner_ref" placeholder="skillhub-lab" required />
-          </label>
-          <label>
-            <span>初始变体</span>
-            <input name="variant_label" placeholder="Baseline" required />
-          </label>
-          <label>
-            <span>约束标签</span>
-            <input name="tags" placeholder="codex, gpt5.4" required />
-          </label>
-          <label className="skillLaunchpadFull">
-            <span>简介</span>
-            <textarea name="summary" placeholder="这个 skill 解决什么问题" required />
-          </label>
-          <label className="skillLaunchpadFull">
-            <span>初始版本说明</span>
-            <textarea name="change_summary" placeholder="初始版本说明" required />
-          </label>
+          <TextField label="Skill ID" name="slug" placeholder="security-reviewer" required />
+          <TextField label="归属" name="owner_ref" placeholder="skillhub-lab" required />
+          <TextField label="初始变体" name="variant_label" placeholder="Baseline" required />
+          <TextField label="约束标签" name="tags" placeholder="codex, gpt5.4" required />
+          <TextAreaField className="skillLaunchpadFull" label="简介" name="summary" placeholder="这个 skill 解决什么问题" required />
+          <TextAreaField className="skillLaunchpadFull" label="初始版本说明" name="change_summary" placeholder="初始版本说明" required />
           <button disabled={busy} type="submit">
             创建 skill
           </button>
