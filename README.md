@@ -12,6 +12,7 @@
 - `AcceptedVerification` 是当前 variant 在某个 eval set snapshot 上认可的测评依据，只指向不可变 `EvalRun`。
 - 候选 `VariantVersion` 可以先测评，但不立刻成为 current。
 - “设为当前版本评审”会把候选版本、当前版本、目标评测集版本、逐 case 修复/回退、文件 diff 和风险说明放到同一个决策页面。
+- `差异` 和 `设为当前版本评审` 的文件 diff 支持会话级 `已查看` 标记与 `x/y reviewed` 进度，用户可以按文件推进审查，而不是靠记忆判断哪些 bundle 文件已经看完。
 - 外部 runner 可以导入标准 eval result JSON，并得到同样的 `EvalRun + CaseResult` 记录。
 - 空工作台主内容区提供 `SkillLaunchpad`，可直接导入标准 Skill bundle 或创建空白 skill，不需要先进入右侧 inspector。
 - 移动端 first-run 默认只保留主区 `SkillLaunchpad` 作为导入/创建主路径；右侧 inspector 的 action menu/form 会折叠，用户从 catalog 或命令菜单显式触发后才展开并接收焦点。
@@ -104,7 +105,7 @@ description: Review pull requests for auth and data access regressions.
 2. 在 `变体` 页的 `追加候选版本` 中上传第二个标准 Skill bundle，或使用右侧 `追加版本` 表单，取消 `设为 current`，让它成为候选版本。
 3. 页面会自动切到 `测评` 并选中新 candidate；记录候选版本的通过/不通过结果。
 4. 用测评页的 candidate banner 点击 `进入设为当前版本评审`，或在 `差异` 页选择 current -> candidate 后进入评审。
-5. 在评审页查看 readiness、逐 case 修复/回退、bundle diff；如果有风险，需要填写说明后才能 `接受风险并设为当前版本`。
+5. 在评审页查看 readiness、逐 case 修复/回退、bundle diff；逐个文件勾选 `已查看此文件` 后，header 会显示 `x/y reviewed`。如果有风险，需要填写说明后才能 `接受风险并设为当前版本`。
 6. 提交后，variant 历史列表会刷新，候选版本显示为 `Current`。
 
 记录多次手工测评后，打开 `历史` 可按 exact variant version、eval set version、strategy、status 过滤 run，并把当前筛选保存成命名视图，之后一键恢复同一组筛选。页面顶部的 `Run matrix` 会把当前筛选下的 runs 展成 case x run 矩阵，单元格显示 `通过`、`不通过` 或 `-` 未覆盖，并用原生 `table`、caption、列/行标题和完整单元格标签暴露给辅助技术。每条 run 都可以标为 `对照` 或 `候选`；选择两条 run 后，矩阵会在每个 case 行显示 `修复`、`回退`、`稳定通过`、`仍未通过` 或 `缺失`。矩阵还支持按 impact 过滤、按 impact 分组、隐藏 run header 分数；这些矩阵控制项会和历史筛选一起保存到命名视图里。当两条 run 绑定同一个 `EvalSetVersion` 时，右侧会显示通过率变化、逐 case `修复/回退/稳定通过/仍未通过`，并可把候选 run `接受为验证依据`。在 `测评` 中，每个 case 行都有 `历史`，可以查看旧 case version 的 input、expected output、notes，以及它进入过哪些 eval set snapshot；如果要回到旧 input/expected output，点击旧版本上的 `恢复此版本`，系统会创建一个新的当前 case version 和新的 `EvalSetVersion`，不会覆盖历史。

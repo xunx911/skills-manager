@@ -487,6 +487,11 @@ test("operator can compare standard bundle versions", async ({ page }) => {
   await expect(page.locator(".diffFileRow").filter({ hasText: "references/checklist.md" })).toBeVisible();
   await expect(page.locator(".diffFileRow").filter({ hasText: "new-checklist.md" })).toBeVisible();
   await expect(page.getByText("Prioritize missing tenant filters.")).toBeVisible();
+  await expect(page.locator(".diffSummary")).toContainText("Reviewed");
+  await expect(page.locator(".diffSummary")).toContainText("0/3");
+  await page.getByLabel("已查看此 diff 文件").check();
+  await expect(page.locator(".diffSummary")).toContainText("1/3");
+  await expect(page.locator(".diffFileRow").filter({ hasText: "SKILL.md" })).toContainText("已查看");
 });
 
 test("operator can append a candidate version from the variants workspace", async ({ page }) => {
@@ -601,6 +606,9 @@ test("operator can review a candidate version before promoting it", async ({ pag
   await expect(page.locator(".promotionReadiness").getByText("可设为当前版本")).toBeVisible();
   await expect(page.locator(".promotionCaseList").getByText("修复", { exact: true })).toBeVisible();
   await expect(page.locator(".promotionDiffPanel").getByText("SKILL.md")).toBeVisible();
+  await expect(page.locator(".promotionDiffPanel")).toContainText("0/3 reviewed");
+  await page.getByLabel("已查看此 promotion diff 文件").check();
+  await expect(page.locator(".promotionDiffPanel")).toContainText("1/3 reviewed");
 
   await page.getByRole("button", { name: "设为当前版本", exact: true }).click();
   await expect(page.getByText("已设为当前版本。")).toBeVisible();

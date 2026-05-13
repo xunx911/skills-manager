@@ -2,7 +2,7 @@
 
 日期：2026-05-14
 
-状态：当前产品闭环已经强于普通 demo，但还不是成熟产品。主要缺口不在“能不能跑通”，而在信息架构密度、历史/发布证据的可扫读性，以及部分表单/焦点/深层 URL 状态的产品级细节。移动端 first-run、证据视图 inspector 折叠、URL state 第一阶段、Audit Explorer 扫读重构、表单字段基础件第一阶段和 Command menu mode-aware 排序已经按本审计后续任务完成。
+状态：当前产品闭环已经强于普通 demo，但还不是成熟产品。主要缺口不在“能不能跑通”，而在信息架构密度、历史/发布证据的可扫读性，以及部分表单/焦点/深层 URL 状态的产品级细节。移动端 first-run、证据视图 inspector 折叠、URL state 第一阶段、Audit Explorer 扫读重构、表单字段基础件第一阶段、Command menu mode-aware 排序和 Diff / Promotion 文件 reviewed progress 第一阶段已经按本审计后续任务完成。
 
 ## 审计输入
 
@@ -142,22 +142,23 @@
 - 第二阶段引入 recently-used ranking，但必须保持 deterministic fallback，避免自动学习排序让 E2E 和用户肌肉记忆漂移。
 - 后续 selection-aware 命令可以基于 selected case/run/variant 追加，例如“恢复此 case 旧版本”“接受当前候选 run”。
 
-### P2 - Diff / Promotion review 缺少 review progress
+### 已解决第一阶段 / 仍需后续 - Diff / Promotion review 缺少 review progress
 
 证据：
 
 - GitHub PR review 建议按文件审查、mark viewed、用进度条追踪文件 reviewed。
-- SkillHub diff 现在有文件 rail 和 line diff，但没有 `viewed` 标记和文件审查进度。
+- TASK-046 已在 SkillHub diff mode 和 promotion review 的 bundle diff 中加入会话级 `viewed` 标记和 `Reviewed x/y` / `x/y reviewed` 进度。
+- E2E 覆盖 diff 页初始 `Reviewed 0/3`、勾选当前文件后 `Reviewed 1/3`，以及 promotion review 初始 `0/3 reviewed`、勾选后 `1/3 reviewed`。
 
 影响：
 
-- 当 skill bundle 文件变多时，用户不知道哪些文件已经看过。
-- promotion review 的“已看 diff”目前是主观判断，不是系统状态。
+- 用户已经可以在一个 diff pair 内按文件推进审查，减少大 bundle diff 的记忆负担。
+- 当前状态仍只存在于浏览器会话；刷新、跨设备或多人协作不会保留 viewed progress。
 
 建议：
 
-- 在 diff/promotion diff 增加 `mark viewed`、`x/y files viewed`。
-- promotion readiness 可以把 “diff reviewed” 作为人工检查项，而不是只看 eval run。
+- 第二阶段再评估是否服务端持久化 viewed state、自动 collapse 已查看文件，或把 “diff reviewed” 作为人工检查项。
+- 如果要做 promotion readiness gate，必须先明确它是协作状态、个人状态，还是一次 promotion decision 的本地 checklist。
 
 ### P3 - 视觉风格稳定，但还缺少成熟产品的密度层级
 
@@ -177,11 +178,11 @@
 
 ## 下一轮任务排序
 
-1. **TASK-046：Diff / Promotion review file viewed progress。**
-2. **URL state 第二阶段。** 补齐 diff pair、history filters、selected case/run、run comparison、eval target version 和 promotion permalink。
-3. **表单字段基础件第二阶段。** 迁移 QuickAddCases、EvalCaseDetailPanel、SkillSettingsPanel、SkillAccessPanel、history filters、run matrix controls 和 diff selectors。
-4. **Command menu 第二阶段。** 增加最近使用/selection-aware 排序和命令 preview。
-5. **组织级 Audit Explorer。** 跨 skill 查询、日期范围、分页、导出和保留策略。
+1. **URL state 第二阶段。** 补齐 diff pair、history filters、selected case/run、run comparison、eval target version 和 promotion permalink。
+2. **表单字段基础件第二阶段。** 迁移 QuickAddCases、EvalCaseDetailPanel、SkillSettingsPanel、SkillAccessPanel、history filters、run matrix controls 和 diff selectors。
+3. **Command menu 第二阶段。** 增加最近使用/selection-aware 排序和命令 preview。
+4. **组织级 Audit Explorer。** 跨 skill 查询、日期范围、分页、导出和保留策略。
+5. **Diff / Promotion reviewed progress 第二阶段。** 决定是否服务端持久化、自动折叠已查看文件或纳入 promotion checklist。
 
 ## 不建议马上做的事
 

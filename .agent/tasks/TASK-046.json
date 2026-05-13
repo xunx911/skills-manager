@@ -1,0 +1,34 @@
+{
+  "id": "046",
+  "title": "Diff / Promotion review 文件 viewed progress",
+  "status": "completed",
+  "goal": "让 bundle diff 和 promotion review 都能按文件标记已查看，并显示当前 diff pair 的 reviewed progress，减少大 bundle 评审时的记忆负担。",
+  "scope": [
+    "新增共享 useFileReviewProgress hook，按 diff pair key 维护会话级 viewed file set",
+    "Diff mode summary 增加 Reviewed x/y 指标",
+    "Diff mode 文件 rail 和详情 header 增加已查看状态与 checkbox",
+    "Promotion review 的 bundle diff header 增加 x/y reviewed",
+    "Promotion review 文件 rail 和代码面板增加已查看状态与 checkbox",
+    "新增 Playwright E2E 覆盖 diff 与 promotion review 的 viewed progress",
+    "更新 README、产品体验评审、完成度审计、摩擦审计、任务日志和本任务规格/计划"
+  ],
+  "out_of_scope": [
+    "服务端持久化 viewed progress",
+    "已查看文件自动折叠",
+    "promotion 必须全部 reviewed 才能提交",
+    "reviewed progress 和 eval case / diff hunk 的关联",
+    "多人协作 reviewed 状态"
+  ],
+  "verification": [
+    "Red: cd apps/web && UV_CACHE_DIR=/Users/xx/Documents/code/skills-manager/.uv-cache npx playwright test e2e/skills-workbench.spec.ts --project=chromium -g \"compare standard bundle versions|review a candidate version before promoting\" -> failed as expected because reviewed progress UI did not exist",
+    "Green: cd apps/web && UV_CACHE_DIR=/Users/xx/Documents/code/skills-manager/.uv-cache npx playwright test e2e/skills-workbench.spec.ts --project=chromium -g \"compare standard bundle versions|review a candidate version before promoting\" -> 2 passed",
+    "cd apps/web && npm run test:unit -> 1 file / 6 tests passed",
+    "cd apps/web && npm run typecheck -> passed",
+    "cd apps/web && npm run build -> passed",
+    "cd apps/web && npm audit --omit=dev -> found 0 vulnerabilities",
+    "cd apps/api && uv run pytest -> 90 passed",
+    "cd apps/web && UV_CACHE_DIR=/Users/xx/Documents/code/skills-manager/.uv-cache npm run e2e -> 56 passed",
+    "git diff --check -> passed",
+    "jq empty .agent/tasks.json .agent/tasks/TASK-046.json -> passed"
+  ]
+}

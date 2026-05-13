@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 
+import { bundleDiffReviewKey, useFileReviewProgress } from "@/components/diff/use-file-review-progress";
 import type { BundleDiff, BundleDiffFile, BundleDiffStatus } from "@/lib/types";
 
 type DiffFilter = "all" | BundleDiffStatus | "binary";
@@ -9,7 +10,9 @@ type DiffFilter = "all" | BundleDiffStatus | "binary";
 export function PromotionDiffViewer({ diff }: { diff: BundleDiff | null }) {
   const [filter, setFilter] = useState<DiffFilter>("all");
   const [selectedPath, setSelectedPath] = useState<string | null>(null);
-  const filteredFiles = useMemo(() => filterFiles(diff?.files ?? [], filter), [diff?.files, filter]);
+  const allFiles = diff?.files ?? [];
+  const reviewProgress = useFileReviewProgress(allFiles, bundleDiffReviewKey(diff));
+  const filteredFiles = useMemo(() => filterFiles(allFiles, filter), [allFiles, filter]);
   const selectedFile = filteredFiles.find((file) => file.path === selectedPath) ?? filteredFiles[0] ?? null;
 
   if (!diff) {
@@ -34,6 +37,7 @@ export function PromotionDiffViewer({ diff }: { diff: BundleDiff | null }) {
           <strong>v{diff.left.version_number} {"->"} v{diff.right.version_number}</strong>
         </div>
         <div className="promotionDiffStats">
+          <span className="promotionReviewedStat">{reviewProgress.viewedCount}/{reviewProgress.totalCount} reviewed</span>
           <span>+{diff.summary.added}</span>
           <span>~{diff.summary.changed}</span>
           <span>-{diff.summary.removed}</span>
@@ -69,13 +73,28 @@ export function PromotionDiffViewer({ diff }: { diff: BundleDiff | null }) {
               type="button"
             >
               <span>{file.path}</span>
-              <small>{file.binary ? "binary" : file.status}</small>
+              <small>{file.binary ? "binary" : file.status} · {reviewProgress.isViewed(file.path) ? "已查看" : "未看"}</small>
             </button>
           ))}
           {filteredFiles.length === 0 ? <div className="promotionDiffEmpty">这个筛选下没有文件变化。</div> : null}
         </aside>
         <div className="promotionDiffCodePanel">
-          {selectedFile ? <DiffFile file={selectedFile} /> : <div className="promotionDiffEmpty">选择文件查看行级变化。</div>}
+          {selectedFile ? (
+            <>
+              <label className="promotionViewedControl">
+                <input
+                  aria-label="已查看此 promotion diff 文件"
+                  checked={reviewProgress.isViewed(selectedFile.path)}
+                  onChange={(event) => reviewProgress.markViewed(selectedFile.path, event.currentTarget.checked)}
+                  type="checkbox"
+                />
+                <span>已查看此文件</span>
+              </label>
+              <DiffFile file={selectedFile} />
+            </>
+          ) : (
+            <div className="promotionDiffEmpty">选择文件查看行级变化。</div>
+          )}
         </div>
       </div>
     </section>

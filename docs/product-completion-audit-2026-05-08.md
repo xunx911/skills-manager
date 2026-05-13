@@ -2,7 +2,7 @@
 
 日期：2026-05-14
 
-状态：尚未达到“成熟产品完成”。当前已经是一个强的正式垂直切片：主工作区 Skill Launchpad、移动端 first-run 单主路径、中等桌面证据视图 compact inspector rail、URL state 第一阶段、高频写入表单字段基础件第一阶段、Command menu mode-aware 排序、主工作区 Skill 设置、Skill 作用域访问控制、本地 session actor、基础 accessibility 护栏、Workbench mode tablist、Inspector action 焦点交接、Skill 治理与审计面板、Skill 审计 Explorer quick filters/readable timeline/structured detail、标准 Skill bundle 导入、导入后验证清单、variant/version、candidate verification handoff、eval set version、manual eval review queue、历史查看、run matrix 多维控制与表格语义、保存历史筛选视图、run-to-run comparison、accepted verification、bundle diff、candidate promotion review、上下文命令菜单 ARIA 和快速添加 case 都能闭环。但距离成熟产品还缺少真实认证、多用户协作、自动测评策略和更深的可访问性验证。
+状态：尚未达到“成熟产品完成”。当前已经是一个强的正式垂直切片：主工作区 Skill Launchpad、移动端 first-run 单主路径、中等桌面证据视图 compact inspector rail、URL state 第一阶段、高频写入表单字段基础件第一阶段、Command menu mode-aware 排序、Diff / Promotion 文件 reviewed progress 第一阶段、主工作区 Skill 设置、Skill 作用域访问控制、本地 session actor、基础 accessibility 护栏、Workbench mode tablist、Inspector action 焦点交接、Skill 治理与审计面板、Skill 审计 Explorer quick filters/readable timeline/structured detail、标准 Skill bundle 导入、导入后验证清单、variant/version、candidate verification handoff、eval set version、manual eval review queue、历史查看、run matrix 多维控制与表格语义、保存历史筛选视图、run-to-run comparison、accepted verification、bundle diff、candidate promotion review、上下文命令菜单 ARIA 和快速添加 case 都能闭环。但距离成熟产品还缺少真实认证、多用户协作、自动测评策略和更深的可访问性验证。
 
 ## 目标拆解
 
@@ -63,6 +63,7 @@
 | Active hub 隐藏 archived skill | Repository `list_skills` 过滤 active；API 测试覆盖 archived skill 不再出现在列表。 | 完成 |
 | Skill bundle 文件可见 | Overview 显示文件列表和 `SKILL.md`；visual snapshot 覆盖导入后视图。 | 完成 |
 | Bundle diff | `GET /api/artifacts/diff`；前端 diff mode 有文件 rail、筛选和行级 diff；E2E 覆盖版本比较。 | 完成 |
+| Diff / Promotion 文件 reviewed progress | `useFileReviewProgress` 在 diff pair 内维护会话级 viewed file set；Diff mode 显示 `Reviewed x/y`，Promotion review 显示 `x/y reviewed`；E2E 覆盖勾选当前文件后的进度和文件行状态。 | 完成第一阶段 |
 | Promotion review read model | `GET /api/variants/{variant_id}/promotion-review`；API contract 已记录；前端新增 `PromotionReviewPane`。 | 完成 |
 | Promotion command | `POST /api/variants/promotions` 要求 evidence run 和 skill `owner/maintainer` 权限，写入 `promotion_decisions` 和 `audit_events`；API/Repository 测试覆盖。 | 完成 |
 | 无风险 promotion | E2E `operator can review a candidate version before promoting it` 覆盖修复 case 后直接设为 current。 | 完成 |
@@ -93,7 +94,7 @@ cd apps/web && npm run build
 cd apps/web && npm audit --omit=dev
 cd apps/web && npm run e2e
 git diff --check
-jq empty .agent/tasks.json .agent/tasks/TASK-045.json
+jq empty .agent/tasks.json .agent/tasks/TASK-046.json
 ```
 
 结果：
@@ -105,7 +106,7 @@ jq empty .agent/tasks.json .agent/tasks/TASK-045.json
 - Playwright E2E：56 passed。
 - API pytest：90 passed。
 - `git diff --check`：通过。
-- `.agent/tasks.json` 和 `.agent/tasks/TASK-045.json` JSON 结构检查：通过。
+- `.agent/tasks.json` 和 `.agent/tasks/TASK-046.json` JSON 结构检查：通过。
 
 本轮相关视觉资产：
 
@@ -117,7 +118,7 @@ jq empty .agent/tasks.json .agent/tasks/TASK-045.json
 - `apps/web/e2e/visual-workbench.spec.ts-snapshots/local-session-panel-chromium-darwin.png`
 - `apps/web/e2e/visual-workbench.spec.ts-snapshots/skill-governance-panel-chromium-darwin.png`
 - `apps/web/e2e/visual-workbench.spec.ts-snapshots/skill-audit-explorer-chromium-darwin.png`
-- `apps/web/e2e/visual-workbench.spec.ts-snapshots/promotion-review-ready-chromium-darwin.png`
+- `apps/web/e2e/visual-workbench.spec.ts-snapshots/promotion-review-ready-chromium-darwin.png`（TASK-046 更新，反映 Diff reviewed progress）
 - `apps/web/e2e/visual-workbench.spec.ts-snapshots/run-comparison-ready-chromium-darwin.png`
 - `apps/web/e2e/visual-workbench.spec.ts-snapshots/mobile-empty-workbench-chromium-darwin.png`
 - `.agent/screenshots/promotion-review-ready-2026-05-10.png`

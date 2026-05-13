@@ -1,6 +1,7 @@
 "use client";
 
 import { Metric } from "@/components/workbench-metric";
+import { bundleDiffReviewKey, useFileReviewProgress } from "@/components/diff/use-file-review-progress";
 import { formatBytes } from "@/lib/format";
 import type { BundleDiff, BundleDiffFile, BundleDiffStatus, VariantDetail, VariantVersion } from "@/lib/types";
 
@@ -36,7 +37,9 @@ export function WorkbenchDiffPane({
   const versions = sortedVersions(variant?.versions ?? []);
   const rightVersion = versions.find((version) => version.id === rightVersionId) ?? null;
   const canReviewRight = Boolean(variant && rightVersion && rightVersion.id !== variant.current_version?.id);
-  const filteredFiles = filterDiffFiles(diff?.files ?? [], filter);
+  const allFiles = diff?.files ?? [];
+  const reviewProgress = useFileReviewProgress(allFiles, bundleDiffReviewKey(diff));
+  const filteredFiles = filterDiffFiles(allFiles, filter);
   const selectedFile = filteredFiles.find((file) => file.path === selectedPath) ?? filteredFiles[0] ?? null;
 
   if (!variant || versions.length < 2) {
@@ -105,6 +108,7 @@ export function WorkbenchDiffPane({
           <Metric label="Added" tone="good" value={String(diff?.summary.added ?? 0)} />
           <Metric label="Removed" tone="bad" value={String(diff?.summary.removed ?? 0)} />
           <Metric label="Binary" value={String(diff?.summary.binary ?? 0)} />
+          <Metric label="Reviewed" value={`${reviewProgress.viewedCount}/${reviewProgress.totalCount}`} />
         </div>
 
         <div className="diffFilterBar" aria-label="Diff filters">
@@ -138,7 +142,7 @@ export function WorkbenchDiffPane({
                 type="button"
               >
                 <span>{file.path}</span>
-                <small>{file.binary ? "binary" : file.status}</small>
+                <small>{file.binary ? "binary" : file.status} · {reviewProgress.isViewed(file.path) ? "已查看" : "未看"}</small>
               </button>
             ))}
           </aside>
@@ -151,7 +155,18 @@ export function WorkbenchDiffPane({
                     <span>{selectedFile.status}</span>
                     <strong>{selectedFile.path}</strong>
                   </div>
-                  <small>{diffFileSizeLabel(selectedFile)}</small>
+                  <div className="diffDetailMeta">
+                    <small>{diffFileSizeLabel(selectedFile)}</small>
+                    <label className="diffViewedControl">
+                      <input
+                        aria-label="已查看此 diff 文件"
+                        checked={reviewProgress.isViewed(selectedFile.path)}
+                        onChange={(event) => reviewProgress.markViewed(selectedFile.path, event.currentTarget.checked)}
+                        type="checkbox"
+                      />
+                      <span>已查看此文件</span>
+                    </label>
+                  </div>
                 </div>
                 {selectedFile.binary ? (
                   <div className="diffBinaryNotice">二进制文件不展示文本 diff；仍保留 digest 和大小用于审查。</div>

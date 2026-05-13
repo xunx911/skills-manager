@@ -35,6 +35,7 @@
 - 空数据库会展示真实 first-run 状态，用户可以直接导入 bundle 或新建 skill。
 - Archived skill 会保留历史审计能力，但不会出现在 active SkillHub 列表。
 - 标准 bundle version 可以在专门的 diff mode 里比较文件状态、筛选 changed/added/removed/binary，并查看行级 diff。
+- Diff mode 和 Promotion review 的 bundle diff 都支持会话级文件 `已查看` 标记，并显示 `Reviewed x/y` 或 `x/y reviewed`，用户能按文件推进审查。
 - History mode 支持按 exact variant version、eval set version、strategy、status 过滤 eval run，并查看每个 run 的逐 case 结果。
 - History mode 支持 `Run matrix`，把当前筛选下的 runs 展成 case x run 矩阵，快速识别哪些 case 在哪些 run 上通过、不通过或未覆盖；矩阵使用原生 table、caption、列/行标题和完整单元格标签，辅助技术不用靠颜色和视觉位置猜测结果。
 - History mode 支持保存、应用、删除当前筛选视图，用户可以把“候选 v2 / Primary v3”这类常用实验入口固化下来，不需要反复手动组合筛选。
@@ -85,6 +86,7 @@
 - **Raycast extension bootstrap:** Raycast 创建扩展后立刻给出下一步开发动作。SkillHub 适配为 launchpad 右侧 checklist：导入或创建后继续补 case、记录首轮 run、沉淀验证依据。
 - **GitHub / VS Code diff:** 版本变化用文件列表 + 行级 additions/removals 展示，而不是只给 change summary。Skill 本质上是文件夹，必须让用户看到真实文件变化。
 - **GitHub PR review 主证据面:** GitHub 的代码审查把文件 diff 放在最宽的阅读面，辅助栏不能压缩代码。SkillHub 适配为 promotion/diff/history/audit 在中等桌面宽度下折叠 inspector，让用户先看证据。
+- **GitHub / GitLab file viewed progress:** GitHub 和 GitLab 都允许用户把单个 diff 文件标记为 viewed，并用进度降低大 diff 的记忆负担。SkillHub 第一阶段适配为会话级文件 viewed set；由于 `VariantVersion` 不可变，切换 diff pair 时直接重置 viewed state。
 - **GitHub protected branch / release review:** “设为当前版本”不是普通字段更新，而是有证据的指针移动。promotion review 借鉴 release 前检查，把测试结果、diff、风险说明合在一起。
 - **Vercel Preview Promotion:** Vercel 的 preview promotion 强调 inspect、test、check logs、再 promote。SkillHub 适配为 candidate version 创建后立即进入 exact candidate 的测评上下文，再进入 promotion review。
 - **Netlify Deploy Preview:** Netlify 把 preview URL 和状态暴露到 PR，让团队先体验变化再发布。SkillHub 适配为测评页 candidate banner，明确当前测的是非 current 版本。
@@ -139,13 +141,14 @@
 33. 以前 Audit Explorer 默认让 Raw JSON 占据详情区，列表行容易截断；现在先给 action quick filters、可读事件标题、actor/resource/time 和结构化 payload 摘要，Raw JSON 默认折叠。
 34. 以前 Launchpad 和 Inspector 高频写入字段各自手写 label/input，业务字段缺少显式 `autocomplete`；现在第一阶段统一到共享字段基础件，并用 E2E 覆盖 Launchpad 与 Inspector 的 autocomplete 和可见焦点。
 35. 以前 command menu 默认静态导航优先；现在会按当前 mode 排序，测评页第一条就是 `记录本次测评`，变体页优先 variant/version/diff，空工作台优先导入/新建。
+36. 以前 diff/promotion review 中用户只能靠记忆判断哪些文件已经看过；现在可以逐文件勾选已查看，并在 summary/header 中看到 `Reviewed x/y`。
 
 ## 仍然存在的摩擦
 
 1. URL state 只完成第一阶段：selected skill 和 mode 可以分享与刷新恢复；diff pair、history filters、selected run/case、run comparison、eval target version 和 promotion 上下文还不能深链。
 2. 表单细节还未完全产品化：第一阶段已覆盖 `SkillLaunchpad` 和 `WorkbenchInspector` 高频写入表单；`QuickAddCases`、`EvalCaseDetailPanel`、`SkillSettingsPanel`、`SkillAccessPanel`、history filters、run matrix controls 和 diff selectors 还没有迁移到同一字段基础件。
 3. Command menu 已根据当前 mode 做第一阶段上下文化排序；还没有最近使用、个人化排序、selection-aware 命令或右侧 preview。
-4. Promotion review 已经展示 case impact 和 diff，但还没有文件 reviewed progress，也没有把具体 diff hunk 关联到具体 eval case。
+4. Promotion review 已经展示 case impact、diff 和会话级文件 reviewed progress，但 viewed state 还没有服务端持久化，也没有把具体 diff hunk 关联到具体 eval case。
 5. Run matrix 已经提供 read-only 多 run x case 浏览、保存筛选视图、对照/候选 impact、impact 过滤和分组，但还没有列配置、自定义指标列、导出或保存对照/候选 run 指针。
 6. 权限还没有真实认证来源。当前 actor 已从请求体和前端硬编码 header 收敛到后端签名的本地 cookie session，但仍不是多用户登录、token rotation 或组织级身份系统。
 7. Accessibility 仍未完整覆盖全路径。现在已有 skip link、focus ring、reduced-motion、status notice、command menu combobox/listbox、Workbench mode tablist、Run matrix 表格语义和 Inspector action focus handoff 回归，但更广的全路径焦点巡检和人工读屏验收还需要继续补。
@@ -155,7 +158,7 @@
 1. URL state 第二阶段：补齐 diff pair、history filters、selected run/case、run comparison、eval target version 和 promotion context 深链。
 2. 表单字段基础件第二阶段：迁移 QuickAddCases、EvalCaseDetailPanel、SkillSettingsPanel、SkillAccessPanel、history filters、run matrix controls 和 diff selectors，并补错误展示规范。
 3. Command menu 第二阶段：增加最近使用/selection-aware 排序和命令 preview，避免只靠 mode 估计意图。
-4. Diff / Promotion review 文件 reviewed progress：按文件标记已查看，显示 x/y reviewed。
+4. Diff / Promotion review 第二阶段：评估是否服务端持久化 viewed state、自动折叠已查看文件，或把 diff hunk 关联到 eval case。
 5. 做 run matrix 多维表格：支持列配置、自定义指标列、导出，并考虑是否保存对照/候选 run 指针。
 6. 接入真实认证：用真正的登录 session/token 替换本地 actor cookie，前端只展示 capability，不再允许自由切换开发身份。
 7. 扩展 accessibility E2E：继续覆盖更广的全路径焦点巡检和人工读屏验收。

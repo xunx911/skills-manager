@@ -10,6 +10,15 @@
 
 ## Session Log
 
+### 2026-05-14 02:27 CST - TASK-046 Diff / Promotion review 文件 viewed progress
+
+- 新增 `docs/superpowers/specs/2026-05-14-diff-review-progress-design.md` 和执行计划，记录借鉴 GitHub/GitLab file viewed progress 后的会话级适配方案。
+- 新增 `useFileReviewProgress`，按 diff pair key 维护 viewed file set；切换 diff pair 时自动重置，避免把旧版本对比的查看状态带到新对比。
+- Diff mode summary 增加 `Reviewed x/y`，文件 rail 显示 `已查看/未看`，当前文件 header 可勾选 `已查看此文件`。
+- Promotion review 的 bundle diff header 增加 `x/y reviewed`，文件 rail 和代码面板复用同一进度逻辑。
+- 新增 E2E 红绿覆盖 diff 页和 promotion review 的 reviewed progress；更新 README、产品体验评审、完成度审计、摩擦审计和 TASK-046 任务记录。
+- 已验证：红灯 E2E 先失败于缺少 reviewed progress；绿色后目标 E2E 2 passed；promotion review 视觉基线因预期 UI 变化更新；`npm run test:unit` 1 file/6 tests passed；`npm run typecheck` passed；`npm run build` passed；`npm audit --omit=dev` found 0 vulnerabilities；`uv run pytest` 90 passed；`npm run e2e` 56 passed；`git diff --check` passed；任务 JSON 结构检查 passed。
+
 ### 2026-05-14 02:14 CST - TASK-045 Command menu 当前 mode 上下文化排序
 
 - 新增 `docs/superpowers/specs/2026-05-14-command-menu-contextual-priority-design.md` 和执行计划，记录借鉴 Linear、GitHub Command Palette 和 GitKraken Command Palette 后的 mode-aware 排序方案。

@@ -5964,7 +5964,7 @@ body {
 
 .diffSummary {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 8px;
 }
 
@@ -6089,6 +6089,43 @@ body {
   color: #667085;
   font-size: 12px;
   font-weight: 850;
+}
+
+.diffDetailMeta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.diffViewedControl,
+.promotionViewedControl {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #d6dde8;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #334155;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 900;
+  padding: 5px 8px;
+}
+
+.diffViewedControl input,
+.promotionViewedControl input {
+  width: 14px;
+  height: 14px;
+  accent-color: #111827;
+}
+
+.diffDetailHead .diffViewedControl span,
+.promotionViewedControl span {
+  color: #334155;
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: none;
 }
 
 .diffCode {
@@ -7590,6 +7627,12 @@ body {
   padding: 5px 7px;
 }
 
+.promotionDiffStats .promotionReviewedStat {
+  background: #eaf7f1;
+  color: #0a7a55;
+  text-transform: none;
+}
+
 .promotionDiffFilters {
   display: flex;
   flex-wrap: wrap;
@@ -7670,6 +7713,10 @@ body {
   min-width: 0;
   overflow: auto;
   background: #0d1117;
+}
+
+.promotionViewedControl {
+  margin: 10px;
 }
 
 .promotionDiffCode {
