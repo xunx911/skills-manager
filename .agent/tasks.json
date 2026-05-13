@@ -236,5 +236,12 @@
     "priority": 34,
     "passes": true,
     "spec": ".agent/tasks/TASK-034.json"
+  },
+  {
+    "id": "035",
+    "title": "抽离 Workbench Diff Pane",
+    "priority": 35,
+    "passes": true,
+    "spec": ".agent/tasks/TASK-035.json"
   }
 ]

@@ -10,6 +10,14 @@
 
 ## Session Log
 
+### 2026-05-14 00:30 CST - TASK-035 Workbench Diff Pane 组件抽离
+
+- 新增 `WorkbenchDiffPane`，把版本差异页的 version selectors、summary metrics、filter bar、file rail、binary notice 和 line-level diff 从 `DecisionWorkbench` 抽离。
+- 导出 `DiffFilter`，主工作台继续持有筛选状态和 bundle diff API 编排；`defaultDiffPair` 保留在主工作台。
+- 保留 CSS class、文案、filter values、promotion review 入口和 diff 显示行为。
+- 主文件从 1814 行降到 1609 行，新 Diff 文件 215 行。
+- 已验证：`npm run typecheck` passed；`npm run build` passed；`uv run pytest` 90 passed；`npm run e2e` 50 passed；`git diff --check` passed。
+
 ### 2026-05-14 00:55 CST - TASK-034 Workbench History Pane 组件抽离
 
 - 新增 `WorkbenchHistoryPane`，把历史页 saved views、filters、RunMatrix、run list、RunComparison 和逐 case result detail 从 `DecisionWorkbench` 抽离。
