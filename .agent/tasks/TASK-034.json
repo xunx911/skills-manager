@@ -1,0 +1,30 @@
+{
+  "id": "034",
+  "title": "抽离 Workbench History Pane",
+  "status": "complete",
+  "goal": "把主工作区历史页从 DecisionWorkbench 中抽离为独立组件，降低主工作台文件体积，并保持测评历史、保存视图、矩阵和 run comparison 行为不变。",
+  "scope": [
+    "新增 apps/web/components/history/workbench-history-pane.tsx",
+    "迁移历史页 saved views、filters、run matrix、run list、comparison panel 和逐 case 结果详情",
+    "导出 HistoryRunFilters，DecisionWorkbench 继续负责筛选状态、API 查询和保存视图 mutation",
+    "保留现有 CSS class、文案、ARIA label、筛选字段和 comparison 动作",
+    "记录中文规格、执行计划和任务日志"
+  ],
+  "out_of_scope": [
+    "重做历史页视觉设计",
+    "改变 run matrix、saved view 或 comparison 交互",
+    "拆分 Diff/Variants pane",
+    "调整 API、数据库模型、权限策略或 E2E 语义"
+  ],
+  "verification": [
+    "test -f apps/web/components/history/workbench-history-pane.tsx -> failed before implementation, confirming missing component boundary",
+    "rg -n \"function HistoryPane\\\\(\" apps/web/components/decision-workbench.tsx -> found old inline HistoryPane before implementation",
+    "wc -l apps/web/components/decision-workbench.tsx -> 2090 before, 1814 after extraction",
+    "wc -l apps/web/components/history/workbench-history-pane.tsx -> 300 lines",
+    "cd apps/web && npm run typecheck -> passed",
+    "cd apps/web && npm run build -> passed",
+    "cd apps/api && uv run pytest -> 90 passed",
+    "cd apps/web && UV_CACHE_DIR=/Users/xx/Documents/code/skills-manager/.uv-cache npm run e2e -> 50 passed",
+    "git diff --check -> passed"
+  ]
+}

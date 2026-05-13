@@ -229,5 +229,12 @@
     "priority": 33,
     "passes": true,
     "spec": ".agent/tasks/TASK-033.json"
+  },
+  {
+    "id": "034",
+    "title": "抽离 Workbench History Pane",
+    "priority": 34,
+    "passes": true,
+    "spec": ".agent/tasks/TASK-034.json"
   }
 ]

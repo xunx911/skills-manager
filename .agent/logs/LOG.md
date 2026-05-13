@@ -10,6 +10,14 @@
 
 ## Session Log
 
+### 2026-05-14 00:55 CST - TASK-034 Workbench History Pane 组件抽离
+
+- 新增 `WorkbenchHistoryPane`，把历史页 saved views、filters、RunMatrix、run list、RunComparison 和逐 case result detail 从 `DecisionWorkbench` 抽离。
+- 导出 `HistoryRunFilters`，让主工作台继续复用同一筛选类型并保留 API 查询、保存视图和 accepted verification mutation 编排。
+- 保留历史页 CSS class、文案、ARIA label、filter 字段、matrix controls、comparison actions 和空态入口。
+- 主文件从 2090 行降到 1814 行，新 History 文件 300 行。
+- 已验证：`npm run typecheck` passed；`npm run build` passed；`uv run pytest` 90 passed；`npm run e2e` 50 passed；`git diff --check` passed。
+
 ### 2026-05-14 00:35 CST - TASK-033 Workbench Evals Pane 组件抽离
 
 - 新增 `WorkbenchEvalsPane`，把测评页目标版本选择、candidate banner、快速添加 case、review controls、case queue、快捷键和 case 详情从 `DecisionWorkbench` 抽离。
