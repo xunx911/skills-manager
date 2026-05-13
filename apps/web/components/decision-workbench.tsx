@@ -15,7 +15,7 @@ import { EvalCaseDetailPanel, type EvalCaseUpdateDraft } from "@/components/eval
 import { GlobalCommandButton } from "@/components/command-menu/global-command-button";
 import { PromotionReviewPane } from "@/components/promotion-review/promotion-review-pane";
 import { RunComparisonPanel } from "@/components/run-comparison/run-comparison-panel";
-import { RunMatrixPanel } from "@/components/run-matrix/run-matrix-panel";
+import { RunMatrixPanel, type RunMatrixControls } from "@/components/run-matrix/run-matrix-panel";
 import { SavedRunViews } from "@/components/saved-views/saved-run-views";
 import { SkillLaunchpad } from "@/components/skills/skill-launchpad";
 import { SkillSettingsPanel } from "@/components/skills/skill-settings-panel";
@@ -87,6 +87,11 @@ const DEFAULT_RUN_FILTERS: RunFilters = {
   strategy: "all",
   status: "all",
 };
+const DEFAULT_RUN_MATRIX_CONTROLS: RunMatrixControls = {
+  matrix_group_by: "none",
+  matrix_impact: "all",
+  matrix_show_score: "true",
+};
 type BundleSource =
   | { kind: "zip"; name: string; zip_base64: string }
   | {
@@ -131,6 +136,7 @@ export function DecisionWorkbench({ skills: initialSkills, featuredSkill }: Deci
   const [runComparison, setRunComparison] = useState<EvalRunComparison | null>(null);
   const [runComparisonLoading, setRunComparisonLoading] = useState(false);
   const [runFilters, setRunFilters] = useState<RunFilters>(DEFAULT_RUN_FILTERS);
+  const [runMatrixControls, setRunMatrixControls] = useState<RunMatrixControls>(DEFAULT_RUN_MATRIX_CONTROLS);
   const [caseHistory, setCaseHistory] = useState<EvalCaseHistory | null>(null);
   const [caseHistoryCaseId, setCaseHistoryCaseId] = useState<string | null>(null);
   const [caseHistoryLoading, setCaseHistoryLoading] = useState(false);
@@ -426,11 +432,21 @@ export function DecisionWorkbench({ skills: initialSkills, featuredSkill }: Deci
     setRunFilters((current) => ({ ...current, [key]: value }));
   }
 
+  function updateRunMatrixControl<Key extends keyof RunMatrixControls>(key: Key, value: RunMatrixControls[Key]) {
+    setSelectedSavedViewId("adhoc");
+    setRunMatrixControls((current) => ({ ...current, [key]: value }));
+  }
+
   function applySavedView(view: SavedView | null) {
     setSelectedSavedViewId(view?.id ?? "adhoc");
     setSavedViewName("");
-    if (!view) return;
-    setRunFilters({ ...DEFAULT_RUN_FILTERS, ...view.config });
+    if (!view) {
+      setRunFilters(DEFAULT_RUN_FILTERS);
+      setRunMatrixControls(DEFAULT_RUN_MATRIX_CONTROLS);
+      return;
+    }
+    setRunFilters({ ...DEFAULT_RUN_FILTERS, ...runFiltersFromConfig(view.config) });
+    setRunMatrixControls({ ...DEFAULT_RUN_MATRIX_CONTROLS, ...runMatrixControlsFromConfig(view.config) });
   }
 
   async function createSavedRunView() {
@@ -445,7 +461,7 @@ export function DecisionWorkbench({ skills: initialSkills, featuredSkill }: Deci
           skill_id: selectedDetail.skill.id,
           name,
           view_type: "run_history",
-          config: runFilterConfig(runFilters),
+          config: { ...runFilterConfig(runFilters), ...runMatrixControlConfig(runMatrixControls) },
           actor: ACTOR,
         },
       });
@@ -1137,6 +1153,7 @@ export function DecisionWorkbench({ skills: initialSkills, featuredSkill }: Deci
             onChooseComparisonRun={chooseComparisonRun}
             onDeleteSavedView={deleteSavedRunView}
             onFilterChange={updateRunFilter}
+            onMatrixControlChange={updateRunMatrixControl}
             onSaveView={createSavedRunView}
             onSavedViewNameChange={setSavedViewName}
             onSelectRun={setSelectedRunId}
@@ -1145,6 +1162,7 @@ export function DecisionWorkbench({ skills: initialSkills, featuredSkill }: Deci
             runDetail={selectedRunDetail}
             runHistory={runHistory}
             runMatrix={runMatrix}
+            runMatrixControls={runMatrixControls}
             runMatrixLoading={runMatrixLoading}
             savedViewName={savedViewName}
             savedViews={savedViews}
@@ -1650,6 +1668,7 @@ function HistoryPane({
   onChooseComparisonRun,
   onDeleteSavedView,
   onFilterChange,
+  onMatrixControlChange,
   onSaveView,
   onSavedViewNameChange,
   onSelectRun,
@@ -1658,6 +1677,7 @@ function HistoryPane({
   runDetail,
   runHistory,
   runMatrix,
+  runMatrixControls,
   runMatrixLoading,
   savedViewName,
   savedViews,
@@ -1678,6 +1698,7 @@ function HistoryPane({
   onChooseComparisonRun: (role: "baseline" | "candidate", runId: string) => void;
   onDeleteSavedView: () => void;
   onFilterChange: (key: keyof RunFilters, value: string) => void;
+  onMatrixControlChange: <Key extends keyof RunMatrixControls>(key: Key, value: RunMatrixControls[Key]) => void;
   onSaveView: () => void;
   onSavedViewNameChange: (name: string) => void;
   onSelectRun: (runId: string) => void;
@@ -1686,6 +1707,7 @@ function HistoryPane({
   runDetail: EvalRunDetail | null;
   runHistory: EvalRunHistory | null;
   runMatrix: EvalRunMatrix | null;
+  runMatrixControls: RunMatrixControls;
   runMatrixLoading: boolean;
   savedViewName: string;
   savedViews: SavedView[];
@@ -1785,8 +1807,10 @@ function HistoryPane({
       <RunMatrixPanel
         baselineRunId={compareBaselineRunId}
         candidateRunId={compareCandidateRunId}
+        controls={runMatrixControls}
         loading={runMatrixLoading}
         matrix={runMatrix}
+        onControlChange={onMatrixControlChange}
       />
 
       <div className="historyGrid">
@@ -2451,6 +2475,33 @@ function sortedVersions(versions: VariantVersion[]) {
 
 function runFilterConfig(filters: RunFilters) {
   return Object.fromEntries(Object.entries(filters).filter(([, value]) => value !== "all"));
+}
+
+function runMatrixControlConfig(controls: RunMatrixControls) {
+  return Object.fromEntries(
+    Object.entries(controls).filter(([key, value]) => value !== DEFAULT_RUN_MATRIX_CONTROLS[key as keyof RunMatrixControls]),
+  );
+}
+
+function runFiltersFromConfig(config: SavedView["config"]): Partial<RunFilters> {
+  return {
+    ...(config.variant_version_id ? { variant_version_id: config.variant_version_id } : {}),
+    ...(config.eval_set_version_id ? { eval_set_version_id: config.eval_set_version_id } : {}),
+    ...(config.strategy ? { strategy: config.strategy } : {}),
+    ...(config.status ? { status: config.status } : {}),
+  };
+}
+
+function runMatrixControlsFromConfig(config: SavedView["config"]): Partial<RunMatrixControls> {
+  return {
+    ...(config.matrix_group_by === "impact" || config.matrix_group_by === "none" ? { matrix_group_by: config.matrix_group_by } : {}),
+    ...(isMatrixImpactConfig(config.matrix_impact) ? { matrix_impact: config.matrix_impact } : {}),
+    ...(config.matrix_show_score === "true" || config.matrix_show_score === "false" ? { matrix_show_score: config.matrix_show_score } : {}),
+  };
+}
+
+function isMatrixImpactConfig(value: string | undefined): value is RunMatrixControls["matrix_impact"] {
+  return value === "all" || value === "waiting" || value === "fixed" || value === "regressed" || value === "stable_pass" || value === "stable_fail" || value === "missing";
 }
 
 function defaultDiffPair(variant: VariantDetail | null): { left: VariantVersion; right: VariantVersion } | null {

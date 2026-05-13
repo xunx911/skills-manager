@@ -233,6 +233,9 @@ class ApiCommandTest(unittest.TestCase):
                     "eval_set_version_id": "all",
                     "strategy": "manual_pass_fail",
                     "status": "",
+                    "matrix_group_by": "impact",
+                    "matrix_impact": "fixed",
+                    "matrix_show_score": "false",
                     "unknown": "ignored",
                 },
                 "actor": "tester",
@@ -242,7 +245,16 @@ class ApiCommandTest(unittest.TestCase):
         self.assertEqual(created.status_code, 200)
         view = created.json()
         self.assertEqual(view["name"], "Candidate runs")
-        self.assertEqual(view["config"], {"variant_version_id": skill["variant_version_id"], "strategy": "manual_pass_fail"})
+        self.assertEqual(
+            view["config"],
+            {
+                "variant_version_id": skill["variant_version_id"],
+                "strategy": "manual_pass_fail",
+                "matrix_group_by": "impact",
+                "matrix_impact": "fixed",
+                "matrix_show_score": "false",
+            },
+        )
 
         duplicate = self.client.post(
             "/api/saved-views",
@@ -261,6 +273,7 @@ class ApiCommandTest(unittest.TestCase):
         self.assertEqual(duplicate.status_code, 400)
         self.assertEqual(listed.status_code, 200)
         self.assertEqual([item["id"] for item in listed.json()], [view["id"]])
+        self.assertEqual(listed.json()[0]["config"], view["config"])
         self.assertEqual(deleted.status_code, 200)
         self.assertEqual(deleted.json(), {"ok": True})
         self.assertEqual(listed_after_delete.json(), [])

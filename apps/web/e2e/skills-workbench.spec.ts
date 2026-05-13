@@ -628,6 +628,13 @@ test("operator can inspect run matrix across eval runs", async ({ page }) => {
   await page.locator(".historyRunRow").filter({ hasText: "2/2" }).getByRole("button", { name: "候选" }).click();
   await expect(page.locator(".runMatrixImpactFixed")).toHaveCount(1);
   await expect(page.locator(".runMatrixImpactStablePass")).toHaveCount(1);
+
+  await page.getByLabel("Matrix group by").selectOption("impact");
+  await expect(page.locator(".runMatrixGroupRow").filter({ hasText: "修复 · 1 case" })).toBeVisible();
+  await expect(page.locator(".runMatrixGroupRow").filter({ hasText: "稳定通过 · 1 case" })).toBeVisible();
+  await page.getByLabel("Matrix impact filter").selectOption("fixed");
+  await expect(page.locator(".runMatrixCaseTitle", { hasText: "PR: missing tenant scope" })).toBeVisible();
+  await expect(page.locator(".runMatrixCaseTitle", { hasText: "PR: token logging" })).toHaveCount(0);
 });
 
 test("operator can save and reapply an eval run history view", async ({ page }) => {
@@ -653,15 +660,21 @@ test("operator can save and reapply an eval run history view", async ({ page }) 
   await variantFilter.selectOption(candidateVersionId!);
   await expect(page.locator(".historyRunRow")).toHaveCount(1);
   await expect(page.locator(".runMatrixRunHeader")).toHaveCount(1);
+  await page.getByLabel("Matrix group by").selectOption("impact");
+  await page.getByLabel("Show matrix score").uncheck();
 
   await page.getByLabel("保存视图名称").fill("候选版本通过记录");
   await page.getByRole("button", { name: "保存当前视图" }).click();
   await expect(page.getByLabel("Saved run view")).toContainText("候选版本通过记录");
 
   await variantFilter.selectOption("all");
+  await page.getByLabel("Matrix group by").selectOption("none");
+  await page.getByLabel("Show matrix score").check();
   await expect(page.locator(".historyRunRow")).toHaveCount(2);
   await page.getByLabel("Saved run view").selectOption({ label: "候选版本通过记录" });
   await expect(variantFilter).toHaveValue(candidateVersionId!);
+  await expect(page.getByLabel("Matrix group by")).toHaveValue("impact");
+  await expect(page.getByLabel("Show matrix score")).not.toBeChecked();
   await expect(page.locator(".historyRunRow")).toHaveCount(1);
 
   await page.getByRole("button", { name: "删除视图" }).click();

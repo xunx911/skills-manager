@@ -266,7 +266,16 @@ export type SavedView = {
   skill_id: string;
   name: string;
   view_type: "run_history";
-  config: Partial<Record<"variant_version_id" | "eval_set_version_id" | "strategy" | "status", string>>;
+  config: Partial<Record<
+    | "variant_version_id"
+    | "eval_set_version_id"
+    | "strategy"
+    | "status"
+    | "matrix_group_by"
+    | "matrix_impact"
+    | "matrix_show_score",
+    string
+  >>;
   created_at?: string;
   created_by: string;
 };

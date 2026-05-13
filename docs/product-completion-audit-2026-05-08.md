@@ -2,7 +2,7 @@
 
 日期：2026-05-13
 
-状态：尚未达到“成熟产品完成”。当前已经是一个强的正式垂直切片：主工作区 Skill Launchpad、主工作区 Skill 设置、标准 Skill bundle 导入、导入后验证清单、variant/version、candidate verification handoff、eval set version、manual eval review queue、历史查看、run matrix、保存历史筛选视图、run-to-run comparison、accepted verification、bundle diff、candidate promotion review、上下文命令菜单和快速添加 case 都能闭环。但距离成熟产品还缺少更完整的权限、多用户协作、自动测评策略和更深的可访问性验证。
+状态：尚未达到“成熟产品完成”。当前已经是一个强的正式垂直切片：主工作区 Skill Launchpad、主工作区 Skill 设置、标准 Skill bundle 导入、导入后验证清单、variant/version、candidate verification handoff、eval set version、manual eval review queue、历史查看、run matrix 多维控制、保存历史筛选视图、run-to-run comparison、accepted verification、bundle diff、candidate promotion review、上下文命令菜单和快速添加 case 都能闭环。但距离成熟产品还缺少更完整的权限、多用户协作、自动测评策略和更深的可访问性验证。
 
 ## 目标拆解
 
@@ -56,8 +56,8 @@
 | 风险 promotion | E2E `risky promotion requires a decision note before promoting` 覆盖回退时必须填写说明。 | 完成 |
 | Diff 区域 promotion 入口 | `DiffPane` 对 current -> candidate 提供 `设为当前版本评审`；E2E happy path 从 diff 入口进入评审。 | 完成 |
 | Run history | `GET /api/skills/{skill_id}/eval-runs`；前端 history mode 可过滤并查看 case result；E2E 覆盖。 | 完成 |
-| Run matrix | `GET /api/skills/{skill_id}/eval-run-matrix`；History mode 展示 case x run pass/fail 矩阵；选择对照/候选后显示逐 case `修复/回退/稳定/缺失` impact；E2E 覆盖多 case、多 run 和 impact。 | 完成 |
-| Saved run views | `saved_views` 表；`GET /api/skills/{skill_id}/saved-views`、`POST /api/saved-views`、`DELETE /api/saved-views/{id}`；History mode 可保存、应用、删除当前 run filters；E2E 覆盖。 | 完成 |
+| Run matrix | `GET /api/skills/{skill_id}/eval-run-matrix`；History mode 展示 case x run pass/fail 矩阵；选择对照/候选后显示逐 case `修复/回退/稳定/缺失` impact；支持 impact 过滤、按 impact 分组、隐藏 run header 分数；E2E 覆盖多 case、多 run、impact 和矩阵控制。 | 完成 |
+| Saved run views | `saved_views` 表；`GET /api/skills/{skill_id}/saved-views`、`POST /api/saved-views`、`DELETE /api/saved-views/{id}`；History mode 可保存、应用、删除当前 run filters 和 matrix 控制项；E2E/API 覆盖。 | 完成 |
 | Run-to-run comparison | `GET /api/eval-runs/compare` 只允许同 `EvalSetVersion` 的 finished run 比较；History mode 可选择对照/候选并查看 delta、修复/回退。 | 完成 |
 | Accepted verification | `POST /api/eval-runs/accepted-verifications` 写入 `(variant_id, eval_set_version_id)` 指针和 audit event；History row 显示 `Accepted`。 | 完成 |
 | 上下文命令菜单 | `Cmd/Ctrl+K` 和可见按钮可打开命令菜单；E2E 覆盖搜索 `添加 case` 并跳转表单。 | 完成 |
@@ -101,13 +101,14 @@ cd apps/web && npm run e2e
 - `.agent/screenshots/TASK-016-1.png`
 - `.agent/screenshots/TASK-017-1.png`
 - `.agent/screenshots/TASK-018-1.png`
+- `.agent/screenshots/TASK-019-1.png`
 
 ## 仍然阻塞“成熟产品完成”的风险
 
 1. **权限和多用户协作还没实现。** 当前仍是单用户工作台；没有 owner/maintainer/evaluator/viewer 的 scoped role enforcement。
 2. **部分操作仍偏表单。** 导入后清单、case 新增、case 详情内联编辑、主区创建 variant、主区追加候选版本、主区创建 skill、主区 skill 设置、记录 run 和 candidate 验证已更连续，但归档、权限等低频/危险设置仍主要依赖 inspector 或尚未产品化。
 3. **自动测评策略还没产品化。** 当前支持手工 pass/fail 和外部结果导入，但还没有内置 strategy registry、runner 调度和自动优化流水线。
-4. **Run matrix 还不是完整多维表格。** 现在能保存筛选视图、看 case x run pass/fail，并高亮对照/候选的修复和回退，但还不能配置列或分组。
+4. **Run matrix 还不是完整多维表格。** 现在能保存筛选视图、看 case x run pass/fail、高亮对照/候选的修复和回退，并支持 impact 过滤/分组/分数显示控制，但还不能配置列、自定义指标、导出或保存对照/候选 run 指针。
 5. **Accessibility 覆盖还浅。** 有键盘 smoke 和可见 label，但缺少系统化 focus order、screen reader、reduced-motion 验证。
 6. **Ralph Loop 未真正持续运行。** 配置已安装，但本地 Docker Sandboxes 需要 `sbx login` 授权；没有登录就不能让 Ralph 持续接管任务。
 
@@ -119,6 +120,6 @@ cd apps/web && npm run e2e
 
 1. 把归档、权限和审计类低频设置做成明确的设置分区，减少 inspector 承担所有管理动作。
 2. 开始权限模型和 scoped role assignment，尤其是 accepted verification / promotion 权限。
-3. 把 run matrix 升级为多维表格：支持列配置、分组和更多指标列。
+3. 把 run matrix 升级为多维表格：支持列配置、更多指标列、导出，并评估是否保存对照/候选 run 指针。
 4. 把 eval strategy / runner registry 产品化。
 5. 系统补 accessibility 和可用性测试。

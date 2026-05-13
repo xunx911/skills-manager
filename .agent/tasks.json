@@ -124,5 +124,12 @@
     "priority": 18,
     "passes": true,
     "spec": ".agent/tasks/TASK-018.json"
+  },
+  {
+    "id": "019",
+    "title": "实现 Run Matrix 多维控制",
+    "priority": 19,
+    "passes": true,
+    "spec": ".agent/tasks/TASK-019.json"
   }
 ]

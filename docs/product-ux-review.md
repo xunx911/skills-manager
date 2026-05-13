@@ -29,6 +29,7 @@
 - History mode 支持 `Run matrix`，把当前筛选下的 runs 展成 case x run 矩阵，快速识别哪些 case 在哪些 run 上通过、不通过或未覆盖。
 - History mode 支持保存、应用、删除当前筛选视图，用户可以把“候选 v2 / Primary v3”这类常用实验入口固化下来，不需要反复手动组合筛选。
 - 选择 `对照` 和 `候选` run 后，Run matrix 每个 case 行会显示 `修复`、`回退`、`稳定通过`、`仍未通过` 或 `缺失`，把样本级变化直接放到表格里。
+- Run matrix 支持按 impact 过滤 case、按 impact 分组、隐藏 run header 分数，并且这些矩阵控制项会随命名视图一起保存和恢复。
 - History mode 支持把两次同 `EvalSetVersion` 的 run 标为对照/候选，直接查看通过率 delta、逐 case 修复/回退，并把候选 run 接受为当前验证依据。
 - 每个 eval case 可以在测评页内查看版本时间线，包括 input、expected output、notes，以及被哪些 eval set snapshot 包含；也可以从旧版本一键恢复为新的当前版本，历史不会被覆盖。
 - Playwright 覆盖 folder/zip import、导入后验证引导、新建 variant、新增/编辑/归档 case、手工 eval、候选版本 promotion review、风险 promotion、bundle diff、run history、run comparison、accepted verification、case history、键盘入口、移动端宽度和视觉回归。
@@ -63,10 +64,10 @@
 - **Vercel Deployment Checks:** Vercel 把 safety checks 放在 release 前。SkillHub 适配为导入后验证清单：bundle 存在只是起点，只有 case 和 eval run 才能支撑可信分发。
 - **Linear Triage:** Linear 把外部进入的 issue 放入 triage inbox，先 review/update/prioritize 再进入正式 workflow。SkillHub 适配为新导入 skill 的轻量 triage：先补测评资产，再跑首轮验证。
 - **GitHub Actions / LangSmith:** eval run history 以状态、策略、分数、exact binding 为核心，先扫全局，再进入单个 run 的 case 结果；run-to-run comparison 借鉴实验对比视图，只允许同 eval set snapshot 比较，避免把测试集变化误判成 skill 提升。
-- **LangSmith experiment comparison:** LangSmith 的 comparison view 支持多 experiment 表格、过滤、列显示和 regression/improvement。SkillHub 适配为 run matrix，先把多 run x 多 case 的 pass/fail 关系铺开，后续再做保存视图和回退高亮。
+- **LangSmith experiment comparison:** LangSmith 的 comparison view 支持多 experiment 表格、过滤、列显示和 regression/improvement。SkillHub 适配为 run matrix，把多 run x 多 case 的 pass/fail 关系铺开，并用 impact filter/grouping 聚焦 regression 和 improvement。
 - **LangSmith regression / improvement focus:** LangSmith 会基于 source experiment 标出 regression 和 improvement。SkillHub 适配为选择 `对照` 和 `候选` 后，在矩阵每个 case 行显示 impact chip，减少用户心算。
 - **W&B Tables:** W&B Tables 用表格比较模型版本、时间和具体样本结果。SkillHub 适配为 case x run 矩阵，把 skill 评测从两两比较扩展到多 run 浏览。
-- **Linear Saved Views / Airtable Views:** 常用筛选不应该每次重建，视图保存的是查询意图而不是复制数据。SkillHub 适配为保存 `run_history` 筛选配置，run 列表和矩阵仍实时读取同一份后端结果。
+- **Linear Saved Views / Airtable Views:** 常用筛选不应该每次重建，视图保存的是查询意图而不是复制数据。SkillHub 适配为保存 `run_history` 筛选配置和 matrix 展示偏好，run 列表和矩阵仍实时读取同一份后端结果。
 - **W&B / release gate:** accepted verification 借鉴 pinned baseline / release gate 思路，用一个明确指针说明“当前分发依据是哪次测评”，而不是让用户猜最新 run 是否可信。
 - **Sentry issue timeline:** case history 留在当前排查上下文中，避免用户跳走后丢失对当前测试集的理解。
 - **GitHub / GitLab revert:** 恢复旧内容不应该覆盖历史，而应该创建新的提交。SkillHub 适配为从旧 `EvalCaseVersion` 恢复时创建新的 current case version，并生成新的 `EvalSetVersion`。
@@ -95,18 +96,19 @@
 18. 以前创建 variant 主要依赖右侧 inspector；现在变体主面板有约束 variant composer，并默认复用当前版本作为 v1 基线。
 19. 以前空工作台只给两个跳转按钮，用户要理解 inspector 才能开始；现在 first-run 主区可以直接完成导入或创建，创建后立刻进入同一个 skill 概览和验证清单。
 20. 以前修改 skill ID、owner 或默认分发主要依赖右侧 inspector；现在概览主区可直接完成 identity/default variant 设置，保存后 catalog、header 和 hero 同步刷新。
+21. 以前矩阵只能看全部 case；现在可以把视图收窄到 `修复`、`回退`、`仍未通过` 等 impact，也可以按 impact 分组并把这个视图保存下来。
 
 ## 仍然存在的摩擦
 
 1. 右侧 inspector 仍然偏表单化。case 编辑、variant 创建、候选版本追加、first-run skill 创建和基础 skill 设置已经迁入主区，但 destructive action 和部分低频设置仍需要更成熟的主区或内联抽屉体验。
 2. Promotion review 已经展示 case impact 和 diff，但还没有把具体 diff hunk 关联到具体 eval case。
-3. Run matrix 已经提供 read-only 多 run x case 浏览、保存筛选视图和对照/候选 impact，但还没有列配置和分组。
+3. Run matrix 已经提供 read-only 多 run x case 浏览、保存筛选视图、对照/候选 impact、impact 过滤和分组，但还没有列配置、自定义指标列、导出或保存对照/候选 run 指针。
 4. Zip import 预览仍然依赖后端校验；folder import 的浏览器侧预览更丰富。
 5. Accessibility 覆盖仍偏浅。现在有键盘 smoke 和标签，但还需要系统化验证 focus order、screen reader label、reduced motion。
 
 ## 下一轮优化队列
 
 1. 优化低频设置和危险操作体验：把归档、权限和审计入口做成明确的设置分区，让 inspector 更像上下文工具而不是唯一操作区。
-2. 做 run matrix 多维表格：支持隐藏列、分组并突出 regression/improvement。
+2. 做 run matrix 多维表格：支持列配置、自定义指标列、导出，并考虑是否保存对照/候选 run 指针。
 3. 把 accepted verification 接入 Hub 文案和权限模型：明确谁能接受、谁只能查看。
 4. 扩展 accessibility E2E：覆盖焦点顺序、aria label、键盘完整路径和 reduced-motion。

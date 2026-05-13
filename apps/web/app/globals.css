@@ -5295,7 +5295,7 @@ body {
 .runMatrixPanel {
   display: grid;
   gap: 10px;
-  overflow: hidden;
+  overflow: visible;
   border: 1px solid #dde4ed;
   border-radius: 12px;
   background: #ffffff;
@@ -5329,6 +5329,98 @@ body {
 .runMatrixHead > span {
   margin: 0;
   text-transform: uppercase;
+}
+
+.runMatrixControls {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: flex-end;
+  border-bottom: 1px solid #edf1f6;
+  padding: 0 12px 10px;
+}
+
+.runMatrixControls label {
+  display: grid;
+  gap: 4px;
+  min-width: 138px;
+}
+
+.runMatrixControls label span {
+  color: #667085;
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.runMatrixControls select {
+  min-height: 34px;
+  border: 1px solid #dce2ea;
+  border-radius: 8px;
+  background: #fbfcfd;
+  color: #111827;
+  font: inherit;
+  font-size: 12px;
+  padding: 6px 9px;
+}
+
+.runMatrixControls .runMatrixToggle {
+  position: relative;
+  z-index: 4;
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 7px;
+  min-height: 34px;
+  overflow: hidden;
+  border: 1px solid #dce2ea;
+  border-radius: 8px;
+  background: #fbfcfd;
+  cursor: pointer;
+  padding: 0 12px 0 36px;
+}
+
+.runMatrixToggle input {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+  opacity: 0;
+  margin: 0;
+}
+
+.runMatrixControls .runMatrixToggle span::before {
+  position: absolute;
+  top: 50%;
+  left: 12px;
+  width: 14px;
+  height: 14px;
+  border: 1.5px solid #98a2b3;
+  border-radius: 4px;
+  background: #ffffff;
+  content: "";
+  transform: translateY(-50%);
+}
+
+.runMatrixControls .runMatrixToggle input:checked + span::before {
+  border-color: #111827;
+  background: #111827;
+  box-shadow: inset 0 0 0 3px #ffffff;
+}
+
+.runMatrixEmptyView {
+  border: 1px dashed #d7dee8;
+  border-radius: 10px;
+  background: #f8fafc;
+  color: #667085;
+  font-size: 13px;
+  font-weight: 850;
+  margin: 0 12px 12px;
+  padding: 13px;
 }
 
 .runMatrixScroller {
@@ -5381,6 +5473,18 @@ body {
   width: 148px;
   min-width: 148px;
   background: #ffffff;
+}
+
+.runMatrixGroupRow td {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  border-right: 0;
+  background: #f3f6fa;
+  color: #475467;
+  font-size: 11px;
+  font-weight: 950;
+  text-transform: uppercase;
 }
 
 .runMatrixRunHeader strong,

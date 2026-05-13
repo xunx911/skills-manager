@@ -1,0 +1,29 @@
+{
+  "id": "019",
+  "title": "实现 Run Matrix 多维控制",
+  "status": "complete",
+  "goal": "让 run matrix 支持 impact 过滤、按 impact 分组、分数显示控制，并把这些视图偏好保存到 saved views。",
+  "scope": [
+    "扩展 saved view config 支持 matrix_group_by、matrix_impact、matrix_show_score",
+    "Run matrix 支持按 impact 分组",
+    "Run matrix 支持按 impact 过滤 case",
+    "Run matrix 支持隐藏 run header 分数",
+    "Saved run views 保存并恢复 matrix 控制项",
+    "新增 API 和 E2E 覆盖 matrix 控制路径",
+    "更新中文 README、UX 复盘和完成度审计"
+  ],
+  "out_of_scope": [
+    "引入大型表格库",
+    "列拖拽和列冻结配置",
+    "CSV 导出",
+    "保存 baseline/candidate run id",
+    "后端 matrix aggregation"
+  ],
+  "verification": [
+    "cd apps/api && uv run pytest",
+    "cd apps/web && npm run typecheck",
+    "cd apps/web && npm run build",
+    "cd apps/web && UV_CACHE_DIR=/Users/xx/Documents/code/skills-manager/.uv-cache npm run e2e",
+    "git diff --check"
+  ]
+}

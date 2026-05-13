@@ -1502,7 +1502,15 @@ class SqlSkillRepository:
             raise InvariantError(f"Unsupported saved view type: {view_type}")
 
     def _saved_view_config(self, config: dict[str, Any]) -> dict[str, str]:
-        allowed_keys = {"variant_version_id", "eval_set_version_id", "strategy", "status"}
+        allowed_keys = {
+            "variant_version_id",
+            "eval_set_version_id",
+            "strategy",
+            "status",
+            "matrix_group_by",
+            "matrix_impact",
+            "matrix_show_score",
+        }
         clean: dict[str, str] = {}
         for key in allowed_keys:
             value = config.get(key)

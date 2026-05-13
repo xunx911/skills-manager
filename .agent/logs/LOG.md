@@ -10,6 +10,15 @@
 
 ## Session Log
 
+### 2026-05-13 20:45 CST - TASK-019 Run Matrix 多维控制
+
+- 在 History mode 的 `Run matrix` 增加 impact 过滤、按 impact 分组和隐藏 run header 分数控制。
+- 扩展 saved view config，保存视图现在会一起保存并恢复 run filters 和 matrix 展示偏好。
+- 修复 matrix panel 外层 `overflow: hidden` 导致 Playwright 和用户点击小控件时可能命中错位的问题，滚动职责保留给内部 matrix scroller。
+- 新增 API/E2E 覆盖 matrix 控制保存、恢复、impact 分组和 impact 过滤；更新 README、UX 复盘、产品完成度审计和 run comparison 视觉基线。
+- 已验证：`uv run pytest` 81 passed；`npm run typecheck` passed；`npm run build` passed；`npm run e2e` 33 passed；`git diff --check` passed。
+- 截图：`.agent/screenshots/TASK-019-1.png`。
+
 ### 2026-05-13 20:13 CST - TASK-018 主工作区 Skill 设置
 
 - 在概览主工作区新增 `SkillSettingsPanel`，可直接修改 skill ID、归属，并选择默认分发 variant。
