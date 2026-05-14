@@ -74,7 +74,8 @@
 - **WCAG Focus Order:** WCAG 2.4.3 要求顺序导航保留意义和可操作性。SkillHub 适配为 Inspector action 的焦点交接：用户请求某个右侧表单时，焦点进入该表单，而不是停在左侧或命令菜单的旧位置。
 - **Vercel / MDN / WCAG / VA.gov form guidance:** 表单字段需要稳定 label、说明、合适的 `autocomplete` 和键盘可见焦点。SkillHub 适配为轻量 `WorkbenchField` 系列，先覆盖 Launchpad 与 Inspector 的高频写入路径；业务字段不是姓名、邮箱或地址时默认关闭浏览器自动填充，防止 `owner_ref`、`tags`、`slug` 被个人资料误填。
 - **GOV.UK / MOJ form validation:** GOV.UK 要求错误摘要和字段旁错误同时出现，且文案一致；MOJ 建议提交时验证，不在输入或 blur 时打扰用户。SkillHub 适配为 `ValidatedForm`：提交空 required 字段后展示摘要、聚焦摘要、链接回字段，并通过 `WorkbenchField` 显示同一条字段错误。
-- **RFC 9457 / JSON:API error object / FastAPI exception handlers:** API 错误应该把人读说明和机器可读定位分开，客户端不应该解析 `detail` 文案猜字段。SkillHub 适配为兼容式 `detail + field_errors`：重复 Skill ID 和请求体校验错误会回填到表单字段，后续再扩展到 bundle frontmatter 和批量 case 行级错误。
+- **GOV.UK file upload:** 文件上传失败要贴近上传控件本身，而不是只在页面顶部显示泛化错误。SkillHub 适配为：标准 Skill bundle 的 `SKILL.md`、frontmatter 和 zip 解析错误会回填到 `folder_files` 或 `zip_file`，用户知道应该重新选择哪个来源。
+- **RFC 9457 / JSON:API error object / FastAPI exception handlers:** API 错误应该把人读说明和机器可读定位分开，客户端不应该解析 `detail` 文案猜字段。SkillHub 适配为兼容式 `detail + field_errors`：重复 Skill ID、请求体校验错误和 Skill bundle 导入解析错误会回填到表单字段，后续再扩展到批量 case 行级错误。
 - **MDN form validation:** 客户端校验可以改善体验，但不能替代服务端校验。SkillHub 适配为服务端权威格式规则：手工新建 skill 的 `slug` 与标准 Skill bundle `name` 保持一致，tag 只允许稳定可查询字符；前端只显示服务端 `field_errors`。
 - **GitHub Command Palette:** 命令菜单兼具导航、搜索和运行命令能力；SkillHub 借鉴其 scope 思路，把菜单限定在当前 skill 工作区，避免全局搜索过早膨胀。
 - **TestRail quick outline:** 测试用例管理工具会区分完整表单和快速 outline。SkillHub 借鉴“快速进入测试集”的速度，但不允许只填标题，仍要求 `input + expected output`，保证测评资产质量。
@@ -150,11 +151,12 @@
 37. 以前用户只能分享粗粒度 mode；现在可以分享具体 diff pair、selected diff file、candidate eval target、selected case、history filters、selected run、run comparison、matrix controls、audit filters 和 promotion review permalink。
 38. 以前剩余表单仍各自手写 label/input/select；现在 QuickAddCases、EvalCaseDetailPanel、SkillSettingsPanel、SkillAccessPanel、SkillGovernancePanel、SavedRunViews、history filters、run matrix controls 和 diff selectors 都接入共享字段基础件。
 39. 以前命令菜单只会根据 mode 估计意图；现在会记住本地最近使用命令，并在选中 case/run 时展示可执行的 selection-aware 命令和 preview。
+40. 以前导入 bundle 时如果 `SKILL.md` frontmatter 或 zip 有问题，用户只能看到全局失败提示；现在错误摘要会指向文件夹或 zip 上传字段，并在字段旁显示同一条修正说明。
 
 ## 仍然存在的摩擦
 
 1. Command menu 已完成第二阶段：支持 mode-aware 排序、本地最近使用、selected case/run 命令和右侧 preview；还没有服务器端个性化、跨 skill 全局搜索或快捷键自定义。
-2. 表单字段基础件已覆盖主要工作台表单，required 字段已有错误 summary、提交后聚焦摘要、摘要链接回字段和字段旁错误；后端字段错误映射第一阶段已覆盖重复 Skill ID、基础请求体校验、Skill ID 格式和 tags 格式。还没有导入 bundle frontmatter 字段错误、批量 case 行级错误和其余长文本长度上限。
+2. 表单字段基础件已覆盖主要工作台表单，required 字段已有错误 summary、提交后聚焦摘要、摘要链接回字段和字段旁错误；后端字段错误映射第一阶段已覆盖重复 Skill ID、基础请求体校验、Skill ID 格式、tags 格式和导入 bundle 解析错误。还没有批量 case 行级错误、其余长文本长度上限和错误统计。
 3. Promotion review 已经展示 case impact、diff 和会话级文件 reviewed progress，但 viewed state 还没有服务端持久化，也没有把具体 diff hunk 关联到具体 eval case。
 4. URL state 已覆盖核心证据上下文，但还没有短链接、权限感知分享提示，也没有保存未提交草稿。
 5. Run matrix 已经提供 read-only 多 run x case 浏览、保存筛选视图、对照/候选 impact、impact 过滤和分组，但还没有列配置、自定义指标列、导出或保存对照/候选 run 指针。
@@ -163,7 +165,7 @@
 
 ## 下一轮优化队列
 
-1. 表单验证第二阶段剩余部分：导入 bundle frontmatter 错误、批量 case 行级错误、其余长文本长度上限和错误统计。
+1. 表单验证第二阶段剩余部分：批量 case 行级错误、其余长文本长度上限和错误统计。
 2. 接入真实认证：用真正的登录 session/token 替换本地 actor cookie，前端只展示 capability，不再允许自由切换开发身份。
 3. Diff / Promotion review 第二阶段：评估是否服务端持久化 viewed state、自动折叠已查看文件，或把 diff hunk 关联到 eval case。
 4. URL state 第三阶段：增加短链接、权限感知分享提示，并评估是否保存草稿到本地 session storage 而不是 URL。

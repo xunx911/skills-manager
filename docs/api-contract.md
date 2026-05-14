@@ -98,6 +98,7 @@
 
 - `POST /api/skills` 重复 `slug`：`400`，`field_errors[0].field = "slug"`。
 - `PATCH /api/skills/{skill_id}` 重复 `slug`：`400`，`field_errors[0].field = "slug"`。
+- `POST /api/skill-imports` 解析标准 Skill bundle 失败：`400`，folder 导入回填 `folder_files`，zip 导入回填 `zip_file`。
 - FastAPI 请求体校验错误：`422`，按请求体字段生成 `field_errors`；数组 item 错误会优先回填到顶层表单字段，例如 `tags[0]` 映射为 `tags`。
 
 当前基础格式规则：
@@ -107,7 +108,20 @@
 | `slug` | `^[a-z0-9][a-z0-9-]{0,63}$`，小写字母、数字、连字符，必须以字母或数字开头，最多 64 字符。 | `slug` |
 | `tags[]` | 每个 tag 1-64 字符，只能使用字母、数字、`.`、`_`、`-`。 | `tags` |
 
-后续如果要支持嵌套 bundle frontmatter 或批量 case 行级错误，可以在保持 `field` 的同时增加 JSON Pointer，但不能破坏 `detail + field_errors` 的兼容契约。
+当前 bundle 导入字段错误：
+
+| 场景 | `field` | `code` |
+| --- | --- | --- |
+| folder 导入缺少根目录 `SKILL.md` | `folder_files` | `skill_import.skill_md_missing` |
+| zip 导入缺少根目录 `SKILL.md` | `zip_file` | `skill_import.skill_md_missing` |
+| `SKILL.md` 不是 UTF-8 | `folder_files` 或 `zip_file` | `skill_import.skill_md_not_utf8` |
+| `SKILL.md` 缺少 YAML frontmatter | `folder_files` 或 `zip_file` | `skill_import.frontmatter_missing` |
+| frontmatter 为空或未关闭 | `folder_files` 或 `zip_file` | `skill_import.frontmatter_empty` / `skill_import.frontmatter_unclosed` |
+| frontmatter `name` 格式不合法 | `folder_files` 或 `zip_file` | `skill_import.name_invalid` |
+| frontmatter 缺少 `description` 或过长 | `folder_files` 或 `zip_file` | `skill_import.description_required` / `skill_import.description_too_long` |
+| zip 无法读取 | `zip_file` | `skill_import.zip_unreadable` |
+
+后续如果要支持嵌套字段或批量 case 行级错误，可以在保持 `field` 的同时增加 JSON Pointer，但不能破坏 `detail + field_errors` 的兼容契约。
 
 ### Local Session
 

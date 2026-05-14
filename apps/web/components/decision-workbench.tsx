@@ -883,26 +883,30 @@ export function DecisionWorkbench({
       setNotice({ tone: "bad", message: "文件夹和 zip 只能选择一种来源。" });
       return;
     }
-    await runCommand("Skill bundle 已导入。", async () => {
-      const source = await sourceFromSelectedBundle({ folderFiles, zipFile });
-      const result = await apiSend<ImportSkillResponse>("/api/skill-imports", {
-        method: "POST",
-        body: {
-          owner_ref: textValue(form, "owner_ref"),
-          tags: tagList(textValue(form, "tags")),
-          variant_label: textValue(form, "variant_label") || "Imported",
-          source,
-        },
-      });
-      setCatalogQuery("");
-      chooseAction("skill", { focusInspector: false });
-      setImportPreview(null);
-      formElement.reset();
-      return {
-        message: `已导入 ${result.slug}，包含 ${result.file_count} 个文件。`,
-        selectedSkillId: result.skill_id,
-      };
-    });
+    await runCommand(
+      "Skill bundle 已导入。",
+      async () => {
+        const source = await sourceFromSelectedBundle({ folderFiles, zipFile });
+        const result = await apiSend<ImportSkillResponse>("/api/skill-imports", {
+          method: "POST",
+          body: {
+            owner_ref: textValue(form, "owner_ref"),
+            tags: tagList(textValue(form, "tags")),
+            variant_label: textValue(form, "variant_label") || "Imported",
+            source,
+          },
+        });
+        setCatalogQuery("");
+        chooseAction("skill", { focusInspector: false });
+        setImportPreview(null);
+        formElement.reset();
+        return {
+          message: `已导入 ${result.slug}，包含 ${result.file_count} 个文件。`,
+          selectedSkillId: result.skill_id,
+        };
+      },
+      { rethrowFieldErrors: true },
+    );
   }
 
   async function refreshImportPreview(event: FormEvent<HTMLFormElement>) {

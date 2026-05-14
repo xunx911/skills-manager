@@ -10,6 +10,17 @@
 
 ## Session Log
 
+### 2026-05-14 04:42 CST - TASK-053 导入 bundle 字段错误映射第一阶段
+
+- 新增 `docs/superpowers/specs/2026-05-14-import-bundle-field-errors-design.md` 和执行计划，记录 GOV.UK Error Summary、GOV.UK File Upload、JSON:API 和 RFC 9457 对导入错误定位的适配。
+- `POST /api/skill-imports` 捕获 bundle parser 的 `InvariantError`，保留兼容 `detail`，并按 `source.kind` 把错误映射到 `folder_files` 或 `zip_file`。
+- 新增稳定错误码覆盖缺少 `SKILL.md`、frontmatter 缺失/为空/未关闭、`name` 不合法、`description` 缺失/过长、`SKILL.md` 非 UTF-8 和 zip 不可读。
+- 导入 skill 命令在服务端字段错误时冒泡给 `ValidatedForm`，Launchpad 和 Inspector 的文件上传控件会显示错误摘要、字段旁错误和 `aria-invalid`。
+- 新增 API 红绿测试覆盖 folder frontmatter 缺少 `description` 和 zip 不可读；新增 E2E 覆盖不合法 folder bundle 的错误摘要和上传字段回填。
+- 修复本地 `uv` cache 权限对一键启动和 Playwright webServer 的影响：`scripts/dev.sh` 与 E2E API webServer 默认使用 `UV_NO_CACHE=1`。
+- README、API contract、产品体验评审、完成度审计、摩擦审计和 TASK-053 任务记录已更新。
+- 已验证：红灯 API 先失败于缺少 `field_errors`；红灯 E2E 先失败于 `.formErrorSummary` 缺失；绿色后目标 API 2 passed、目标 E2E 1 passed；`UV_NO_CACHE=1 uv run pytest` 98 passed；`npm run test:unit` 4 files/15 tests passed；`npm run typecheck` passed；`npm run build` passed；`npm audit --omit=dev` found 0 vulnerabilities；`npm run e2e` 65 passed；`git diff --check` passed；任务 JSON 结构检查 passed；关键文件行数 809/1740/119/40/61/73/28/38/31。
+
 ### 2026-05-14 04:17 CST - TASK-052 基础格式校验第一阶段
 
 - 新增 `docs/superpowers/specs/2026-05-14-format-validation-design.md` 和执行计划，记录 GOV.UK Error Summary、MDN 表单校验和标准 Skill bundle name 规则对本轮格式校验的适配。

@@ -1478,6 +1478,54 @@ class ApiCommandTest(unittest.TestCase):
         self.assertEqual(duplicate.json()["detail"], "Skill ID 已存在：duplicate-reviewer")
         self.assertEqual(duplicate.json()["field_errors"][0]["code"], "skill.slug_conflict")
 
+    def test_import_skill_frontmatter_error_returns_folder_field_error(self):
+        response = self.client.post(
+            "/api/skill-imports",
+            json={
+                "owner_ref": "skillhub-lab",
+                "tags": ["codex"],
+                "source": {
+                    "kind": "files",
+                    "files": [
+                        {
+                            "path": "missing-description/SKILL.md",
+                            "content_text": "---\nname: missing-description\n---\n\n# Missing description\n",
+                        }
+                    ],
+                },
+            },
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()["detail"], "Skill description is required.")
+        self.assertEqual(
+            response.json()["field_errors"],
+            [
+                {
+                    "field": "folder_files",
+                    "message": "SKILL.md frontmatter 需要 description。",
+                    "code": "skill_import.description_required",
+                }
+            ],
+        )
+
+    def test_import_skill_zip_error_returns_zip_field_error(self):
+        response = self.client.post(
+            "/api/skill-imports",
+            json={
+                "owner_ref": "skillhub-lab",
+                "tags": ["codex"],
+                "source": {
+                    "kind": "zip",
+                    "zip_base64": "bm90LXJlYWxseS1hLXppcA==",
+                },
+            },
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()["field_errors"][0]["field"], "zip_file")
+        self.assertEqual(response.json()["field_errors"][0]["code"], "skill_import.zip_unreadable")
+
     def test_variant_version_from_bundle_source_can_be_diffed(self):
         imported = self.import_standard_skill_bundle("diff-reviewing")
         detail = self.client.get(f"/api/skills/{imported['skill_id']}").json()

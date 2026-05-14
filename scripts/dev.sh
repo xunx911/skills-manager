@@ -6,7 +6,7 @@ API_PORT="${SKILLHUB_API_PORT:-8000}"
 WEB_PORT="${SKILLHUB_WEB_PORT:-3000}"
 DATA_DIR="${SKILLHUB_DATA_DIR:-$ROOT_DIR/.data}"
 DATABASE_URL="${SKILLHUB_DATABASE_URL:-sqlite:///$DATA_DIR/skillhub.sqlite3}"
-export UV_CACHE_DIR="${UV_CACHE_DIR:-$ROOT_DIR/.uv-cache}"
+export UV_NO_CACHE="${UV_NO_CACHE:-1}"
 
 cleanup() {
   if [[ -n "${API_PID:-}" ]]; then
@@ -22,7 +22,11 @@ echo "Starting SkillHub API on http://127.0.0.1:${API_PORT}"
 mkdir -p "$DATA_DIR"
 (
   cd "$ROOT_DIR/apps/api"
-  SKILLHUB_DATABASE_URL="$DATABASE_URL" uv run uvicorn skillhub.api.main:app --host 127.0.0.1 --port "$API_PORT"
+  if command -v ruby >/dev/null 2>&1; then
+    SKILLHUB_DATABASE_URL="$DATABASE_URL" "$ROOT_DIR/scripts/run-uvicorn-socket-activated.rb" "$API_PORT"
+  else
+    SKILLHUB_DATABASE_URL="$DATABASE_URL" uv run uvicorn skillhub.api.main:app --host 127.0.0.1 --port "$API_PORT"
+  fi
 ) &
 API_PID=$!
 

@@ -25,7 +25,7 @@ export default defineConfig({
   ],
   webServer: [
     {
-      command: `cd ../api && SKILLHUB_DATABASE_URL=${databaseUrl} uv run uvicorn skillhub.api.main:app --host 127.0.0.1 --port ${apiPort}`,
+      command: `cd ../api && UV_NO_CACHE=1 SKILLHUB_DATABASE_URL=${databaseUrl} sh -c 'if command -v ruby >/dev/null 2>&1; then ruby ../../scripts/run-uvicorn-socket-activated.rb ${apiPort}; else uv run uvicorn skillhub.api.main:app --host 127.0.0.1 --port ${apiPort}; fi'`,
       url: `http://127.0.0.1:${apiPort}/health`,
       reuseExistingServer: false,
       timeout: 60_000,

@@ -362,5 +362,12 @@
     "priority": 52,
     "passes": true,
     "spec": ".agent/tasks/TASK-052.json"
+  },
+  {
+    "id": "053",
+    "title": "导入 bundle 字段错误映射第一阶段",
+    "priority": 53,
+    "passes": true,
+    "spec": ".agent/tasks/TASK-053.json"
   }
 ]

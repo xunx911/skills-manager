@@ -1,0 +1,38 @@
+{
+  "id": "053",
+  "title": "导入 bundle 字段错误映射第一阶段",
+  "status": "completed",
+  "goal": "让标准 Skill bundle 导入过程中的 SKILL.md/frontmatter/zip 解析错误通过 field_errors 回填到对应文件上传控件，减少用户只能看全局失败提示的摩擦。",
+  "scope": [
+    "为 /api/skill-imports 的 bundle 解析错误返回 field_errors",
+    "folder 导入错误映射到 folder_files，zip 导入错误映射到 zip_file",
+    "让 SkillLaunchpad 和 Inspector 的导入表单遇到服务端字段错误时显示错误摘要和文件字段旁错误",
+    "新增 API 红绿测试覆盖缺少 description 的 SKILL.md frontmatter",
+    "新增 Playwright E2E 覆盖导入无 description 的文件夹后错误回填到文件夹字段",
+    "更新 README、API contract、产品体验评审、完成度审计、摩擦审计、任务日志和本任务规格"
+  ],
+  "out_of_scope": [
+    "前端解析 zip 内容并预校验 frontmatter",
+    "把错误定位到 SKILL.md 的具体行号",
+    "variant version 上传的字段错误回填",
+    "批量 case 行级错误",
+    "完整 problem details 媒体类型迁移"
+  ],
+  "verification": [
+    "Red: cd apps/api && uv run pytest tests/test_api_commands.py -k \"frontmatter_error\" -> failed as expected with missing field_errors",
+    "Red: cd apps/api && uv run pytest tests/test_api_commands.py -k \"frontmatter_error or zip_error\" -> failed as expected with missing field_errors",
+    "Red: cd apps/web && npm run e2e -- -g \"frontmatter errors\" -> failed as expected because .formErrorSummary did not appear",
+    "Green: cd apps/api && uv run pytest tests/test_api_commands.py -k \"frontmatter_error or zip_error\" -> 2 passed",
+    "Green: cd apps/web && npm run e2e -- -g \"frontmatter errors\" -> 1 passed",
+    "UV cache check: cd apps/api && UV_NO_CACHE=1 uv run pytest -> 98 passed",
+    "cd apps/web && npm run test:unit -> 4 files / 15 tests passed",
+    "cd apps/web && npm run typecheck -> passed",
+    "cd apps/web && npm run build -> passed",
+    "cd apps/web && npm audit --omit=dev -> found 0 vulnerabilities",
+    "Fix: ruby scripts/run-uvicorn-socket-activated.rb hands a pre-bound local socket fd to uvicorn, avoiding macOS Python bind EPERM while keeping the same FastAPI app under test",
+    "cd apps/web && npm run e2e -> 65 passed",
+    "git diff --check -> passed",
+    "jq empty .agent/tasks.json .agent/tasks/TASK-053.json -> passed",
+    "wc -l apps/api/skillhub/api/main.py apps/api/tests/test_api_commands.py apps/web/e2e/form-errors.spec.ts apps/web/playwright.config.ts scripts/dev.sh docs/superpowers/specs/2026-05-14-import-bundle-field-errors-design.md docs/superpowers/plans/2026-05-14-import-bundle-field-errors.md .agent/tasks/TASK-053.json scripts/run-uvicorn-socket-activated.rb -> 809 / 1740 / 119 / 40 / 61 / 73 / 28 / 38 / 31"
+  ]
+}

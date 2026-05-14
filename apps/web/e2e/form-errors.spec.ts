@@ -1,4 +1,7 @@
 import { expect, test } from "@playwright/test";
+import { mkdtemp, writeFile, rm } from "node:fs/promises";
+import { join } from "node:path";
+import { tmpdir } from "node:os";
 
 import { clearSkillCatalog, importSkillBundle } from "./helpers";
 
@@ -79,4 +82,38 @@ test("quick case required fields show a focused error summary", async ({ page })
   await expect(summary).toContainText("填写 Input");
   await expect(summary).toContainText("填写 Expected output");
   await expect(page.locator(".quickCaseGrid").locator('input[name="quick_title"]')).toHaveAttribute("aria-invalid", "true");
+});
+
+test("skill bundle frontmatter errors map to the folder upload field", async ({ page, request }) => {
+  await clearSkillCatalog(request);
+  const bundleDir = await mkdtemp(join(tmpdir(), "skillhub-invalid-bundle-"));
+
+  await writeFile(
+    join(bundleDir, "SKILL.md"),
+    [
+      "---",
+      "name: Bad Skill",
+      "description: Invalid name should be reported against the selected bundle.",
+      "---",
+      "",
+      "# Invalid name",
+    ].join("\n"),
+  );
+
+  try {
+    await page.goto("/skills");
+    const form = page.locator(".skillLaunchpadForm");
+    await form.locator('input[name="owner_ref"]').fill("skillhub-e2e");
+    await form.locator('input[name="tags"]').fill("codex, e2e");
+    await form.locator('input[name="folder_files"]').setInputFiles(bundleDir);
+    await form.getByRole("button", { name: "导入并创建 skill" }).click();
+
+    const summary = form.locator(".formErrorSummary");
+    await expect(summary).toBeVisible();
+    await expect(summary).toBeFocused();
+    await expect(summary).toContainText("SKILL.md frontmatter name 只能使用小写字母");
+    await expect(form.locator('input[name="folder_files"]')).toHaveAttribute("aria-invalid", "true");
+  } finally {
+    await rm(bundleDir, { force: true, recursive: true });
+  }
 });

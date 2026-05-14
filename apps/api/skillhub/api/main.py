@@ -21,7 +21,7 @@ from skillhub.api.auth import (
     normalize_actor,
     set_actor_cookie,
 )
-from skillhub.domain.errors import InvariantError, NotFoundError, PermissionDeniedError
+from skillhub.domain.errors import FieldError, FieldInvariantError, InvariantError, NotFoundError, PermissionDeniedError
 from skillhub.domain.models import ContentRef
 from skillhub.infrastructure.db.repositories import SqlSkillRepository
 from skillhub.infrastructure.db.tables import metadata
@@ -417,7 +417,7 @@ def create_app(engine: Engine | None = None) -> FastAPI:
         actor: ActorContext = Depends(actor_dependency),
         repository: SqlSkillRepository = Depends(repository_dependency),
     ):
-        bundle = parse_skill_import_source(payload.source)
+        bundle = parse_skill_import_payload(payload.source)
         artifact = repository.create_text_artifact(
             kind="skill_bundle",
             namespace=f"skill-import:{bundle.slug}",
@@ -706,6 +706,20 @@ def result_payload(result: Any) -> Any:
     return result
 
 
+def parse_skill_import_payload(source: dict[str, Any]):
+    try:
+        return parse_skill_import_source(source)
+    except InvariantError as exc:
+        raise skill_import_field_error(source, exc) from exc
+
+
+def skill_import_field_error(source: dict[str, Any], exc: InvariantError) -> FieldInvariantError:
+    detail = str(exc)
+    message, code = SKILL_IMPORT_ERROR_MESSAGES.get(detail, (detail, "skill_import.invalid_bundle"))
+    field = "zip_file" if source.get("kind") == "zip" else "folder_files"
+    return FieldInvariantError(detail, [FieldError(field=field, message=message, code=code)])
+
+
 def error_payload(exc: InvariantError) -> dict[str, Any]:
     content: dict[str, Any] = {"detail": str(exc)}
     field_errors = [error.to_payload() for error in getattr(exc, "field_errors", [])]
@@ -755,6 +769,40 @@ API_FIELD_LABELS = {
     "variant_summary": "变体简介",
     "tags": "约束标签",
     "change_summary": "版本说明",
+}
+
+
+SKILL_IMPORT_ERROR_MESSAGES = {
+    "Skill bundle must contain SKILL.md at its root.": (
+        "选择的 Skill bundle 根目录必须包含 SKILL.md。",
+        "skill_import.skill_md_missing",
+    ),
+    "SKILL.md must be UTF-8 text.": ("SKILL.md 必须是 UTF-8 文本。", "skill_import.skill_md_not_utf8"),
+    "SKILL.md must start with YAML frontmatter.": (
+        "SKILL.md 必须以 YAML frontmatter 开头。",
+        "skill_import.frontmatter_missing",
+    ),
+    "SKILL.md frontmatter cannot be empty.": (
+        "SKILL.md frontmatter 不能是空的。",
+        "skill_import.frontmatter_empty",
+    ),
+    "SKILL.md frontmatter must end with ---.": (
+        "SKILL.md frontmatter 必须用 --- 结束。",
+        "skill_import.frontmatter_unclosed",
+    ),
+    "Skill name must be lowercase letters, numbers, and hyphens, up to 64 characters.": (
+        "SKILL.md frontmatter name 只能使用小写字母、数字和连字符，且必须以字母或数字开头，最多 64 个字符。",
+        "skill_import.name_invalid",
+    ),
+    "Skill description is required.": (
+        "SKILL.md frontmatter 需要 description。",
+        "skill_import.description_required",
+    ),
+    "Skill description must be 1024 characters or fewer.": (
+        "SKILL.md frontmatter description 最多 1024 个字符。",
+        "skill_import.description_too_long",
+    ),
+    "Skill import zip is not readable.": ("选择的 zip 不是可读取的 Skill bundle。", "skill_import.zip_unreadable"),
 }
 
 
