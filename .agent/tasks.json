@@ -369,5 +369,12 @@
     "priority": 53,
     "passes": true,
     "spec": ".agent/tasks/TASK-053.json"
+  },
+  {
+    "id": "054",
+    "title": "批量 case 行级错误第一阶段",
+    "priority": 54,
+    "passes": true,
+    "spec": ".agent/tasks/TASK-054.json"
   }
 ]

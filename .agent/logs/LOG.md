@@ -10,6 +10,16 @@
 
 ## Session Log
 
+### 2026-05-15 04:20 CST - TASK-054 批量 case 行级错误第一阶段
+
+- 新增 `docs/superpowers/specs/2026-05-15-batch-case-row-errors-design.md` 和执行计划，记录 GOV.UK Error Summary、Airtable 多行粘贴和 TestRail case import 对批量错误体验的适配。
+- 新增 `quick-add-cases-parser.ts`，把批量 case parser 从组件中抽成纯 TS 模块，返回 `valid`、`invalidRows` 和 `invalidCount`。
+- `ValidatedForm` 新增可选 `validate(form)` 扩展点，供本地业务校验复用同一套错误摘要、summary focus、字段旁错误和 `aria-invalid`。
+- 批量 case 表单接入 `ValidatedForm`：有无效行时阻止提交，错误回填到 `batch_cases` textarea，并显示最多前三条行级错误。
+- 新增 unit 红绿测试覆盖缺少 Expected output 和标题的行级解析；新增 E2E 覆盖无效行阻止提交、summary focus、`aria-invalid` 和不创建部分有效 case。
+- README、产品体验评审、完成度审计、摩擦审计和 TASK-054 任务记录已更新。
+- 已验证：红灯 unit 先失败于 parser 模块缺失；红灯 E2E 先失败于 `.formErrorSummary` 缺失；绿色后目标 unit 1 passed、目标 E2E 1 passed；`UV_NO_CACHE=1 uv run pytest` 98 passed；`npm run test:unit` 5 files/16 tests passed；`npm run typecheck` passed；`npm run build` passed；`npm audit --omit=dev` found 0 vulnerabilities；`npm run e2e` 66 passed；`git diff --check` passed；任务 JSON 结构检查 passed；关键文件行数 120/68/22/184/140/8222/48/28/35。
+
 ### 2026-05-14 04:42 CST - TASK-053 导入 bundle 字段错误映射第一阶段
 
 - 新增 `docs/superpowers/specs/2026-05-14-import-bundle-field-errors-design.md` 和执行计划，记录 GOV.UK Error Summary、GOV.UK File Upload、JSON:API 和 RFC 9457 对导入错误定位的适配。

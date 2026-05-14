@@ -899,6 +899,14 @@ a:focus-visible {
   font-weight: 760;
 }
 
+.quickCaseBatchErrors {
+  margin: 0;
+  padding: 0 0 0 18px;
+  color: var(--danger-strong);
+  font-size: 12px;
+  line-height: 1.7;
+}
+
 .pageHeader,
 .hubOverview,
 .stack,

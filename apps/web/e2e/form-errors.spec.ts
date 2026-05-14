@@ -117,3 +117,24 @@ test("skill bundle frontmatter errors map to the folder upload field", async ({ 
     await rm(bundleDir, { force: true, recursive: true });
   }
 });
+
+test("batch case row errors block submit and focus the batch field", async ({ page }) => {
+  await importSkillBundle(page, `batch-errors-${Date.now()}`);
+
+  await page.getByRole("tab", { name: "测评", exact: true }).click();
+  await page.getByRole("button", { name: "批量", exact: true }).click();
+  await page.getByLabel("批量 case 文本").fill(
+    [
+      "PR: missing tenant scope | Project.all() | Flag missing tenant scope.",
+      "PR: token logging | console.log(token)",
+    ].join("\n"),
+  );
+  await page.getByRole("button", { name: "批量加入评测集" }).click();
+
+  const summary = page.locator(".quickCaseBatch").locator(".formErrorSummary");
+  await expect(summary).toBeVisible();
+  await expect(summary).toBeFocused();
+  await expect(summary).toContainText("第 2 行缺少 Expected output。");
+  await expect(page.getByLabel("批量 case 文本")).toHaveAttribute("aria-invalid", "true");
+  await expect(page.locator(".caseReviewCard").filter({ hasText: "PR: missing tenant scope" })).toHaveCount(0);
+});

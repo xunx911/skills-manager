@@ -17,6 +17,7 @@ type ValidatedFormProps = Omit<FormHTMLAttributes<HTMLFormElement>, "noValidate"
   children: ReactNode;
   onValidSubmit: (event: FormEvent<HTMLFormElement>) => void | Promise<void>;
   summaryTitle?: string;
+  validate?: (form: HTMLFormElement) => FormFieldError[];
 };
 
 const FormValidationContext = createContext<Map<string, string> | null>(null);
@@ -25,6 +26,7 @@ export function ValidatedForm({
   children,
   onValidSubmit,
   summaryTitle = "检查这些字段",
+  validate,
   ...props
 }: ValidatedFormProps) {
   const [errors, setErrors] = useState<FormFieldError[]>([]);
@@ -40,7 +42,7 @@ export function ValidatedForm({
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = event.currentTarget;
-    const nextErrors = collectRequiredFieldErrors(form);
+    const nextErrors = [...collectRequiredFieldErrors(form), ...(validate?.(form) ?? [])];
     if (nextErrors.length > 0) {
       setErrors(nextErrors);
       return;

@@ -1,0 +1,35 @@
+{
+  "id": "054",
+  "title": "批量 case 行级错误第一阶段",
+  "status": "completed",
+  "goal": "让批量粘贴 eval case 时的无效行清楚显示行号和原因，并在存在无效行时阻止静默跳过后提交。",
+  "scope": [
+    "扩展批量 case parser，返回有效 drafts 和无效行明细",
+    "批量表单有无效行时显示错误摘要并聚焦摘要",
+    "把错误回填到批量 case textarea，设置 aria-invalid",
+    "保留 tab 或 | 分隔的快速粘贴路径",
+    "新增 unit 红绿测试覆盖行级解析",
+    "新增 Playwright E2E 覆盖无效行阻止提交和字段错误"
+  ],
+  "out_of_scope": [
+    "服务端批量 case 行级错误 JSON Pointer",
+    "CSV 引号/转义解析",
+    "批量导入预览表格编辑器",
+    "批量 case 去重和相似度检测"
+  ],
+  "verification": [
+    "Red: cd apps/web && npm run test:unit -- components/eval-cases/quick-add-cases-parser.test.ts -> failed as expected because quick-add-cases-parser module was missing",
+    "Red: cd apps/web && npm run e2e -- -g \"batch case row errors\" -> failed as expected because .formErrorSummary did not appear",
+    "Green: cd apps/web && npm run test:unit -- components/eval-cases/quick-add-cases-parser.test.ts -> 1 passed",
+    "Green: cd apps/web && npm run e2e -- -g \"batch case row errors\" -> 1 passed",
+    "cd apps/api && UV_NO_CACHE=1 uv run pytest -> 98 passed",
+    "cd apps/web && npm run test:unit -> 5 files / 16 tests passed",
+    "cd apps/web && npm run typecheck -> passed",
+    "cd apps/web && npm run build -> passed",
+    "cd apps/web && npm audit --omit=dev -> found 0 vulnerabilities after one registry socket hang up retry",
+    "cd apps/web && npm run e2e -> 66 passed",
+    "git diff --check -> passed",
+    "jq empty .agent/tasks.json .agent/tasks/TASK-054.json -> passed",
+    "wc -l apps/web/components/eval-cases/quick-add-cases.tsx apps/web/components/eval-cases/quick-add-cases-parser.ts apps/web/components/eval-cases/quick-add-cases-parser.test.ts apps/web/components/forms/form-validation.tsx apps/web/e2e/form-errors.spec.ts apps/web/app/globals.css docs/superpowers/specs/2026-05-15-batch-case-row-errors-design.md docs/superpowers/plans/2026-05-15-batch-case-row-errors.md .agent/tasks/TASK-054.json -> 120 / 68 / 22 / 184 / 140 / 8222 / 48 / 28 / 35"
+  ]
+}

@@ -24,7 +24,7 @@
 - `/skills` 支持第二阶段 URL state：可以直达某个 skill 的 `概览 / 变体 / 测评 / 差异 / 历史 / 审计 / 评审`，并恢复 diff pair/file/filter、eval target/case、history filters、selected run、run comparison、matrix controls、audit filters 和 promotion review context；刷新、复制链接和浏览器 Back/Forward 都能还原这些证据上下文。
 - 工作台有基础 accessibility 护栏：键盘用户可用 skip link 直接进入主内容；全局 focus ring 更醒目；`prefers-reduced-motion` 会压低非必要动效；操作结果通过 `role=status` 暴露给读屏软件；命令菜单、Workbench mode tabs、Run matrix 和 Inspector action 焦点交接已有 E2E 回归。
 - 表单字段基础件已覆盖主要工作台表单：`SkillLaunchpad`、`WorkbenchInspector`、快速添加 case、case 详情内联编辑、skill 设置、访问控制、危险区确认、保存历史视图、history filters、run matrix controls 和 diff selectors 都使用共享字段壳层；业务 text/textarea 默认显式 `autocomplete="off"`。高频写入表单现在使用 `ValidatedForm` 做 required 字段错误摘要、字段旁错误、`aria-invalid` 和摘要链接聚焦，不再依赖浏览器原生 required 气泡；后端唯一性和请求体校验错误会保留 `detail` 并返回 `field_errors`，新建/编辑 skill 时重复或格式错误的 Skill ID 会直接回填到 `Skill ID` 字段，非法 tag 会回填到 `约束标签` 字段，导入 bundle 的 `SKILL.md`、frontmatter 或 zip 解析错误会回填到对应的文件上传字段。
-- `测评` 页支持单条快速添加和批量粘贴 case；批量写入会生成一个新的 `EvalSetVersion`，避免逐条添加制造版本噪音。
+- `测评` 页支持单条快速添加和批量粘贴 case；批量写入会生成一个新的 `EvalSetVersion`，避免逐条添加制造版本噪音。批量粘贴不会静默跳过无效行；缺少标题、Input 或 Expected output 时会显示行号和错误摘要。
 - `测评` 页的手工确认区是 review queue：可按全部/未确认/通过/不通过筛选，点击通过/不通过后自动前进到下一条未确认 case，并支持把未确认项批量标为通过。
 - 导入标准 Skill bundle 后，`概览` 会显示验证清单，引导用户补首批 case、记录首轮手工测评，再进入历史页沉淀证据。
 - 追加 candidate 版本后会自动切到该版本的测评上下文，完成候选 run 后可直接从测评页进入“设为当前版本评审”。
@@ -80,7 +80,7 @@ npm run dev -- --hostname 127.0.0.1 --port 3000
 6. 在 `概览` 页的 `身份与默认分发` 中可直接修改 skill ID、归属，并选择哪个 variant 作为默认分发入口。
 7. 在 `概览` 页的 `访问控制` 中可查看当前 skill 的 owner/maintainer/evaluator/viewer，并添加或移除成员角色。
 8. 在 `概览` 页的 `治理与审计` 中查看最近权限/发布/归档事件；点击 `查看全部审计` 可以进入 `审计 Explorer`，先用 action chip 快速收窄，再按 actor、action 和 resource type 精确过滤。选中事件后先看 actor/resource/time/summary 和 payload key/value，只有排障时再展开 `Raw payload`。确实要归档时，需要输入当前 skill ID 后才能执行。
-9. 在 `测评` 页可以直接用快速添加面板录入单条 case，或切到 `批量` 后粘贴多行 `title | input | expected output | notes`。
+9. 在 `测评` 页可以直接用快速添加面板录入单条 case，或切到 `批量` 后粘贴多行 `title | input | expected output | notes`。如果某行缺字段，页面会阻止提交、聚焦错误摘要，并在批量文本框旁提示第几行需要修正。
 10. 在 `变体` 页可直接用 `新建约束 variant` 创建新的 tags 组合；默认会从当前 default variant 的 current version 复制基线，创建后在同一张 variant map 中出现。
 11. 在 `变体` 页可直接用 `追加候选版本` 上传新的标准 Skill 文件夹或 zip；默认不会设为 current，保存后会自动切到 candidate 的测评上下文。
 12. 在 `测评` 页用 `未确认` 筛选处理剩余 case；点击 `通过` / `不通过` 会自动选中下一条未确认 case，也可以用 `未确认标为通过` 快速完成低风险批次。选中 case 后可直接在详情面板点击 `编辑`，保存时会生成新的 case version 和新的 `EvalSetVersion`，不用跳到右侧 inspector。
