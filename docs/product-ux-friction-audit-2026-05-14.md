@@ -125,6 +125,7 @@
 - Launchpad 和 Inspector 导入表单会捕获这些服务端字段错误，展示错误摘要，把同一条错误显示在上传控件旁，并标记 `aria-invalid`。
 - TASK-054 新增批量 case 行级错误第一阶段：前端 parser 返回 `invalidRows`，批量表单有无效行时阻止提交、聚焦错误摘要，并把错误回填到 `batch_cases` textarea。
 - TASK-055 新增服务端批量 case 字段错误契约：直连 `POST /api/eval-cases/batch` 时，缺字段或空字段返回 `cases[n].title`、`cases[n].expected_output` 这类行级 `field_errors`，同时保留 `tags[0] -> tags` 的旧映射。
+- TASK-056 新增 eval case 文本长度校验：标题、Input、Expected output 和 Notes 超限时返回字段级错误，避免测试资产被误用成无限长文本存储。
 
 影响：
 
@@ -132,11 +133,12 @@
 - 用户不再被浏览器原生 required 气泡挡住；服务端唯一性错误也不再只出现在全局 notice，而是回到用户需要修改的字段。
 - 导入 bundle 的结构错误不再被当成普通 toast；用户能直接知道该重新选择文件夹还是 zip。
 - 批量粘贴 case 不再静默跳过坏行；用户能看到第几行缺少标题、Input 或 Expected output。自动化脚本或外部导入工具直接调批量 API 时也能拿到同样的行级字段定位。
+- 过长 eval case 不再悄悄进入测评集；维护者会看到对应字段的上限说明，并明确知道内容没有被截断保存。
 - 后续新增表单应该优先复用 `WorkbenchField`，而不是在 pane 内继续手写 label/control。
 
 建议：
 
-- 下一轮表单方向应聚焦其余长文本长度上限、错误统计，以及更复杂嵌套表单的字段级回填。
+- 下一轮表单方向应聚焦其他产品字段长度上限、错误统计，以及更复杂嵌套表单的字段级回填。
 - 不建议为了“更像表单系统”而改成全受控输入；SkillHub 的长文本 case input/expected output 仍适合原生 form + FormData。
 
 ### 已解决第二阶段 / 仍需后续 - Command menu 已成为工作台操作入口层
@@ -197,7 +199,7 @@
 
 ## 下一轮任务排序
 
-1. **表单验证第二阶段剩余部分。** 其余长文本长度上限、错误统计，以及更复杂嵌套表单的字段级回填。
+1. **表单验证第二阶段剩余部分。** 其他产品字段长度上限、错误统计，以及更复杂嵌套表单的字段级回填。
 2. **接入真实认证。** 用真实登录 session/token 替换本地 actor cookie，并把 capability 反映到 UI。
 3. **组织级 Audit Explorer。** 跨 skill 查询、日期范围、分页、导出和保留策略。
 4. **Diff / Promotion reviewed progress 第二阶段。** 决定是否服务端持久化、自动折叠已查看文件或纳入 promotion checklist。

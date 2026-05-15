@@ -1,0 +1,32 @@
+{
+  "id": "056",
+  "title": "Eval case 文本长度校验",
+  "status": "complete",
+  "goal": "为 eval case 的标题、输入、期望输出和 notes 增加服务端长度上限，并返回可回填字段的中文错误。",
+  "scope": [
+    "覆盖 POST /api/eval-cases",
+    "覆盖 POST /api/eval-cases/batch",
+    "覆盖 POST /api/eval-case-versions 和 PATCH /api/eval-cases/{case_id}",
+    "保持批量 cases[n].field 字段路径",
+    "新增 API 红绿测试覆盖 overlong title/input/expected output",
+    "更新 API contract、README、审计和任务文档"
+  ],
+  "out_of_scope": [
+    "前端 maxlength 字符计数器",
+    "自动截断用户输入",
+    "Skill/Variant/Promotion 其他字段长度约束",
+    "附件或大文件上传通道"
+  ],
+  "verification": [
+    "红灯：UV_NO_CACHE=1 uv run pytest tests/test_api_commands.py -k \"eval_case_rejects_overlong\" -> 3 failed，旧 API 对超长标题、Input 和 Expected output 仍返回 200。",
+    "目标 API：UV_NO_CACHE=1 uv run pytest tests/test_api_commands.py -k \"eval_case_rejects_overlong or batch_eval_cases_endpoint_returns_row_field_errors or request_validation_error_returns_field_errors\" -> 5 passed。",
+    "后端全量：cd apps/api && UV_NO_CACHE=1 uv run pytest -> 102 passed。",
+    "前端单元：cd apps/web && npm run test:unit -> 5 files / 16 tests passed。",
+    "前端类型：cd apps/web && npm run typecheck -> passed。",
+    "前端构建：cd apps/web && npm run build -> passed。",
+    "依赖审计：cd apps/web && npm audit --omit=dev -> found 0 vulnerabilities（期间 registry POST 短暂 TLS/socket 失败，重试后通过）。",
+    "E2E：cd apps/web && npm run e2e -> 66 passed。",
+    "结构检查：git diff --check -> passed；jq empty .agent/tasks.json .agent/tasks/TASK-056.json -> passed。",
+    "关键文件行数：884 / 1860 / 223 / 1016 / 176 / 212 / 172 / 47 / 67 / 32 / 435。"
+  ]
+}

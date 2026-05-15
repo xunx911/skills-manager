@@ -383,5 +383,12 @@
     "priority": 55,
     "passes": true,
     "spec": ".agent/tasks/TASK-055.json"
+  },
+  {
+    "id": "056",
+    "title": "Eval case 文本长度校验",
+    "priority": 56,
+    "passes": true,
+    "spec": ".agent/tasks/TASK-056.json"
   }
 ]

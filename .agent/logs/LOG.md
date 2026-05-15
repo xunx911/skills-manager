@@ -10,6 +10,15 @@
 
 ## Session Log
 
+### 2026-05-15 10:55 CST - TASK-056 Eval case 文本长度校验
+
+- 新增 `docs/superpowers/specs/2026-05-15-eval-case-length-validation-design.md` 和执行计划，记录 GOV.UK/MOJ、MDN 以及 GitHub/Linear 类工作流产品对标题/正文边界的适配。
+- 后端为 eval case 写入路径增加资产保护上限：`title` 160、`input_text` 20000、`expected_output` 10000、`notes` 2000 字符。
+- `POST /api/eval-cases`、`POST /api/eval-cases/batch`、`POST /api/eval-case-versions` 和 `PATCH /api/eval-cases/{case_id}` 共用同一组 Pydantic 字段规则。
+- 字段错误文案新增上限说明；批量路径继续返回 `cases[n].field`，单条和更新路径返回具体字段名。
+- README、API contract、产品体验评审、完成度审计、摩擦审计和 TASK-056 任务记录已更新。
+- 已验证：红灯 API 先失败于超长标题、Input 和 Expected output 仍返回 200；绿色后目标 API 5 passed；`UV_NO_CACHE=1 uv run pytest` 102 passed；`npm run test:unit` 5 files/16 tests passed；`npm run typecheck` passed；`npm run build` passed；`npm audit --omit=dev` found 0 vulnerabilities；`npm run e2e` 66 passed；`git diff --check` passed；任务 JSON 结构检查 passed；关键文件行数 884/1860/223/1016/176/212/172/47/67/32/435。
+
 ### 2026-05-15 10:22 CST - TASK-055 服务端批量 case 字段错误契约
 
 - 新增 `docs/superpowers/specs/2026-05-15-batch-case-api-field-errors-design.md` 和执行计划，记录 JSON:API、RFC 9457 与 GOV.UK Error Summary 对批量 API 字段定位的适配。

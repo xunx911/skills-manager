@@ -2,7 +2,7 @@
 
 日期：2026-05-15
 
-状态：尚未达到“成熟产品完成”。当前已经是一个强的正式垂直切片：主工作区 Skill Launchpad、移动端 first-run 单主路径、中等桌面证据视图 compact inspector rail、URL state 第二阶段、高频写入表单字段基础件第二阶段、表单验证错误摘要、后端字段错误映射、基础格式校验第一阶段、导入 bundle 字段错误映射第一阶段、批量 case 行级错误第一阶段、服务端批量 case 字段错误契约、Command menu 第二阶段、Diff / Promotion 文件 reviewed progress 第一阶段、主工作区 Skill 设置、Skill 作用域访问控制、本地 session actor、基础 accessibility 护栏、Workbench mode tablist、Inspector action 焦点交接、Skill 治理与审计面板、Skill 审计 Explorer quick filters/readable timeline/structured detail、标准 Skill bundle 导入、导入后验证清单、variant/version、candidate verification handoff、eval set version、manual eval review queue、历史查看、run matrix 多维控制与表格语义、保存历史筛选视图、run-to-run comparison、accepted verification、bundle diff、candidate promotion review、上下文命令菜单 ARIA 和快速添加 case 都能闭环。但距离成熟产品还缺少真实认证、多用户协作、自动测评策略和更深的可访问性验证。
+状态：尚未达到“成熟产品完成”。当前已经是一个强的正式垂直切片：主工作区 Skill Launchpad、移动端 first-run 单主路径、中等桌面证据视图 compact inspector rail、URL state 第二阶段、高频写入表单字段基础件第二阶段、表单验证错误摘要、后端字段错误映射、基础格式校验第一阶段、导入 bundle 字段错误映射第一阶段、批量 case 行级错误第一阶段、服务端批量 case 字段错误契约、eval case 文本长度校验、Command menu 第二阶段、Diff / Promotion 文件 reviewed progress 第一阶段、主工作区 Skill 设置、Skill 作用域访问控制、本地 session actor、基础 accessibility 护栏、Workbench mode tablist、Inspector action 焦点交接、Skill 治理与审计面板、Skill 审计 Explorer quick filters/readable timeline/structured detail、标准 Skill bundle 导入、导入后验证清单、variant/version、candidate verification handoff、eval set version、manual eval review queue、历史查看、run matrix 多维控制与表格语义、保存历史筛选视图、run-to-run comparison、accepted verification、bundle diff、candidate promotion review、上下文命令菜单 ARIA 和快速添加 case 都能闭环。但距离成熟产品还缺少真实认证、多用户协作、自动测评策略和更深的可访问性验证。
 
 ## 目标拆解
 
@@ -43,7 +43,7 @@
 | Local session 面板 | 右侧 inspector 显示当前本地 actor，可切换为 `release-manager` 等身份；E2E 覆盖切换后导入 skill，owner role 来自 session actor；视觉回归覆盖 session 面板。 | 完成 |
 | Accessibility 基础护栏 | `AppShell` 提供 skip link；全局 `:focus-visible` 使用高对比双层 ring；`prefers-reduced-motion` 压低非必要 transition；`linearNotice` 使用 `role=status`；E2E 覆盖四条回归。 | 完成 |
 | 高频表单字段基础件 | `WorkbenchField` 系列统一 Launchpad、Inspector、QuickAddCases、EvalCaseDetailPanel、SkillSettingsPanel、SkillAccessPanel、SkillGovernancePanel、SavedRunViews、history filters、run matrix controls 和 diff selectors 的 label、hint、error、`aria-describedby`、业务字段 `autocomplete="off"` 和局部 `:focus-visible`；E2E 覆盖主要表单字段语义。 | 完成第二阶段 |
-| 表单验证与字段错误 | `ValidatedForm` 统一高频写入表单的 required 校验；缺字段时展示 error summary、聚焦 summary、摘要链接回字段，并通过 `WorkbenchField` 显示字段旁错误和 `aria-invalid`；后端保留 `detail` 并返回 `field_errors`，创建/更新 skill 的重复或格式错误 Skill ID 会回填到 `slug` 字段，非法 tag 会回填到 `tags` 字段，导入 bundle 的 `SKILL.md`、frontmatter 和 zip 解析错误会回填到 `folder_files` 或 `zip_file`；批量 case parser 会返回行级错误并回填到 `batch_cases` 字段，直连批量 API 缺字段会返回 `cases[n].field`；E2E 覆盖 Launchpad、QuickAddCases、服务端字段错误、服务端格式错误、bundle frontmatter 错误和批量 case 行级错误，API 覆盖服务端行级字段错误。 | 完成服务端批量 case 字段错误契约 |
+| 表单验证与字段错误 | `ValidatedForm` 统一高频写入表单的 required 校验；缺字段时展示 error summary、聚焦 summary、摘要链接回字段，并通过 `WorkbenchField` 显示字段旁错误和 `aria-invalid`；后端保留 `detail` 并返回 `field_errors`，创建/更新 skill 的重复或格式错误 Skill ID 会回填到 `slug` 字段，非法 tag 会回填到 `tags` 字段，导入 bundle 的 `SKILL.md`、frontmatter 和 zip 解析错误会回填到 `folder_files` 或 `zip_file`；批量 case parser 会返回行级错误并回填到 `batch_cases` 字段，直连批量 API 缺字段会返回 `cases[n].field`；eval case 标题、Input、Expected output 和 Notes 超限会返回字段级错误；E2E 覆盖 Launchpad、QuickAddCases、服务端字段错误、服务端格式错误、bundle frontmatter 错误和批量 case 行级错误，API 覆盖服务端行级字段错误和长度上限。 | 完成 eval case 文本长度校验 |
 | Command menu ARIA | `CommandMenu` 使用 `role=dialog`、editable `combobox`、`listbox/option`、`aria-activedescendant`、关闭按钮和 Tab trap；E2E 覆盖方向键、弹层内焦点循环和关闭回焦点。 | 完成 |
 | Workbench mode tablist | 工作区模式切换使用 `role=tablist/tab/tabpanel`、`aria-selected`、roving `tabIndex` 和 Left/Right/Home/End 键盘导航；E2E 覆盖 tablist 语义和方向键切换。 | 完成 |
 | URL state 第一阶段 | `/skills` 服务端读取 `skill` 与 `mode` query；前端 History API 同步 selected skill/mode，并监听 `popstate` 支持 Back/Forward；E2E 覆盖直达、刷新、URL 更新和浏览器历史恢复。 | 完成 |
@@ -54,8 +54,8 @@
 | 追加 candidate version | `POST /api/variant-versions` 支持 `make_current=false`；E2E 创建候选版本并保持 current 不变。 | 完成 |
 | 主工作区追加候选版本 | `WorkspaceVersionComposer` 在 `变体` 主面板直接上传标准 Skill bundle；E2E 覆盖保存 candidate 后自动进入候选测评。 | 完成 |
 | Candidate 验证交接 | E2E 覆盖追加 candidate 后自动切到测评页、自动选择新版本、清空旧草稿，并从 banner 进入 promotion review。 | 完成 |
-| Eval case 新增 | `POST /api/eval-cases`；E2E `addEvalCase`。 | 完成 |
-| Eval case 批量新增 | `POST /api/eval-cases/batch`；Repository/API 测试验证一次批量只生成一个 `EvalSetVersion`；E2E 覆盖批量粘贴后记录 run；批量粘贴缺字段时会显示行号、阻止部分提交，并标记 `batch_cases` 字段；直连 API 缺字段或空字段时返回 `cases[n].title/input_text/expected_output`，不会写入部分有效 case。 | 完成 |
+| Eval case 新增 | `POST /api/eval-cases`；E2E `addEvalCase`；服务端限制标题 160、Input 20000、Expected output 10000、Notes 2000 字符，超限返回字段错误且不自动截断。 | 完成 |
+| Eval case 批量新增 | `POST /api/eval-cases/batch`；Repository/API 测试验证一次批量只生成一个 `EvalSetVersion`；E2E 覆盖批量粘贴后记录 run；批量粘贴缺字段时会显示行号、阻止部分提交，并标记 `batch_cases` 字段；直连 API 缺字段、空字段或超限时返回 `cases[n].title/input_text/expected_output/notes`，不会写入部分有效 case。 | 完成 |
 | Eval case 编辑/版本化 | `PATCH /api/eval-cases/{case_id}`；E2E 覆盖编辑；后端测试验证生成新 eval set snapshot。 | 完成 |
 | Eval case 详情内联编辑 | `EvalCaseDetailPanel` 在测评详情中直接编辑 title/input/expected/notes；E2E 覆盖不经过 inspector 的 inline edit 路径。 | 完成 |
 | Eval case 归档 | `DELETE /api/eval-cases/{case_id}`；E2E 覆盖归档。 | 完成 |
@@ -123,6 +123,7 @@ wc -l apps/api/skillhub/api/main.py apps/api/tests/test_api_commands.py apps/web
 - TASK-053 增量验证：导入 bundle 字段错误 API 红绿测试通过，`UV_NO_CACHE=1 uv run pytest` 为 98 passed；Web unit 为 4 files / 15 tests passed；typecheck、production build、audit、`npm run e2e` 65 passed、`git diff --check` 和任务 JSON 检查通过；关键文件行数为 809 / 1740 / 119 / 40 / 61 / 73 / 28 / 38 / 31。
 - TASK-054 增量验证：批量 case 行级错误 unit 红绿测试通过；目标 E2E 覆盖无效行阻止提交、summary focus、`batch_cases` 的 `aria-invalid` 和不创建部分有效 case；完整验证记录见 `.agent/tasks/TASK-054.json`。
 - TASK-055 增量验证：服务端批量 case 字段错误 API 红绿测试覆盖空标题和缺少 Expected output；完整验证记录见 `.agent/tasks/TASK-055.json`。
+- TASK-056 增量验证：eval case 文本长度校验 API 红绿测试覆盖单条过长标题、批量过长 Input 和更新版本过长 Expected output；完整验证记录见 `.agent/tasks/TASK-056.json`。
 
 本轮相关视觉资产：
 
@@ -164,7 +165,7 @@ wc -l apps/api/skillhub/api/main.py apps/api/tests/test_api_commands.py apps/web
 下一轮最有价值的方向：
 
 1. 接入真实认证：用真实登录 session/token 替换本地 actor cookie，前端只展示 capability，不再自由切换开发身份。
-2. 表单验证第二阶段剩余部分：其余长度/格式/唯一性校验、更多嵌套字段错误回填和错误统计。
+2. 表单验证第二阶段剩余部分：其他产品字段长度/格式/唯一性校验、更多嵌套字段错误回填和错误统计。
 3. 把 run matrix 升级为多维表格：支持列配置、更多指标列、导出，并评估是否保存对照/候选 run 指针。
 4. 把 audit events 升级为跨 skill/组织级查询、可导出、可配置保留策略的审计系统。
 5. 把 eval strategy / runner registry 产品化。

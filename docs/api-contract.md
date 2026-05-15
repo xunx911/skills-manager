@@ -108,6 +108,10 @@
 | --- | --- | --- |
 | `slug` | `^[a-z0-9][a-z0-9-]{0,63}$`，小写字母、数字、连字符，必须以字母或数字开头，最多 64 字符。 | `slug` |
 | `tags[]` | 每个 tag 1-64 字符，只能使用字母、数字、`.`、`_`、`-`。 | `tags` |
+| Eval case `title` | 1-160 字符。 | `title` 或 `cases[n].title` |
+| Eval case `input_text` | 1-20000 字符。 | `input_text` 或 `cases[n].input_text` |
+| Eval case `expected_output` | 1-10000 字符。 | `expected_output` 或 `cases[n].expected_output` |
+| Eval case `notes` | 可空；最多 2000 字符。 | `notes` 或 `cases[n].notes` |
 
 当前批量 case 字段错误：
 
@@ -115,6 +119,7 @@
 | --- | --- | --- | --- |
 | 第 1 行标题为空 | `cases[0].title` | `第 1 行填写标题。` | `request.string_too_short` |
 | 第 2 行缺少 Expected output | `cases[1].expected_output` | `第 2 行填写 Expected output。` | `request.missing` |
+| 第 1 行 Input 超过 20000 字符 | `cases[0].input_text` | `第 1 行 Input 最多 20000 个字符。` | `request.string_too_long` |
 
 `cases[n].title`、`cases[n].input_text` 和 `cases[n].expected_output` 是机器可读字段路径；`n` 是从 0 开始的请求数组索引，文案使用从 1 开始的用户行号。其他数组 item 错误仍按顶层字段回填，例如 `tags[0]` 映射为 `tags`。
 
@@ -844,6 +849,7 @@ Content-Type: application/json
 - 创建 `EvalCaseVersion v1`。
 - 创建 input / expected artifacts。
 - 基于当前最新测评集创建新的 `EvalSetVersion`。
+- `title`、`input_text`、`expected_output` 和 `notes` 使用服务端长度上限；超限返回字段级 `field_errors`，不会自动截断。
 
 ### Batch Create Eval Cases
 
@@ -877,6 +883,7 @@ X-SkillHub-Actor: tester
 - 基于当前最新测评集创建一个新的 `EvalSetVersion`，包含旧 case versions 和本批新增 case versions。
 - 任一 case 缺少 title、input 或 expected output 时，整个请求失败，不写入部分数据。
 - 请求体校验失败时返回行级 `field_errors`，例如 `cases[0].title` 或 `cases[1].expected_output`；客户端可把这些错误回填到批量录入控件或表格行。
+- 任一 case 超过标题、Input、Expected output 或 Notes 长度上限时，整个请求失败，不写入部分有效数据。
 
 ### Create Eval Case Version
 

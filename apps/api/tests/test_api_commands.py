@@ -222,6 +222,88 @@ class ApiCommandTest(unittest.TestCase):
             ],
         )
 
+    def test_eval_case_rejects_overlong_title(self):
+        skill = self.create_skill("case-title-too-long")
+
+        response = self.client.post(
+            "/api/eval-cases",
+            json={
+                "skill_id": skill["skill_id"],
+                "title": "x" * 161,
+                "input_text": "diff --git a/api.ts b/api.ts",
+                "expected_output": "Flag missing tenant scope.",
+            },
+        )
+
+        self.assertEqual(response.status_code, 422)
+        self.assertEqual(
+            response.json()["field_errors"][0],
+            {
+                "field": "title",
+                "message": "标题最多 160 个字符。",
+                "code": "request.string_too_long",
+            },
+        )
+
+    def test_eval_case_rejects_overlong_batch_input_with_row_field_error(self):
+        skill = self.create_skill("case-batch-input-too-long")
+
+        response = self.client.post(
+            "/api/eval-cases/batch",
+            json={
+                "skill_id": skill["skill_id"],
+                "cases": [
+                    {
+                        "title": "PR: pasted huge diff",
+                        "input_text": "x" * 20001,
+                        "expected_output": "Flag missing tenant scope.",
+                    }
+                ],
+            },
+        )
+
+        self.assertEqual(response.status_code, 422)
+        self.assertEqual(
+            response.json()["field_errors"][0],
+            {
+                "field": "cases[0].input_text",
+                "message": "第 1 行 Input 最多 20000 个字符。",
+                "code": "request.string_too_long",
+            },
+        )
+
+    def test_eval_case_rejects_overlong_expected_output_when_updating_version(self):
+        skill = self.create_skill("case-update-expected-too-long")
+        case = self.client.post(
+            "/api/eval-cases",
+            json={
+                "skill_id": skill["skill_id"],
+                "title": "PR: missing tenant scope",
+                "input_text": "Project.all()",
+                "expected_output": "Flag missing tenant scope.",
+            },
+        ).json()
+
+        response = self.client.patch(
+            f"/api/eval-cases/{case['eval_case_id']}",
+            json={
+                "case_id": case["eval_case_id"],
+                "title": "PR: missing tenant scope",
+                "input_text": "Project.all()",
+                "expected_output": "x" * 10001,
+            },
+        )
+
+        self.assertEqual(response.status_code, 422)
+        self.assertEqual(
+            response.json()["field_errors"][0],
+            {
+                "field": "expected_output",
+                "message": "Expected output 最多 10000 个字符。",
+                "code": "request.string_too_long",
+            },
+        )
+
     def test_read_flow_returns_hub_skill_eval_set_and_eval_run_details(self):
         skill = self.create_skill("security-reviewer", digest="digest-security")
         case = self.client.post(

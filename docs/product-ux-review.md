@@ -77,6 +77,7 @@
 - **GOV.UK file upload:** 文件上传失败要贴近上传控件本身，而不是只在页面顶部显示泛化错误。SkillHub 适配为：标准 Skill bundle 的 `SKILL.md`、frontmatter 和 zip 解析错误会回填到 `folder_files` 或 `zip_file`，用户知道应该重新选择哪个来源。
 - **RFC 9457 / JSON:API error object / FastAPI exception handlers:** API 错误应该把人读说明和机器可读定位分开，客户端不应该解析 `detail` 文案猜字段。SkillHub 适配为兼容式 `detail + field_errors`：重复 Skill ID、请求体校验错误和 Skill bundle 导入解析错误会回填到表单字段；批量 case 直连 API 会返回 `cases[n].field`，让客户端不用猜测哪一行失败。
 - **MDN form validation:** 客户端校验可以改善体验，但不能替代服务端校验。SkillHub 适配为服务端权威格式规则：手工新建 skill 的 `slug` 与标准 Skill bundle `name` 保持一致，tag 只允许稳定可查询字符；前端只显示服务端 `field_errors`。
+- **GitHub / Linear 类工作流产品:** 标题用于扫读和列表导航，正文承载长上下文。SkillHub 适配为 eval case 标题 160 字符、Input 20000 字符、Expected output 10000 字符、Notes 2000 字符；超限失败而不是截断，避免测试资产丢内容。
 - **GitHub Command Palette:** 命令菜单兼具导航、搜索和运行命令能力；SkillHub 借鉴其 scope 思路，把菜单限定在当前 skill 工作区，避免全局搜索过早膨胀。
 - **TestRail quick outline:** 测试用例管理工具会区分完整表单和快速 outline。SkillHub 借鉴“快速进入测试集”的速度，但不允许只填标题，仍要求 `input + expected output`，保证测评资产质量。
 - **TestRail Pass & Next / bulk result:** TestRail 在三栏执行视图里提供快速通过并进入下一条，也支持批量提交相同结果。SkillHub 适配为“通过/不通过后自动前进”和“仅把未确认项标为通过”，避免覆盖已发现的失败。
@@ -157,7 +158,7 @@
 ## 仍然存在的摩擦
 
 1. Command menu 已完成第二阶段：支持 mode-aware 排序、本地最近使用、selected case/run 命令和右侧 preview；还没有服务器端个性化、跨 skill 全局搜索或快捷键自定义。
-2. 表单字段基础件已覆盖主要工作台表单，required 字段已有错误 summary、提交后聚焦摘要、摘要链接回字段和字段旁错误；后端字段错误映射第一阶段已覆盖重复 Skill ID、基础请求体校验、Skill ID 格式、tags 格式、导入 bundle 解析错误和批量 case 行级字段错误。还没有其余长文本长度上限和错误统计。
+2. 表单字段基础件已覆盖主要工作台表单，required 字段已有错误 summary、提交后聚焦摘要、摘要链接回字段和字段旁错误；后端字段错误映射第一阶段已覆盖重复 Skill ID、基础请求体校验、Skill ID 格式、tags 格式、导入 bundle 解析错误、批量 case 行级字段错误和 eval case 文本长度上限。还没有其他产品字段长度上限和错误统计。
 3. Promotion review 已经展示 case impact、diff 和会话级文件 reviewed progress，但 viewed state 还没有服务端持久化，也没有把具体 diff hunk 关联到具体 eval case。
 4. URL state 已覆盖核心证据上下文，但还没有短链接、权限感知分享提示，也没有保存未提交草稿。
 5. Run matrix 已经提供 read-only 多 run x case 浏览、保存筛选视图、对照/候选 impact、impact 过滤和分组，但还没有列配置、自定义指标列、导出或保存对照/候选 run 指针。
@@ -166,7 +167,7 @@
 
 ## 下一轮优化队列
 
-1. 表单验证第二阶段剩余部分：其余长文本长度上限、错误统计，以及更多嵌套写入表单的字段错误回填。
+1. 表单验证第二阶段剩余部分：其他产品字段长度上限、错误统计，以及更多嵌套写入表单的字段错误回填。
 2. 接入真实认证：用真正的登录 session/token 替换本地 actor cookie，前端只展示 capability，不再允许自由切换开发身份。
 3. Diff / Promotion review 第二阶段：评估是否服务端持久化 viewed state、自动折叠已查看文件，或把 diff hunk 关联到 eval case。
 4. URL state 第三阶段：增加短链接、权限感知分享提示，并评估是否保存草稿到本地 session storage 而不是 URL。

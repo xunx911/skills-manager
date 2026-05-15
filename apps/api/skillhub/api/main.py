@@ -33,6 +33,14 @@ TAG_PATTERN = r"^[A-Za-z0-9._-]+$"
 SkillSlug = Annotated[str, Field(min_length=1, max_length=64, pattern=SLUG_PATTERN)]
 TagValue = Annotated[str, Field(min_length=1, max_length=64, pattern=TAG_PATTERN)]
 TagsPayload = Annotated[list[TagValue], Field(min_length=1)]
+EVAL_CASE_TITLE_MAX_LENGTH = 160
+EVAL_CASE_INPUT_MAX_LENGTH = 20_000
+EVAL_CASE_EXPECTED_OUTPUT_MAX_LENGTH = 10_000
+EVAL_CASE_NOTES_MAX_LENGTH = 2_000
+EvalCaseTitle = Annotated[str, Field(min_length=1, max_length=EVAL_CASE_TITLE_MAX_LENGTH)]
+EvalCaseInput = Annotated[str, Field(min_length=1, max_length=EVAL_CASE_INPUT_MAX_LENGTH)]
+EvalCaseExpectedOutput = Annotated[str, Field(min_length=1, max_length=EVAL_CASE_EXPECTED_OUTPUT_MAX_LENGTH)]
+EvalCaseNotes = Annotated[str, Field(max_length=EVAL_CASE_NOTES_MAX_LENGTH)]
 
 
 class ContentRefPayload(BaseModel):
@@ -102,17 +110,17 @@ class AssignSkillRolePayload(BaseModel):
 
 class CreateEvalCasePayload(BaseModel):
     skill_id: str
-    title: str
-    input_text: str
-    expected_output: str
-    notes: str | None = None
+    title: EvalCaseTitle
+    input_text: EvalCaseInput
+    expected_output: EvalCaseExpectedOutput
+    notes: EvalCaseNotes | None = None
 
 
 class CreateEvalCaseItemPayload(BaseModel):
-    title: str = Field(min_length=1)
-    input_text: str = Field(min_length=1)
-    expected_output: str = Field(min_length=1)
-    notes: str | None = None
+    title: EvalCaseTitle
+    input_text: EvalCaseInput
+    expected_output: EvalCaseExpectedOutput
+    notes: EvalCaseNotes | None = None
 
 
 class CreateEvalCasesBatchPayload(BaseModel):
@@ -122,16 +130,16 @@ class CreateEvalCasesBatchPayload(BaseModel):
 
 class CreateEvalCaseVersionPayload(BaseModel):
     case_id: str
-    title: str | None = None
-    input_text: str
-    expected_output: str
-    notes: str | None = None
+    title: EvalCaseTitle | None = None
+    input_text: EvalCaseInput
+    expected_output: EvalCaseExpectedOutput
+    notes: EvalCaseNotes | None = None
     make_current: bool = True
 
 
 class RestoreEvalCaseVersionPayload(BaseModel):
     source_case_version_id: str
-    notes: str | None = None
+    notes: EvalCaseNotes | None = None
 
 
 class RecordEvalRunPayload(BaseModel):
@@ -762,6 +770,9 @@ def request_validation_message(field: str, error_type: str) -> str:
     batch_message = batch_case_validation_message(field, error_type)
     if batch_message:
         return batch_message
+    eval_case_message = eval_case_validation_message(field, error_type)
+    if eval_case_message:
+        return eval_case_message
     label = API_FIELD_LABELS.get(field, field)
     if error_type == "missing":
         return f"填写 {label}"
@@ -774,11 +785,18 @@ def request_validation_message(field: str, error_type: str) -> str:
     return f"{label} 格式不正确。"
 
 
-BATCH_CASE_FIELD_LABELS = {
+EVAL_CASE_FIELD_LABELS = {
     "title": "标题",
     "input_text": "Input",
     "expected_output": "Expected output",
     "notes": "Notes",
+}
+
+EVAL_CASE_FIELD_MAX_LENGTHS = {
+    "title": EVAL_CASE_TITLE_MAX_LENGTH,
+    "input_text": EVAL_CASE_INPUT_MAX_LENGTH,
+    "expected_output": EVAL_CASE_EXPECTED_OUTPUT_MAX_LENGTH,
+    "notes": EVAL_CASE_NOTES_MAX_LENGTH,
 }
 
 
@@ -787,10 +805,32 @@ def batch_case_validation_message(field: str, error_type: str) -> str | None:
     if not match:
         return None
     row_number = int(match.group(1)) + 1
-    label = BATCH_CASE_FIELD_LABELS.get(match.group(2), match.group(2))
+    field_name = match.group(2)
+    label = EVAL_CASE_FIELD_LABELS.get(field_name, field_name)
+    if error_type == "string_too_long" and field_name in EVAL_CASE_FIELD_MAX_LENGTHS:
+        return f"第 {row_number} 行{prefixed_limit_phrase(label, EVAL_CASE_FIELD_MAX_LENGTHS[field_name])}"
     if error_type in {"missing", "string_too_short"}:
         return f"第 {row_number} 行填写{prefixed_label(label)}。"
     return f"第 {row_number} 行 {label} 格式不正确。"
+
+
+def eval_case_validation_message(field: str, error_type: str) -> str | None:
+    if field not in EVAL_CASE_FIELD_LABELS:
+        return None
+    label = EVAL_CASE_FIELD_LABELS[field]
+    if error_type == "string_too_long":
+        return limit_phrase(label, EVAL_CASE_FIELD_MAX_LENGTHS[field])
+    if error_type in {"missing", "string_too_short"}:
+        return f"填写{prefixed_label(label)}。"
+    return None
+
+
+def limit_phrase(label: str, max_length: int) -> str:
+    return f"{label} 最多 {max_length} 个字符。" if label.isascii() else f"{label}最多 {max_length} 个字符。"
+
+
+def prefixed_limit_phrase(label: str, max_length: int) -> str:
+    return f" {limit_phrase(label, max_length)}" if label.isascii() else limit_phrase(label, max_length)
 
 
 def prefixed_label(label: str) -> str:
