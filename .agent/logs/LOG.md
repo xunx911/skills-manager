@@ -10,6 +10,15 @@
 
 ## Session Log
 
+### 2026-05-16 00:06 CST - TASK-061 Promotion decision note 字段级校验
+
+- 新增 `docs/superpowers/specs/2026-05-15-promotion-decision-note-validation-design.md` 和执行计划，记录 GOV.UK Error Summary / Validation / Textarea 与 GitHub protected branch 对 promotion gate 的适配。
+- `PromoteVariantVersionPayload.decision_note` 增加 1000 字符服务端上限，超长说明返回 `field_errors.decision_note` 和中文文案 `设为当前版本说明最多 1000 个字符。`。
+- risky promotion 空说明从普通 invariant 改成字段错误 `promotion.decision_note_required`，文案 `填写设为当前版本说明。`。
+- `PromotionReviewPane` 决策表单接入 `ValidatedForm` 和共享 `TextAreaField`；不再用 disabled button 解释缺少说明，提交后显示错误摘要、字段旁错误和 `aria-invalid`。
+- README、API contract、产品体验评审、完成度审计、摩擦审计和 TASK-061 任务记录已更新。
+- 已验证：红灯 API 先失败于空 risky note 缺少 `field_errors`；绿色后目标 API 1 passed；红灯 E2E 先失败于接受风险按钮仍 disabled；绿色后目标 E2E 1 passed；`UV_NO_CACHE=1 uv run pytest` 105 passed；`npm run test:unit` 5 files/16 tests passed；`npm run typecheck` passed；`npm run build` passed；`npm audit --omit=dev` found 0 vulnerabilities；`npm run e2e` 69 passed；`git diff --check` passed；任务 JSON 结构检查 passed；关键文件行数 901/2428/2059/157/1615/8380/961/224/1022/183/222/177/100/42/34/429/481。
+
 ### 2026-05-15 23:49 CST - TASK-060 Accepted verification note 字段级校验
 
 - 新增 `docs/superpowers/specs/2026-05-15-accepted-verification-note-validation-design.md` 和执行计划，记录 GOV.UK Error Summary / Validation / Character count 与 MOJ Alert 对 verification note 字段错误体验的适配。

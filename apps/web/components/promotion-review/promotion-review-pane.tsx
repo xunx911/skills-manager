@@ -3,6 +3,8 @@
 import { FormEvent, useMemo, useState } from "react";
 
 import { Badge } from "@/components/chrome";
+import { ValidatedForm } from "@/components/forms/form-validation";
+import { TextAreaField } from "@/components/forms/workbench-field";
 import { percent, shortId } from "@/lib/format";
 import type { PromotionReview } from "@/lib/types";
 import { PromotionCaseComparisonList } from "./promotion-case-comparison-list";
@@ -21,7 +23,7 @@ export function PromotionReviewPane({
   loading: boolean;
   onBack: () => void;
   onOpenEvals: () => void;
-  onPromote: (decisionNote: string) => void;
+  onPromote: (decisionNote: string) => void | Promise<void>;
   review: PromotionReview | null;
 }) {
   const [decisionNote, setDecisionNote] = useState("");
@@ -54,14 +56,13 @@ export function PromotionReviewPane({
   const canPromote =
     !busy &&
     Boolean(review.candidate_run) &&
-    (review.readiness.status === "ready" || review.readiness.status === "risky") &&
-    (!review.readiness.requires_note || decisionNote.trim().length > 0);
+    (review.readiness.status === "ready" || review.readiness.status === "risky");
   const promoteLabel = review.readiness.status === "risky" ? "接受风险并设为当前版本" : "设为当前版本";
 
   function submitPromotion(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!canPromote) return;
-    onPromote(decisionNote.trim());
+    return onPromote(decisionNote.trim());
   }
 
   return (
@@ -107,22 +108,26 @@ export function PromotionReviewPane({
         <PromotionDiffViewer diff={review.bundle_diff} />
       </div>
 
-      <form className="promotionDecisionBar" onSubmit={submitPromotion}>
+      <ValidatedForm className="promotionDecisionBar" onValidSubmit={submitPromotion}>
         <div>
           <span>Decision</span>
           <strong>{review.readiness.label}</strong>
           <small>{decisionHint(review)}</small>
         </div>
-        <textarea
+        <TextAreaField
           aria-label="设为当前版本说明"
+          data-required-message="填写设为当前版本说明。"
+          label="设为当前版本说明"
+          name="decision_note"
           onChange={(event) => setDecisionNote(event.currentTarget.value)}
           placeholder={review.readiness.requires_note ? "说明为什么接受这次风险或仍失败项" : "可选：记录这次上架的判断依据"}
+          required={review.readiness.requires_note}
           value={decisionNote}
         />
         <button className="primaryAction" disabled={!canPromote} type="submit">
           {promoteLabel}
         </button>
-      </form>
+      </ValidatedForm>
     </div>
   );
 }

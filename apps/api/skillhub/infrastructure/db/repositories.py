@@ -326,7 +326,16 @@ class SqlSkillRepository:
             if readiness["status"] in {"unverified", "blocked"}:
                 raise InvariantError(f"Promotion is not ready: {readiness['reason']}")
             if readiness["requires_note"] and not (decision_note or "").strip():
-                raise InvariantError("Promotion decision note is required when review has risk.")
+                raise FieldInvariantError(
+                    "Promotion decision note is required when review has risk.",
+                    [
+                        FieldError(
+                            field="decision_note",
+                            message="填写设为当前版本说明。",
+                            code="promotion.decision_note_required",
+                        )
+                    ],
+                )
             if readiness["requires_note"] and not accept_risk:
                 raise InvariantError("Promotion risk must be accepted before promoting this version.")
 

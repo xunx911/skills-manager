@@ -101,6 +101,7 @@
 - `POST /api/skill-imports` 解析标准 Skill bundle 失败：`400`，folder 导入回填 `folder_files`，zip 导入回填 `zip_file`。
 - `POST /api/saved-views` 空白、重复或超长 `name`：`400/422`，`field_errors[0].field = "name"`。
 - `POST /api/eval-runs/accepted-verifications` 超长 `note`：`422`，`field_errors[0].field = "note"`。
+- `POST /api/variants/promotions` risky promotion 空白或超长 `decision_note`：`400/422`，`field_errors[0].field = "decision_note"`。
 - FastAPI 请求体校验错误：`422`，按请求体字段生成 `field_errors`；数组 item 错误会优先回填到顶层表单字段，例如 `tags[0]` 映射为 `tags`。
 - `POST /api/eval-cases/batch` 的 `cases[]` 请求体错误保留行号，例如第 2 行缺少 `expected_output` 会返回 `field = "cases[1].expected_output"`。
 
@@ -116,6 +117,7 @@
 | Eval case `notes` | 可空；最多 2000 字符。 | `notes` 或 `cases[n].notes` |
 | Saved view `name` | 1-80 字符；trim 后不能为空，同一 skill + view type 下不能重复。 | `name` |
 | Accepted verification `note` | 可空；最多 1000 字符。 | `note` |
+| Promotion `decision_note` | 有风险时 trim 后必填；最多 1000 字符。 | `decision_note` |
 
 当前批量 case 字段错误：
 
@@ -795,7 +797,7 @@ X-SkillHub-Actor: tester
 - `version_id` 必须属于 `variant_id`。
 - `evidence_eval_run_id` 必须绑定 `version_id + eval_set_version_id`。
 - 证据 run 必须是最新的 finished candidate run。
-- 如果评审存在回退或仍未通过，`decision_note` 不能为空，且 `accept_risk` 必须为 `true`。
+- 如果评审存在回退或仍未通过，`decision_note` 不能为空，最多 1000 字符，且 `accept_risk` 必须为 `true`；缺失或超长会返回 `field_errors.decision_note`。
 
 ### Skill Bundle Detail
 

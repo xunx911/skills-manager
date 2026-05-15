@@ -2,7 +2,7 @@
 
 日期：2026-05-14
 
-状态：当前产品闭环已经强于普通 demo，但还不是成熟产品。主要缺口不在“能不能跑通”，而在信息架构密度、历史/发布证据的可扫读性，以及权限协作、验证策略和少量深水区可访问性细节。移动端 first-run、证据视图 inspector 折叠、URL state 第二阶段、Audit Explorer 扫读重构、表单字段基础件第二阶段、表单验证错误摘要、后端字段错误映射、基础格式校验第一阶段、导入 bundle 字段错误映射第一阶段、批量 case 行级错误第一阶段、服务端批量 case 字段错误契约、eval case 文本长度校验、批量 case 导入预览表、批量 case 预览移动端护栏、保存视图名称字段级校验、accepted verification note 字段级校验、Command menu 第二阶段和 Diff / Promotion 文件 reviewed progress 第一阶段已经按本审计后续任务完成。
+状态：当前产品闭环已经强于普通 demo，但还不是成熟产品。主要缺口不在“能不能跑通”，而在信息架构密度、历史/发布证据的可扫读性，以及权限协作、验证策略和少量深水区可访问性细节。移动端 first-run、证据视图 inspector 折叠、URL state 第二阶段、Audit Explorer 扫读重构、表单字段基础件第二阶段、表单验证错误摘要、后端字段错误映射、基础格式校验第一阶段、导入 bundle 字段错误映射第一阶段、批量 case 行级错误第一阶段、服务端批量 case 字段错误契约、eval case 文本长度校验、批量 case 导入预览表、批量 case 预览移动端护栏、保存视图名称字段级校验、accepted verification note 字段级校验、promotion decision note 字段级校验、Command menu 第二阶段和 Diff / Promotion 文件 reviewed progress 第一阶段已经按本审计后续任务完成。
 
 ## 审计输入
 
@@ -130,6 +130,7 @@
 - TASK-058 新增批量 case 预览移动端护栏：窄屏下 textarea、统计卡、预览表和提交按钮纵向排布，页面本身不横向滚动，预览表保留内部横向滚动。
 - TASK-059 新增保存视图名称字段级校验：空白、重复或超过 80 字符的 saved view name 返回 `field_errors.name`，History 页保存表单会显示错误摘要和字段旁错误。
 - TASK-060 新增 accepted verification note 字段级校验：超过 1000 字符的验证说明返回 `field_errors.note`，Run comparison 接受验证依据表单会显示错误摘要和字段旁错误。
+- TASK-061 新增 promotion decision note 字段级校验：risky promotion 空说明或超过 1000 字符返回 `field_errors.decision_note`，Promotion review 决策表单会显示错误摘要和字段旁错误。
 
 影响：
 
@@ -142,6 +143,7 @@
 - 移动端批量补 case 不再被桌面两栏压扁；用户先编辑输入，再看统计和预览，视线顺序更接近真实操作顺序。
 - 保存历史筛选视图时，用户不再需要从全局 toast 猜测重名或超长问题；错误会直接回到 `保存视图名称`。
 - 接受验证依据时，维护者不再能把过长审计说明塞进 verification pointer；超限错误会直接回到 `Accepted verification note`。
+- 有风险的设为当前版本不再靠 disabled button 暗示缺说明；用户点击后会得到可回焦的字段级修正路径。
 - 后续新增表单应该优先复用 `WorkbenchField`，而不是在 pane 内继续手写 label/control。
 
 建议：

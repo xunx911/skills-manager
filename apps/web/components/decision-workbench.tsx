@@ -775,23 +775,27 @@ export function DecisionWorkbench({
       setNotice({ tone: "bad", message: "候选版本还没有可用的测评证据。" });
       return;
     }
-    await runCommand("已设为当前版本。", async () => {
-      await apiSend<{ ok: boolean; promotion_decision: PromotionDecision }>("/api/variants/promotions", {
-        method: "POST",
-        body: {
-          variant_id: promotionReview.variant.id,
-          version_id: promotionReview.candidate_version.id,
-          evidence_eval_run_id: promotionReview.candidate_run?.id,
-          eval_set_version_id: promotionReview.eval_set_version.id,
-          decision_note: decisionNote || null,
-          accept_risk: promotionReview.readiness.status === "risky",
-        },
-      });
-      setPromotionReview(null);
-      setPromotionTarget(null);
-      setMode("variants");
-      return "已设为当前版本。";
-    });
+    await runCommand(
+      "已设为当前版本。",
+      async () => {
+        await apiSend<{ ok: boolean; promotion_decision: PromotionDecision }>("/api/variants/promotions", {
+          method: "POST",
+          body: {
+            variant_id: promotionReview.variant.id,
+            version_id: promotionReview.candidate_version.id,
+            evidence_eval_run_id: promotionReview.candidate_run?.id,
+            eval_set_version_id: promotionReview.eval_set_version.id,
+            decision_note: decisionNote || null,
+            accept_risk: promotionReview.readiness.status === "risky",
+          },
+        });
+        setPromotionReview(null);
+        setPromotionTarget(null);
+        setMode("variants");
+        return "已设为当前版本。";
+      },
+      { rethrowFieldErrors: true },
+    );
   }
 
   async function runCommand(

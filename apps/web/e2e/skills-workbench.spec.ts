@@ -673,9 +673,26 @@ test("risky promotion requires a decision note before promoting", async ({ page 
   await expect(page.locator(".promotionReadiness").getByText("有风险")).toBeVisible();
   await expect(page.locator(".promotionCaseList").getByText("回退", { exact: true })).toBeVisible();
   const promoteButton = page.getByRole("button", { name: "接受风险并设为当前版本" });
-  await expect(promoteButton).toBeDisabled();
-  await page.getByLabel("设为当前版本说明").fill("候选版本包含必要文件变更，先接受风险并补充后续 case。");
   await expect(promoteButton).toBeEnabled();
+  await promoteButton.click();
+
+  let summary = page.locator(".promotionDecisionBar .formErrorSummary");
+  await expect(summary).toBeVisible();
+  await expect(summary).toBeFocused();
+  await expect(summary).toContainText("填写设为当前版本说明。");
+  await expect(page.getByLabel("设为当前版本说明")).toHaveAttribute("aria-invalid", "true");
+
+  await summary.getByRole("link", { name: "填写设为当前版本说明。" }).click();
+  await expect(page.getByLabel("设为当前版本说明")).toBeFocused();
+
+  await page.getByLabel("设为当前版本说明").fill("x".repeat(1001));
+  await promoteButton.click();
+  summary = page.locator(".promotionDecisionBar .formErrorSummary");
+  await expect(summary).toBeVisible();
+  await expect(summary).toBeFocused();
+  await expect(summary).toContainText("设为当前版本说明最多 1000 个字符。");
+
+  await page.getByLabel("设为当前版本说明").fill("候选版本包含必要文件变更，先接受风险并补充后续 case。");
   await promoteButton.click();
   await expect(page.getByText("已设为当前版本。")).toBeVisible();
   await expect(page.locator(".variantVersionRow").filter({ hasText: "v2" }).getByText("Current")).toBeVisible();

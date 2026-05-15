@@ -8143,6 +8143,14 @@ body {
   gap: 3px;
 }
 
+.promotionDecisionBar .formErrorSummary {
+  grid-column: 1 / -1;
+}
+
+.promotionDecisionBar .workbenchField {
+  min-width: 0;
+}
+
 .promotionDecisionBar strong {
   color: #111827;
   font-size: 17px;

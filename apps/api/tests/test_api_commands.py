@@ -962,6 +962,112 @@ class ApiCommandTest(unittest.TestCase):
         promoted = self.client.get(f"/api/skills/{imported['skill_id']}").json()
         self.assertEqual(promoted["summary"]["default_variant"]["current_version"]["id"], candidate["variant_version_id"])
 
+    def test_promotion_decision_note_returns_field_errors(self):
+        imported = self.import_standard_skill_bundle("promotion-decision-note")
+        detail = self.client.get(f"/api/skills/{imported['skill_id']}").json()
+        variant = detail["summary"]["default_variant"]
+        current_version = variant["current_version"]
+        candidate = self.client.post(
+            "/api/variant-versions",
+            json={
+                "variant_id": variant["id"],
+                "source": {
+                    "kind": "files",
+                    "name": "promotion-decision-note",
+                    "files": [
+                        {
+                            "path": "promotion-decision-note/SKILL.md",
+                            "content_text": (
+                                "---\n"
+                                "name: promotion-decision-note\n"
+                                "description: Review pull requests for auth and data access regressions.\n"
+                                "---\n"
+                                "# Security Reviewing\n"
+                                "Flag auth regressions and tenant leaks first.\n"
+                            ),
+                        }
+                    ],
+                },
+                "change_summary": "Add stricter tenant guidance.",
+                "make_current": False,
+                "actor": "tester",
+            },
+        ).json()
+        case = self.client.post(
+            "/api/eval-cases",
+            json={
+                "skill_id": imported["skill_id"],
+                "title": "PR: tenant scope regresses",
+                "input_text": "Project.all()",
+                "expected_output": "Flag missing tenant scope.",
+                "actor": "tester",
+            },
+        ).json()
+        self.client.post(
+            "/api/eval-runs",
+            json={
+                "variant_version_id": current_version["id"],
+                "eval_set_version_id": case["eval_set_version_id"],
+                "strategy": "manual_pass_fail",
+                "results": {case["eval_case_version_id"]: True},
+                "actor": "tester",
+            },
+        )
+        candidate_run = self.client.post(
+            "/api/eval-runs",
+            json={
+                "variant_version_id": candidate["variant_version_id"],
+                "eval_set_version_id": case["eval_set_version_id"],
+                "strategy": "manual_pass_fail",
+                "results": {case["eval_case_version_id"]: False},
+                "actor": "tester",
+            },
+        ).json()
+
+        missing_note = self.client.post(
+            "/api/variants/promotions",
+            json={
+                "variant_id": variant["id"],
+                "version_id": candidate["variant_version_id"],
+                "evidence_eval_run_id": candidate_run["eval_run_id"],
+                "eval_set_version_id": case["eval_set_version_id"],
+                "decision_note": " ",
+                "accept_risk": True,
+                "actor": "tester",
+            },
+        )
+        self.assertEqual(missing_note.status_code, 400)
+        self.assertEqual(
+            missing_note.json()["field_errors"][0],
+            {
+                "field": "decision_note",
+                "message": "填写设为当前版本说明。",
+                "code": "promotion.decision_note_required",
+            },
+        )
+
+        overlong_note = self.client.post(
+            "/api/variants/promotions",
+            json={
+                "variant_id": variant["id"],
+                "version_id": candidate["variant_version_id"],
+                "evidence_eval_run_id": candidate_run["eval_run_id"],
+                "eval_set_version_id": case["eval_set_version_id"],
+                "decision_note": "x" * 1001,
+                "accept_risk": True,
+                "actor": "tester",
+            },
+        )
+        self.assertEqual(overlong_note.status_code, 422)
+        self.assertEqual(
+            overlong_note.json()["field_errors"][0],
+            {
+                "field": "decision_note",
+                "message": "设为当前版本说明最多 1000 个字符。",
+                "code": "request.string_too_long",
+            },
+        )
+
     def test_eval_run_compare_endpoint_returns_case_impact(self):
         skill = self.create_skill("run-compare-api")
         case = self.client.post(

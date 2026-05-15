@@ -39,12 +39,14 @@ EVAL_CASE_EXPECTED_OUTPUT_MAX_LENGTH = 10_000
 EVAL_CASE_NOTES_MAX_LENGTH = 2_000
 SAVED_VIEW_NAME_MAX_LENGTH = 80
 ACCEPTED_VERIFICATION_NOTE_MAX_LENGTH = 1_000
+PROMOTION_DECISION_NOTE_MAX_LENGTH = 1_000
 EvalCaseTitle = Annotated[str, Field(min_length=1, max_length=EVAL_CASE_TITLE_MAX_LENGTH)]
 EvalCaseInput = Annotated[str, Field(min_length=1, max_length=EVAL_CASE_INPUT_MAX_LENGTH)]
 EvalCaseExpectedOutput = Annotated[str, Field(min_length=1, max_length=EVAL_CASE_EXPECTED_OUTPUT_MAX_LENGTH)]
 EvalCaseNotes = Annotated[str, Field(max_length=EVAL_CASE_NOTES_MAX_LENGTH)]
 SavedViewName = Annotated[str, Field(min_length=1, max_length=SAVED_VIEW_NAME_MAX_LENGTH)]
 AcceptedVerificationNote = Annotated[str, Field(max_length=ACCEPTED_VERIFICATION_NOTE_MAX_LENGTH)]
+PromotionDecisionNote = Annotated[str | None, Field(max_length=PROMOTION_DECISION_NOTE_MAX_LENGTH)]
 
 
 class ContentRefPayload(BaseModel):
@@ -96,7 +98,7 @@ class PromoteVariantVersionPayload(BaseModel):
     version_id: str
     evidence_eval_run_id: str | None = None
     eval_set_version_id: str | None = None
-    decision_note: str | None = None
+    decision_note: PromotionDecisionNote = None
     accept_risk: bool = False
 
 
@@ -792,6 +794,8 @@ def request_validation_message(field: str, error_type: str) -> str:
         return "填写保存视图名称。"
     if field == "note" and error_type == "string_too_long":
         return f"验证说明最多 {ACCEPTED_VERIFICATION_NOTE_MAX_LENGTH} 个字符。"
+    if field == "decision_note" and error_type == "string_too_long":
+        return f"设为当前版本说明最多 {PROMOTION_DECISION_NOTE_MAX_LENGTH} 个字符。"
     return f"{label} 格式不正确。"
 
 
@@ -856,6 +860,7 @@ API_FIELD_LABELS = {
     "change_summary": "版本说明",
     "name": "保存视图名称",
     "note": "验证说明",
+    "decision_note": "设为当前版本说明",
 }
 
 

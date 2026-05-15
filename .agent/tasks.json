@@ -418,5 +418,12 @@
     "priority": 60,
     "passes": true,
     "spec": ".agent/tasks/TASK-060.json"
+  },
+  {
+    "id": "061",
+    "title": "Promotion decision note 字段级校验",
+    "priority": 61,
+    "passes": true,
+    "spec": ".agent/tasks/TASK-061.json"
   }
 ]
