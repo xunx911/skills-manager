@@ -1,0 +1,36 @@
+{
+  "id": "059",
+  "title": "保存视图名称字段级校验",
+  "status": "complete",
+  "goal": "让 saved run view 的重复名、空白名和超长名都返回字段级错误，并在 History 页回填到保存视图名称输入框。",
+  "scope": [
+    "新增 saved view name API 红绿测试",
+    "为保存视图名称增加 80 字符服务端上限",
+    "重复保存视图名称返回 name 字段错误",
+    "History 页保存视图表单接入 ValidatedForm",
+    "新增 E2E 覆盖重复名称错误摘要和字段回填",
+    "更新 README、体验审计和任务记录"
+  ],
+  "out_of_scope": [
+    "保存视图重命名",
+    "保存视图分页",
+    "其他 note / reason / summary 字段长度上限",
+    "服务器端个性化 command menu"
+  ],
+  "verification": [
+    "红灯 API：UV_NO_CACHE=1 uv run pytest tests/test_api_commands.py -k \"saved_run_view\" -> failed，重复名缺少 field_errors，81 字符名称返回 200。",
+    "绿色 API target：UV_NO_CACHE=1 uv run pytest tests/test_api_commands.py -k \"saved_run_view\" -> 2 passed。",
+    "红灯 E2E：npm run e2e -- form-errors.spec.ts -g \"saved run view\" -> failed，.savedRunViews .formErrorSummary 不存在。",
+    "绿色 E2E target：npm run e2e -- form-errors.spec.ts -g \"saved run view\" -> 1 passed。",
+    "视觉基线：run comparison 截图因保存按钮从 disabled 改为可提交而更新；定点 visual run comparison -> 1 passed。",
+    "浏览器 QA：in-app Browser 当前 /skills 页非空，SkillHub 工作台可见，console error/warn 为 0。",
+    "后端全量：cd apps/api && UV_NO_CACHE=1 uv run pytest -> 103 passed。",
+    "前端单元：cd apps/web && npm run test:unit -> 5 files / 16 tests passed。",
+    "前端类型：cd apps/web && npm run typecheck -> passed。",
+    "前端构建：cd apps/web && npm run build -> passed。",
+    "依赖审计：cd apps/web && npm audit --omit=dev -> found 0 vulnerabilities。",
+    "E2E：cd apps/web && npm run e2e -> 68 passed。",
+    "结构检查：git diff --check -> passed；jq empty .agent/tasks.json .agent/tasks/TASK-059.json -> passed。",
+    "关键文件行数：891 / 2419 / 1911 / 75 / 1607 / 163 / 224 / 1018 / 181 / 218 / 175 / 44 / 97 / 21 / 415 / 453。"
+  ]
+}

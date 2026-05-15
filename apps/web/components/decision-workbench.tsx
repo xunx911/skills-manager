@@ -611,6 +611,9 @@ export function DecisionWorkbench({
       setSavedViewName("");
       setNotice({ tone: "good", message: "保存视图已创建。" });
     } catch (error) {
+      if (isApiError(error) && error.fieldErrors.length > 0) {
+        throw error;
+      }
       setNotice({ tone: "bad", message: error instanceof Error ? error.message : "保存视图失败" });
     } finally {
       setBusy(false);

@@ -140,3 +140,24 @@ test("batch case row errors block submit and focus the batch field", async ({ pa
   await expect(page.getByLabel("批量 case 文本")).toHaveAttribute("aria-invalid", "true");
   await expect(page.locator(".caseReviewCard").filter({ hasText: "PR: missing tenant scope" })).toHaveCount(0);
 });
+
+test("saved run view duplicate names map to the saved view name field", async ({ page }) => {
+  await importSkillBundle(page, `saved-view-field-errors-${Date.now()}`);
+
+  await page.getByRole("tab", { name: "历史", exact: true }).click();
+  await page.getByLabel("保存视图名称").fill("候选版本通过记录");
+  await page.getByRole("button", { name: "保存当前视图" }).click();
+  await expect(page.getByText("保存视图已创建。")).toBeVisible();
+
+  await page.getByLabel("保存视图名称").fill("候选版本通过记录");
+  await page.getByRole("button", { name: "保存当前视图" }).click();
+
+  const summary = page.locator(".savedRunViews .formErrorSummary");
+  await expect(summary).toBeVisible();
+  await expect(summary).toBeFocused();
+  await expect(summary).toContainText("保存视图名称已存在。");
+  await expect(page.getByLabel("保存视图名称")).toHaveAttribute("aria-invalid", "true");
+
+  await summary.getByRole("link", { name: "保存视图名称已存在。" }).click();
+  await expect(page.getByLabel("保存视图名称")).toBeFocused();
+});

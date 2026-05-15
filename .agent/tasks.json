@@ -404,5 +404,12 @@
     "priority": 58,
     "passes": true,
     "spec": ".agent/tasks/TASK-058.json"
+  },
+  {
+    "id": "059",
+    "title": "保存视图名称字段级校验",
+    "priority": 59,
+    "passes": true,
+    "spec": ".agent/tasks/TASK-059.json"
   }
 ]

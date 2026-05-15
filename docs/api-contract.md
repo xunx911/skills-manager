@@ -99,6 +99,7 @@
 - `POST /api/skills` 重复 `slug`：`400`，`field_errors[0].field = "slug"`。
 - `PATCH /api/skills/{skill_id}` 重复 `slug`：`400`，`field_errors[0].field = "slug"`。
 - `POST /api/skill-imports` 解析标准 Skill bundle 失败：`400`，folder 导入回填 `folder_files`，zip 导入回填 `zip_file`。
+- `POST /api/saved-views` 空白、重复或超长 `name`：`400/422`，`field_errors[0].field = "name"`。
 - FastAPI 请求体校验错误：`422`，按请求体字段生成 `field_errors`；数组 item 错误会优先回填到顶层表单字段，例如 `tags[0]` 映射为 `tags`。
 - `POST /api/eval-cases/batch` 的 `cases[]` 请求体错误保留行号，例如第 2 行缺少 `expected_output` 会返回 `field = "cases[1].expected_output"`。
 
@@ -112,6 +113,7 @@
 | Eval case `input_text` | 1-20000 字符。 | `input_text` 或 `cases[n].input_text` |
 | Eval case `expected_output` | 1-10000 字符。 | `expected_output` 或 `cases[n].expected_output` |
 | Eval case `notes` | 可空；最多 2000 字符。 | `notes` 或 `cases[n].notes` |
+| Saved view `name` | 1-80 字符；trim 后不能为空，同一 skill + view type 下不能重复。 | `name` |
 
 当前批量 case 字段错误：
 

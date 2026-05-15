@@ -1276,7 +1276,10 @@ class SqlSkillRepository:
         self._validate_saved_view_type(view_type)
         clean_name = name.strip()
         if not clean_name:
-            raise InvariantError("Saved view name is required.")
+            raise FieldInvariantError(
+                "Saved view name is required.",
+                [FieldError("name", "填写保存视图名称。", "saved_view.name_required")],
+            )
         created_at = utc_now()
         values = {
             "id": new_id("view"),
@@ -1298,7 +1301,10 @@ class SqlSkillRepository:
                     .one()
                 )
         except IntegrityError as exc:
-            raise InvariantError(f"Saved view name already exists: {clean_name}") from exc
+            raise FieldInvariantError(
+                f"Saved view name already exists: {clean_name}",
+                [FieldError("name", "保存视图名称已存在。", "saved_view.name_conflict")],
+            ) from exc
 
         return self._row_dict(saved_view)
 

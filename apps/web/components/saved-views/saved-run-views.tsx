@@ -1,5 +1,8 @@
 "use client";
 
+import type { FormEvent } from "react";
+
+import { ValidatedForm } from "@/components/forms/form-validation";
 import { SelectField, TextField } from "@/components/forms/workbench-field";
 import type { SavedView } from "@/lib/types";
 
@@ -20,14 +23,19 @@ export function SavedRunViews({
   onApply: (view: SavedView | null) => void;
   onDelete: () => void;
   onNameChange: (name: string) => void;
-  onSave: () => void;
+  onSave: () => void | Promise<void>;
   selectedViewId: string;
   views: SavedView[];
 }) {
   const selectedView = views.find((view) => view.id === selectedViewId) ?? null;
 
+  function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    return onSave();
+  }
+
   return (
-    <section className="savedRunViews" aria-label="保存视图">
+    <ValidatedForm aria-label="保存视图" className="savedRunViews" onValidSubmit={submit}>
       <SelectField
         aria-label="Saved run view"
         disabled={loading || busy}
@@ -50,16 +58,18 @@ export function SavedRunViews({
         className="savedRunViewName"
         disabled={busy}
         label="保存为"
+        name="name"
         onChange={(event) => onNameChange(event.currentTarget.value)}
         placeholder="候选 v2 / Primary v3"
+        required
         value={name}
       />
-      <button disabled={busy || name.trim().length === 0} onClick={onSave} type="button">
+      <button disabled={busy} type="submit">
         保存当前视图
       </button>
       <button disabled={busy || !selectedView} onClick={onDelete} type="button">
         删除视图
       </button>
-    </section>
+    </ValidatedForm>
   );
 }

@@ -10,6 +10,16 @@
 
 ## Session Log
 
+### 2026-05-15 23:24 CST - TASK-059 保存视图名称字段级校验
+
+- 新增 `docs/superpowers/specs/2026-05-15-saved-view-name-validation-design.md` 和执行计划，记录 GOV.UK Error Summary / Validation / Character count 与 MOJ Alert 对保存视图字段错误体验的适配。
+- `CreateSavedViewPayload.name` 增加 1-80 字符服务端校验，超长名称返回 `field_errors.name` 和中文上限文案。
+- `SqlSkillRepository.create_saved_view` 对 trim 后空白名和唯一约束冲突返回 `FieldInvariantError`，重复名称稳定返回 code `saved_view.name_conflict`。
+- `SavedRunViews` 接入 `ValidatedForm`；保存按钮改为 submit，空白/重复/超长名称会显示错误摘要、字段旁错误和 `aria-invalid`，摘要链接可回焦到 `保存视图名称`。
+- 更新 run comparison 视觉基线：保存按钮从空值禁用改为可提交以触发表单错误，这是本轮交互变化的预期结果。
+- README、API contract、产品体验评审、完成度审计、摩擦审计和 TASK-059 任务记录已更新。
+- 已验证：红灯 API 先失败于重复名缺少 `field_errors` 和 81 字符名称返回 200；绿色后目标 API 2 passed；红灯 E2E 先失败于 `.savedRunViews .formErrorSummary` 不存在；绿色后目标 E2E 1 passed；visual run comparison 更新后定点 1 passed；in-app Browser 当前工作台非空、console error/warn 为 0；`UV_NO_CACHE=1 uv run pytest` 103 passed；`npm run test:unit` 5 files/16 tests passed；`npm run typecheck` passed；`npm run build` passed；`npm audit --omit=dev` found 0 vulnerabilities；`npm run e2e` 68 passed；`git diff --check` passed；任务 JSON 结构检查 passed；关键文件行数 891/2419/1911/75/1607/163/224/1018/181/218/175/44/97/21/415/453。
+
 ### 2026-05-15 22:57 CST - TASK-058 批量 case 预览移动端护栏
 
 - 新增 `docs/superpowers/specs/2026-05-15-batch-case-preview-mobile-design.md` 和执行计划，记录批量 case 预览在窄屏下的响应式边界。

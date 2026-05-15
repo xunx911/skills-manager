@@ -493,6 +493,57 @@ class ApiCommandTest(unittest.TestCase):
         self.assertEqual(deleted.status_code, 200)
         self.assertEqual(deleted.json(), {"ok": True})
         self.assertEqual(listed_after_delete.json(), [])
+        self.assertEqual(
+            duplicate.json()["field_errors"][0],
+            {
+                "field": "name",
+                "message": "保存视图名称已存在。",
+                "code": "saved_view.name_conflict",
+            },
+        )
+
+    def test_saved_run_view_rejects_overlong_name(self):
+        skill = self.create_skill("saved-view-name-too-long")
+
+        response = self.client.post(
+            "/api/saved-views",
+            json={
+                "skill_id": skill["skill_id"],
+                "name": "x" * 81,
+                "view_type": "run_history",
+                "config": {},
+                "actor": "tester",
+            },
+        )
+        blank = self.client.post(
+            "/api/saved-views",
+            json={
+                "skill_id": skill["skill_id"],
+                "name": "   ",
+                "view_type": "run_history",
+                "config": {},
+                "actor": "tester",
+            },
+        )
+
+        self.assertEqual(response.status_code, 422)
+        self.assertEqual(
+            response.json()["field_errors"][0],
+            {
+                "field": "name",
+                "message": "保存视图名称最多 80 个字符。",
+                "code": "request.string_too_long",
+            },
+        )
+        self.assertEqual(blank.status_code, 400)
+        self.assertEqual(
+            blank.json()["field_errors"][0],
+            {
+                "field": "name",
+                "message": "填写保存视图名称。",
+                "code": "saved_view.name_required",
+            },
+        )
 
     def test_eval_case_history_returns_versions_and_eval_set_membership(self):
         skill = self.create_skill("case-history-reviewer")

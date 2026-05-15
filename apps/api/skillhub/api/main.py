@@ -37,10 +37,12 @@ EVAL_CASE_TITLE_MAX_LENGTH = 160
 EVAL_CASE_INPUT_MAX_LENGTH = 20_000
 EVAL_CASE_EXPECTED_OUTPUT_MAX_LENGTH = 10_000
 EVAL_CASE_NOTES_MAX_LENGTH = 2_000
+SAVED_VIEW_NAME_MAX_LENGTH = 80
 EvalCaseTitle = Annotated[str, Field(min_length=1, max_length=EVAL_CASE_TITLE_MAX_LENGTH)]
 EvalCaseInput = Annotated[str, Field(min_length=1, max_length=EVAL_CASE_INPUT_MAX_LENGTH)]
 EvalCaseExpectedOutput = Annotated[str, Field(min_length=1, max_length=EVAL_CASE_EXPECTED_OUTPUT_MAX_LENGTH)]
 EvalCaseNotes = Annotated[str, Field(max_length=EVAL_CASE_NOTES_MAX_LENGTH)]
+SavedViewName = Annotated[str, Field(min_length=1, max_length=SAVED_VIEW_NAME_MAX_LENGTH)]
 
 
 class ContentRefPayload(BaseModel):
@@ -156,7 +158,7 @@ class AcceptEvalRunVerificationPayload(BaseModel):
 
 class CreateSavedViewPayload(BaseModel):
     skill_id: str
-    name: str
+    name: SavedViewName
     view_type: str = "run_history"
     config: dict[str, str] = Field(default_factory=dict)
 
@@ -782,6 +784,10 @@ def request_validation_message(field: str, error_type: str) -> str:
         return "至少填写一个约束标签。"
     if field == "tags" and error_type in {"string_pattern_mismatch", "string_too_long", "string_too_short"}:
         return "约束标签只能使用字母、数字、点、下划线和连字符，每个最多 64 个字符。"
+    if field == "name" and error_type == "string_too_long":
+        return f"保存视图名称最多 {SAVED_VIEW_NAME_MAX_LENGTH} 个字符。"
+    if field == "name" and error_type in {"missing", "string_too_short"}:
+        return "填写保存视图名称。"
     return f"{label} 格式不正确。"
 
 
@@ -844,6 +850,7 @@ API_FIELD_LABELS = {
     "variant_summary": "变体简介",
     "tags": "约束标签",
     "change_summary": "版本说明",
+    "name": "保存视图名称",
 }
 
 
