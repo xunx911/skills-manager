@@ -411,5 +411,12 @@
     "priority": 59,
     "passes": true,
     "spec": ".agent/tasks/TASK-059.json"
+  },
+  {
+    "id": "060",
+    "title": "Accepted verification note 字段级校验",
+    "priority": 60,
+    "passes": true,
+    "spec": ".agent/tasks/TASK-060.json"
   }
 ]

@@ -10,6 +10,15 @@
 
 ## Session Log
 
+### 2026-05-15 23:49 CST - TASK-060 Accepted verification note 字段级校验
+
+- 新增 `docs/superpowers/specs/2026-05-15-accepted-verification-note-validation-design.md` 和执行计划，记录 GOV.UK Error Summary / Validation / Character count 与 MOJ Alert 对 verification note 字段错误体验的适配。
+- `AcceptEvalRunVerificationPayload.note` 增加 1000 字符服务端上限，超长说明返回 `field_errors.note` 和中文文案 `验证说明最多 1000 个字符。`。
+- `RunComparisonPanel` 的 accepted verification 表单接入 `ValidatedForm` 和共享 `TextField`；`acceptComparisonCandidate` 对 API 字段错误重新抛给表单。
+- 超长 note 现在会显示错误摘要、字段旁错误、`aria-invalid`，摘要链接可回焦到 `Accepted verification note` 输入框。
+- README、API contract、产品体验评审、完成度审计、摩擦审计和 TASK-060 任务记录已更新。
+- 已验证：红灯 API 先失败于 1001 字符 note 返回 200；绿色后目标 API 2 passed；红灯 E2E 先失败于 `.runCompareAcceptBar .formErrorSummary` 不存在；绿色后目标 E2E 1 passed；`UV_NO_CACHE=1 uv run pytest` 104 passed；`npm run test:unit` 5 files/16 tests passed；`npm run typecheck` passed；`npm run build` passed；`npm audit --omit=dev` found 0 vulnerabilities；`npm run e2e` 69 passed；`git diff --check` passed；任务 JSON 结构检查 passed；关键文件行数 896/1953/163/1611/194/224/1020/182/220/176/92/44/21/422/463。
+
 ### 2026-05-15 23:24 CST - TASK-059 保存视图名称字段级校验
 
 - 新增 `docs/superpowers/specs/2026-05-15-saved-view-name-validation-design.md` 和执行计划，记录 GOV.UK Error Summary / Validation / Character count 与 MOJ Alert 对保存视图字段错误体验的适配。

@@ -78,7 +78,7 @@
 - **RFC 9457 / JSON:API error object / FastAPI exception handlers:** API 错误应该把人读说明和机器可读定位分开，客户端不应该解析 `detail` 文案猜字段。SkillHub 适配为兼容式 `detail + field_errors`：重复 Skill ID、请求体校验错误和 Skill bundle 导入解析错误会回填到表单字段；批量 case 直连 API 会返回 `cases[n].field`，让客户端不用猜测哪一行失败。
 - **MDN form validation:** 客户端校验可以改善体验，但不能替代服务端校验。SkillHub 适配为服务端权威格式规则：手工新建 skill 的 `slug` 与标准 Skill bundle `name` 保持一致，tag 只允许稳定可查询字符；前端只显示服务端 `field_errors`。
 - **GitHub / Linear 类工作流产品:** 标题用于扫读和列表导航，正文承载长上下文。SkillHub 适配为 eval case 标题 160 字符、Input 20000 字符、Expected output 10000 字符、Notes 2000 字符；超限失败而不是截断，避免测试资产丢内容。
-- **GOV.UK Character count / MOJ Alert:** 只有有明确产品或技术理由时才限制字符数，表单验证错误不应该退化为普通 alert。SkillHub 适配为 saved view name 80 字符上限、重复名和空白名都回填到 `保存视图名称` 字段，避免用户从 toast 里猜该修哪里。
+- **GOV.UK Character count / MOJ Alert:** 只有有明确产品或技术理由时才限制字符数，表单验证错误不应该退化为普通 alert。SkillHub 适配为 saved view name 80 字符上限、accepted verification note 1000 字符上限；空白、重复、超长或审计说明过长都会回填到对应字段，避免用户从 toast 里猜该修哪里。
 - **GitHub Command Palette:** 命令菜单兼具导航、搜索和运行命令能力；SkillHub 借鉴其 scope 思路，把菜单限定在当前 skill 工作区，避免全局搜索过早膨胀。
 - **TestRail quick outline:** 测试用例管理工具会区分完整表单和快速 outline。SkillHub 借鉴“快速进入测试集”的速度，但不允许只填标题，仍要求 `input + expected output`，保证测评资产质量。
 - **TestRail Pass & Next / bulk result:** TestRail 在三栏执行视图里提供快速通过并进入下一条，也支持批量提交相同结果。SkillHub 适配为“通过/不通过后自动前进”和“仅把未确认项标为通过”，避免覆盖已发现的失败。
@@ -159,11 +159,12 @@
 42. 以前批量粘贴前看不到解析结果；现在预览表会展示每行的状态、标题、Input、Expected output 和 Notes，用户提交前能发现串列或漏字段。
 43. 以前移动端批量预览沿用桌面两栏，textarea 和统计卡会挤在同一行；现在窄屏下批量输入、统计、预览表和提交按钮纵向排布，页面本身不横向滚动，只让表格容器内部滚动。
 44. 以前保存历史视图重名时只会出现全局失败提示；现在空白、重复或超过 80 字符的名称会显示错误摘要，并把错误标到 `保存视图名称` 输入框旁。
+45. 以前接受验证依据时 note 可以无限长，失败也只可能成为全局错误；现在超过 1000 字符会显示错误摘要，并把错误标到 `Accepted verification note` 输入框旁。
 
 ## 仍然存在的摩擦
 
 1. Command menu 已完成第二阶段：支持 mode-aware 排序、本地最近使用、selected case/run 命令和右侧 preview；还没有服务器端个性化、跨 skill 全局搜索或快捷键自定义。
-2. 表单字段基础件已覆盖主要工作台表单，required 字段已有错误 summary、提交后聚焦摘要、摘要链接回字段和字段旁错误；后端字段错误映射第一阶段已覆盖重复 Skill ID、基础请求体校验、Skill ID 格式、tags 格式、导入 bundle 解析错误、批量 case 行级字段错误、eval case 文本长度上限和保存视图名称字段错误。还没有其他产品字段长度上限和错误统计。
+2. 表单字段基础件已覆盖主要工作台表单，required 字段已有错误 summary、提交后聚焦摘要、摘要链接回字段和字段旁错误；后端字段错误映射第一阶段已覆盖重复 Skill ID、基础请求体校验、Skill ID 格式、tags 格式、导入 bundle 解析错误、批量 case 行级字段错误、eval case 文本长度上限、保存视图名称字段错误和 accepted verification note 字段错误。还没有其他产品字段长度上限和错误统计。
 3. Promotion review 已经展示 case impact、diff 和会话级文件 reviewed progress，但 viewed state 还没有服务端持久化，也没有把具体 diff hunk 关联到具体 eval case。
 4. URL state 已覆盖核心证据上下文，但还没有短链接、权限感知分享提示，也没有保存未提交草稿。
 5. Run matrix 已经提供 read-only 多 run x case 浏览、保存筛选视图、对照/候选 impact、impact 过滤和分组，但还没有列配置、自定义指标列、导出或保存对照/候选 run 指针。

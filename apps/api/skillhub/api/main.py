@@ -38,11 +38,13 @@ EVAL_CASE_INPUT_MAX_LENGTH = 20_000
 EVAL_CASE_EXPECTED_OUTPUT_MAX_LENGTH = 10_000
 EVAL_CASE_NOTES_MAX_LENGTH = 2_000
 SAVED_VIEW_NAME_MAX_LENGTH = 80
+ACCEPTED_VERIFICATION_NOTE_MAX_LENGTH = 1_000
 EvalCaseTitle = Annotated[str, Field(min_length=1, max_length=EVAL_CASE_TITLE_MAX_LENGTH)]
 EvalCaseInput = Annotated[str, Field(min_length=1, max_length=EVAL_CASE_INPUT_MAX_LENGTH)]
 EvalCaseExpectedOutput = Annotated[str, Field(min_length=1, max_length=EVAL_CASE_EXPECTED_OUTPUT_MAX_LENGTH)]
 EvalCaseNotes = Annotated[str, Field(max_length=EVAL_CASE_NOTES_MAX_LENGTH)]
 SavedViewName = Annotated[str, Field(min_length=1, max_length=SAVED_VIEW_NAME_MAX_LENGTH)]
+AcceptedVerificationNote = Annotated[str, Field(max_length=ACCEPTED_VERIFICATION_NOTE_MAX_LENGTH)]
 
 
 class ContentRefPayload(BaseModel):
@@ -153,7 +155,7 @@ class RecordEvalRunPayload(BaseModel):
 
 class AcceptEvalRunVerificationPayload(BaseModel):
     eval_run_id: str
-    note: str = ""
+    note: AcceptedVerificationNote = ""
 
 
 class CreateSavedViewPayload(BaseModel):
@@ -788,6 +790,8 @@ def request_validation_message(field: str, error_type: str) -> str:
         return f"保存视图名称最多 {SAVED_VIEW_NAME_MAX_LENGTH} 个字符。"
     if field == "name" and error_type in {"missing", "string_too_short"}:
         return "填写保存视图名称。"
+    if field == "note" and error_type == "string_too_long":
+        return f"验证说明最多 {ACCEPTED_VERIFICATION_NOTE_MAX_LENGTH} 个字符。"
     return f"{label} 格式不正确。"
 
 
@@ -851,6 +855,7 @@ API_FIELD_LABELS = {
     "tags": "约束标签",
     "change_summary": "版本说明",
     "name": "保存视图名称",
+    "note": "验证说明",
 }
 
 

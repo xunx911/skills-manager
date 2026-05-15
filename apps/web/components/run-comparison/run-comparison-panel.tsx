@@ -3,6 +3,8 @@
 import { FormEvent, useState } from "react";
 
 import { Badge } from "@/components/chrome";
+import { ValidatedForm } from "@/components/forms/form-validation";
+import { TextField } from "@/components/forms/workbench-field";
 import { percent, shortId } from "@/lib/format";
 import type { EvalRunComparison } from "@/lib/types";
 
@@ -15,14 +17,14 @@ export function RunComparisonPanel({
   busy: boolean;
   comparison: EvalRunComparison | null;
   loading: boolean;
-  onAccept: (note: string) => void;
+  onAccept: (note: string) => void | Promise<void>;
 }) {
   const [note, setNote] = useState("");
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!comparison || busy || comparison.candidate_accepted_verification) return;
-    onAccept(note.trim());
+    return onAccept(note.trim());
   }
 
   if (loading) {
@@ -100,14 +102,16 @@ export function RunComparisonPanel({
         ))}
       </div>
 
-      <form className="runCompareAcceptBar" onSubmit={submit}>
+      <ValidatedForm className="runCompareAcceptBar" onValidSubmit={submit}>
         <div>
           <span>Verification pointer</span>
           <strong>{accepted ? "候选 run 已是验证依据" : "把候选 run 接受为验证依据"}</strong>
         </div>
-        <input
+        <TextField
           aria-label="Accepted verification note"
           disabled={Boolean(accepted)}
+          label="Verification note"
+          name="note"
           onChange={(event) => setNote(event.currentTarget.value)}
           placeholder="可选：记录为什么接受这次测评"
           value={accepted ? accepted.note : note}
@@ -115,7 +119,7 @@ export function RunComparisonPanel({
         <button className="primaryAction" disabled={busy || Boolean(accepted)} type="submit">
           接受为验证依据
         </button>
-      </form>
+      </ValidatedForm>
     </section>
   );
 }

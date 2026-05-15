@@ -674,18 +674,22 @@ export function DecisionWorkbench({
 
   async function acceptComparisonCandidate(note: string) {
     if (!runComparison) return;
-    await runCommand("候选 run 已接受为验证依据。", async () => {
-      await apiSend<{ ok: boolean }>("/api/eval-runs/accepted-verifications", {
-        method: "POST",
-        body: {
-          eval_run_id: runComparison.candidate.eval_run.id,
-          note,
-        },
-      });
-      await loadRunHistory(selectedDetail.skill.id, runFilters);
-      await loadRunComparison(runComparison.baseline.eval_run.id, runComparison.candidate.eval_run.id);
-      return "候选 run 已接受为验证依据。";
-    });
+    await runCommand(
+      "候选 run 已接受为验证依据。",
+      async () => {
+        await apiSend<{ ok: boolean }>("/api/eval-runs/accepted-verifications", {
+          method: "POST",
+          body: {
+            eval_run_id: runComparison.candidate.eval_run.id,
+            note,
+          },
+        });
+        await loadRunHistory(selectedDetail.skill.id, runFilters);
+        await loadRunComparison(runComparison.baseline.eval_run.id, runComparison.candidate.eval_run.id);
+        return "候选 run 已接受为验证依据。";
+      },
+      { rethrowFieldErrors: true },
+    );
   }
 
   async function loadCaseHistory(caseId: string) {

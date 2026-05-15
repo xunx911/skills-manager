@@ -1060,6 +1060,48 @@ class ApiCommandTest(unittest.TestCase):
         history = self.client.get(f"/api/skills/{skill['skill_id']}/eval-runs").json()
         self.assertEqual(history["runs"][0]["accepted_verification"]["eval_run_id"], run["eval_run_id"])
 
+    def test_accepted_verification_rejects_overlong_note(self):
+        skill = self.create_skill("accepted-note-too-long")
+        case = self.client.post(
+            "/api/eval-cases",
+            json={
+                "skill_id": skill["skill_id"],
+                "title": "PR: owner scope",
+                "input_text": "Project.all()",
+                "expected_output": "Flag owner scope.",
+                "actor": "tester",
+            },
+        ).json()
+        run = self.client.post(
+            "/api/eval-runs",
+            json={
+                "variant_version_id": skill["variant_version_id"],
+                "eval_set_version_id": case["eval_set_version_id"],
+                "strategy": "manual_pass_fail",
+                "results": {case["eval_case_version_id"]: True},
+                "actor": "tester",
+            },
+        ).json()
+
+        response = self.client.post(
+            "/api/eval-runs/accepted-verifications",
+            json={
+                "eval_run_id": run["eval_run_id"],
+                "note": "x" * 1001,
+                "actor": "tester",
+            },
+        )
+
+        self.assertEqual(response.status_code, 422)
+        self.assertEqual(
+            response.json()["field_errors"][0],
+            {
+                "field": "note",
+                "message": "验证说明最多 1000 个字符。",
+                "code": "request.string_too_long",
+            },
+        )
+
     def test_skill_role_assignments_can_be_listed_granted_and_revoked(self):
         skill = self.create_skill("access-api")
 

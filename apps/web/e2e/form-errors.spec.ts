@@ -3,7 +3,7 @@ import { mkdtemp, writeFile, rm } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 
-import { clearSkillCatalog, importSkillBundle } from "./helpers";
+import { addEvalCase, clearSkillCatalog, importSkillBundle } from "./helpers";
 
 test("launchpad required fields show an error summary and focus recovery links", async ({ page, request }) => {
   await clearSkillCatalog(request);
@@ -160,4 +160,35 @@ test("saved run view duplicate names map to the saved view name field", async ({
 
   await summary.getByRole("link", { name: "保存视图名称已存在。" }).click();
   await expect(page.getByLabel("保存视图名称")).toBeFocused();
+});
+
+test("accepted verification note length errors map to the note field", async ({ page }) => {
+  await importSkillBundle(page, `accepted-note-field-errors-${Date.now()}`);
+  await addEvalCase(page, "PR: verification pointer");
+  const caseCard = page.locator(".caseReviewCard").filter({ hasText: "PR: verification pointer" });
+
+  await caseCard.getByRole("button", { name: "不通过", exact: true }).click();
+  await page.getByTestId("eval-run-bar").getByRole("button", { name: "记录本次测评" }).click();
+  await expect(page.getByText("已记录 0/1 通过。")).toBeVisible();
+
+  await caseCard.getByRole("button", { name: "通过", exact: true }).click();
+  await page.getByTestId("eval-run-bar").getByRole("button", { name: "记录本次测评" }).click();
+  await expect(page.getByText("已记录 1/1 通过。")).toBeVisible();
+
+  await page.getByRole("tab", { name: "历史", exact: true }).click();
+  await page.locator(".historyRunRow").filter({ hasText: "0/1" }).getByRole("button", { name: "对照" }).click();
+  await page.locator(".historyRunRow").filter({ hasText: "1/1" }).getByRole("button", { name: "候选" }).click();
+  await expect(page.getByTestId("run-comparison-panel")).toContainText("+100%");
+
+  await page.getByLabel("Accepted verification note").fill("x".repeat(1001));
+  await page.getByRole("button", { name: "接受为验证依据" }).click();
+
+  const summary = page.locator(".runCompareAcceptBar .formErrorSummary");
+  await expect(summary).toBeVisible();
+  await expect(summary).toBeFocused();
+  await expect(summary).toContainText("验证说明最多 1000 个字符。");
+  await expect(page.getByLabel("Accepted verification note")).toHaveAttribute("aria-invalid", "true");
+
+  await summary.getByRole("link", { name: "验证说明最多 1000 个字符。" }).click();
+  await expect(page.getByLabel("Accepted verification note")).toBeFocused();
 });
