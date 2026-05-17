@@ -1,0 +1,30 @@
+{
+  "id": "069",
+  "title": "EvalRun results 精确字段校验",
+  "status": "complete",
+  "goal": "让手工测评结果必须完整、精确匹配 EvalSetVersion 的 case versions，缺失或多余 result key 都返回字段级错误。",
+  "scope": [
+    "POST /api/eval-runs results key 集合校验",
+    "缺失 result 返回 results.<case_version_id> 字段错误",
+    "未知 result 返回 results.<case_version_id> 字段错误",
+    "更新 API contract、README、产品审计和任务记录"
+  ],
+  "out_of_scope": [
+    "实现 eval-result-imports",
+    "改造前端测评 UI",
+    "新增 JSON Pointer 字段",
+    "修改 run matrix/history/comparison 读取模型"
+  ],
+  "verification": [
+    "红灯 API: cd apps/api && UV_NO_CACHE=1 uv run pytest tests/test_api_commands.py -k \"eval_run_results_must_match_eval_set_version\" 先失败于缺失 result 返回 200。",
+    "红灯 Repository: cd apps/api && UV_NO_CACHE=1 uv run pytest tests/test_sql_repository.py -k \"record_eval_run_requires_exact_result_keys\" 先失败于没有抛 FieldInvariantError。",
+    "绿色 API: cd apps/api && UV_NO_CACHE=1 uv run pytest tests/test_api_commands.py -k \"eval_run_results_must_match_eval_set_version\" -> 1 passed。",
+    "绿色 Repository: cd apps/api && UV_NO_CACHE=1 uv run pytest tests/test_sql_repository.py -k \"record_eval_run_requires_exact_result_keys\" -> 1 passed。",
+    "API: cd apps/api && UV_NO_CACHE=1 uv run pytest -> 111 passed。",
+    "Web unit: cd apps/web && npm run test:unit -> 5 files / 16 tests passed。",
+    "Web typecheck: cd apps/web && npm run typecheck -> passed after build regenerated .next/types。",
+    "Web build: cd apps/web && npm run build -> passed。",
+    "Web audit: cd apps/web && npm audit --omit=dev -> found 0 vulnerabilities。",
+    "Web E2E: cd apps/web && npm run e2e -> 74 passed。"
+  ]
+}

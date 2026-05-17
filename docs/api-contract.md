@@ -1010,7 +1010,9 @@ Content-Type: application/json
 
 - 创建 `EvalRun`。
 - 为 eval set 中每个 case 创建 `CaseResult`。
-- 未提供的 case 默认 `false`，demo 阶段这样更容易暴露遗漏。
+- `results` 的 key 必须完整、精确匹配该 `EvalSetVersion` 的 case versions；缺失 case version 返回 `400` 和 `field_errors.field = "results.<case_version_id>"`，code 为 `eval_run.result_required`。
+- 不属于当前 eval set version 的 result key 返回 `400` 和 `field_errors.field = "results.<case_version_id>"`，code 为 `eval_run.result_unexpected`。
+- `results` 的 value 必须是 JSON boolean，不做字符串 `"true"` / `"false"` 的隐式转换。
 - `variant_version_id` 和 `eval_set_version_id` 必须属于同一个 skill，否则返回 400。
 
 ### Import Eval Result
@@ -1040,10 +1042,9 @@ Content-Type: application/json
 - 创建 `eval_result_import` artifact，保存外部导入的原始 JSON。
 - 创建 `EvalRun`，`strategy_ref` 和 `run_config_hash` 来自导入 payload。
 - 为 eval set 中每个 `EvalCaseVersion` 创建 `CaseResult`。
-- `results` 的 key 必须属于该 `EvalSetVersion.case_version_refs`；未知 case version 返回 400。
+- `results` 的 key 必须完整、精确匹配该 `EvalSetVersion.case_version_refs`；缺失或未知 case version 返回 400。
 - 外部 runner 应先读取目标 `GET /api/eval-set`，再按返回的 `case_version_refs` 生成 payload；不要硬编码历史 case id。
 - `results` 的 value 必须是 JSON boolean，不做字符串 `"true"` / `"false"` 的隐式转换。
-- 未提供的 case 默认 `false`。正式版可以把缺失结果升级成 `missing` 或导入校验错误；demo 阶段先保持与手工记录一致。
 - `variant_version_id` 和 `eval_set_version_id` 必须属于同一个 skill，否则返回 400。
 
 Demo runner:

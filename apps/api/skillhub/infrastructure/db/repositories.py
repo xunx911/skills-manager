@@ -908,6 +908,7 @@ class SqlSkillRepository:
                 raise InvariantError("EvalRun must bind a variant version and eval set version from the same skill.")
             skill_id = variant_version["skill_id"]
             case_version_ids = self._eval_set_case_version_ids(connection, eval_set_version_id)
+            self._validate_eval_run_results(case_version_ids, results)
             passed_count = sum(1 for case_version_id in case_version_ids if results.get(case_version_id, False))
             failed_count = len(case_version_ids) - passed_count
             summary = {
@@ -955,6 +956,29 @@ class SqlSkillRepository:
             failed=failed_count,
             total=len(case_version_ids),
         )
+
+    def _validate_eval_run_results(self, case_version_ids: list[str], results: dict[str, bool]) -> None:
+        expected_ids = set(case_version_ids)
+        result_ids = set(results)
+        field_errors = [
+            FieldError(
+                field=f"results.{case_version_id}",
+                message="确认该测试用例通过或不通过。",
+                code="eval_run.result_required",
+            )
+            for case_version_id in case_version_ids
+            if case_version_id not in result_ids
+        ]
+        field_errors.extend(
+            FieldError(
+                field=f"results.{case_version_id}",
+                message="测试结果不属于当前 EvalSetVersion。",
+                code="eval_run.result_unexpected",
+            )
+            for case_version_id in sorted(result_ids - expected_ids)
+        )
+        if field_errors:
+            raise FieldInvariantError("EvalRun results must exactly match the eval set version cases.", field_errors)
 
     def list_skills(self) -> list[dict[str, Any]]:
         with self.engine.connect() as connection:

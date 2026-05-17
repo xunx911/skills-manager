@@ -169,11 +169,12 @@
 50. 以前错误摘要只说“修正后再提交”，用户要扫列表才能知道有多少项；现在摘要直接显示需要修正的字段数量，错误恢复的工作量更可见。
 51. 以前 variant 说明、版本说明和发布决策说明要提交后才知道是否超过 1000 字符；现在这些低频长文本字段会显示剩余或超出字符数，用户能在提交前修正。
 52. 以前本地 actor session 只有登录没有退出入口，用户要刷新或手动清 cookie 才能确认回到默认身份；现在 `Local login` 面板有 `退出登录`，退出后再导入 skill 会回到 `product-operator` owner。
+53. 以前 `POST /api/eval-runs` 会把遗漏的 case result 静默记为不通过，未知 result key 也会被忽略；现在缺失或多余结果都会返回 `results.<case_version_id>` 字段错误，测评事实不会靠平台猜测补齐。
 
 ## 仍然存在的摩擦
 
 1. Command menu 已完成第二阶段：支持 mode-aware 排序、本地最近使用、selected case/run 命令和右侧 preview；还没有服务器端个性化、跨 skill 全局搜索或快捷键自定义。
-2. 表单字段基础件已覆盖主要工作台表单，required 字段已有错误 summary、错误数量统计、提交后聚焦摘要、摘要链接回字段和字段旁错误；后端字段错误映射已覆盖重复 Skill ID、基础请求体校验、Skill ID 格式、tags 格式、owner_ref / subject_id 身份引用格式、导入 bundle 解析错误、批量 case 行级字段错误、eval case 文本长度上限、variant 写入字段长度上限、保存视图名称字段错误、accepted verification note 字段错误和 promotion decision note 字段错误。还没有更复杂嵌套字段回填。
+2. 表单字段基础件已覆盖主要工作台表单，required 字段已有错误 summary、错误数量统计、提交后聚焦摘要、摘要链接回字段和字段旁错误；后端字段错误映射已覆盖重复 Skill ID、基础请求体校验、Skill ID 格式、tags 格式、owner_ref / subject_id 身份引用格式、导入 bundle 解析错误、批量 case 行级字段错误、EvalRun results map-key 字段错误、eval case 文本长度上限、variant 写入字段长度上限、保存视图名称字段错误、accepted verification note 字段错误和 promotion decision note 字段错误。还没有更广的表格型字段回填体验。
 3. Promotion review 已经展示 case impact、diff 和会话级文件 reviewed progress，但 viewed state 还没有服务端持久化，也没有把具体 diff hunk 关联到具体 eval case。
 4. URL state 已覆盖核心证据上下文，但还没有短链接、权限感知分享提示，也没有保存未提交草稿。
 5. Run matrix 已经提供 read-only 多 run x case 浏览、保存筛选视图、对照/候选 impact、impact 过滤和分组，但还没有列配置、自定义指标列、导出或保存对照/候选 run 指针。
@@ -182,7 +183,7 @@
 
 ## 下一轮优化队列
 
-1. 表单验证后续：更多嵌套写入表单的字段错误回填，以及低频字段的辅助说明。
+1. 表单验证后续：更多嵌套写入表单的字段错误回填和表格型错误定位；EvalRun results 精确校验已完成第一阶段。
 2. 接入真实认证：用真正的登录 session/token 替换本地登录码和 actor cookie，保留后端 capabilities 契约，前端不再允许开发期身份模拟。
 3. Diff / Promotion review 第二阶段：评估是否服务端持久化 viewed state、自动折叠已查看文件，或把 diff hunk 关联到 eval case。
 4. URL state 第三阶段：增加短链接、权限感知分享提示，并评估是否保存草稿到本地 session storage 而不是 URL。

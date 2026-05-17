@@ -474,5 +474,12 @@
     "priority": 68,
     "passes": true,
     "spec": ".agent/tasks/TASK-068.json"
+  },
+  {
+    "id": "069",
+    "title": "EvalRun results 精确字段校验",
+    "priority": 69,
+    "passes": true,
+    "spec": ".agent/tasks/TASK-069.json"
   }
 ]

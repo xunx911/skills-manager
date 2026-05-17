@@ -10,6 +10,14 @@
 
 ## Session Log
 
+### 2026-05-17 17:57 CST - TASK-069 EvalRun results 精确字段校验
+
+- `POST /api/eval-runs` 现在要求 `results` key 集合完整、精确匹配目标 `EvalSetVersion` 的 case versions，不再把遗漏 case result 静默记为 `false`，也不再忽略未知 result key。
+- `SqlSkillRepository.record_eval_run` 新增结果 key 校验；缺失 case version 返回 `results.<case_version_id>` / `eval_run.result_required`，多余 case version 返回 `results.<case_version_id>` / `eval_run.result_unexpected`。
+- 原本依赖“缺失默认 false”的 repository 测试改为显式提交 `false`，保持 pass/fail summary 语义不变。
+- README、API contract、产品体验评审、摩擦审计、完成度审计、Superpowers spec/plan 和 TASK-069 任务记录已更新。
+- 已验证：红灯 API 先失败于缺失 result 返回 200；红灯 Repository 先失败于没有抛 `FieldInvariantError`；绿色后目标 API 1 passed、目标 Repository 1 passed；`UV_NO_CACHE=1 uv run pytest` 111 passed；`npm run test:unit` 5 files/16 tests passed；`npm run typecheck` passed；`npm run build` passed；`npm audit --omit=dev` found 0 vulnerabilities；完整 `npm run e2e` 74 passed。
+
 ### 2026-05-17 17:43 CST - TASK-068 本地 session 退出控制
 
 - `LocalSessionPanel` 新增 `退出登录` 次级按钮，非默认 actor 时调用 `DELETE /api/session`，默认 actor `product-operator` 下按钮禁用并给出标题说明。

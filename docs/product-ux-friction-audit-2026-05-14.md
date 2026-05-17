@@ -155,6 +155,7 @@
 - TASK-066 新增表单错误摘要统计：`ValidatedForm` 的错误摘要会显示需要修正的字段数量，保留原有 summary focus、摘要链接和字段旁错误。
 - TASK-067 新增低频长文本字符计数：`TextAreaField.characterLimit` 会显示剩余/超出字符数，并把计数节点加入 `aria-describedby`；variant summary、change summary、verification note 和 promotion decision note 已接入 1000 字符提示。
 - TASK-068 新增本地 session 退出控制：`Local login` 面板提供 `退出登录`，调用 `DELETE /api/session` 清除 actor cookie，前端刷新 actor 和 capabilities，退出后创建/导入 skill 回到默认 owner。
+- TASK-069 新增 EvalRun results 精确字段校验：`POST /api/eval-runs` 不再把遗漏 case result 静默记为 `false`，也不再忽略未知 result key；缺失或多余结果会返回 `results.<case_version_id>` 字段错误。
 
 影响：
 
@@ -174,7 +175,7 @@
 
 建议：
 
-- 下一轮表单方向应聚焦更复杂嵌套表单的字段级回填，以及低频字段的辅助说明。
+- 下一轮表单方向应继续聚焦更复杂嵌套表单的字段级回填；EvalRun results 已完成第一条 map-key 级别的嵌套字段错误，后续可以延展到表格型编辑体验。
 - 不建议为了“更像表单系统”而改成全受控输入；SkillHub 的长文本 case input/expected output 仍适合原生 form + FormData。
 
 ### 已解决第二阶段 / 仍需后续 - Command menu 已成为工作台操作入口层
@@ -235,7 +236,7 @@
 
 ## 下一轮任务排序
 
-1. **表单验证后续。** 更复杂嵌套表单的字段级回填，以及低频字段的辅助说明。
+1. **表单验证后续。** 更多嵌套表单的字段级回填和表格型错误定位；EvalRun results 精确校验已完成第一阶段。
 2. **接入真实认证。** 用真实登录 session/token 替换本地登录码和 actor cookie，并复用当前 capability UI 契约。
 3. **组织级 Audit Explorer。** 跨 skill 查询、日期范围、分页、导出和保留策略。
 4. **Diff / Promotion reviewed progress 第二阶段。** 决定是否服务端持久化、自动折叠已查看文件或纳入 promotion checklist。

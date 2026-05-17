@@ -259,6 +259,75 @@ class ApiCommandTest(unittest.TestCase):
         self.assertEqual(run_response.json()["passed"], 1)
         self.assertEqual(run_response.json()["failed"], 0)
 
+    def test_eval_run_results_must_match_eval_set_version(self):
+        skill = self.create_skill("strict-eval-run-results")
+        first_case = self.client.post(
+            "/api/eval-cases",
+            json={
+                "skill_id": skill["skill_id"],
+                "title": "PR: missing tenant scope",
+                "input_text": "Project.all()",
+                "expected_output": "Flag missing tenant scope.",
+                "actor": "tester",
+            },
+        ).json()
+        second_case = self.client.post(
+            "/api/eval-cases",
+            json={
+                "skill_id": skill["skill_id"],
+                "title": "PR: token logging",
+                "input_text": "console.log(token)",
+                "expected_output": "Flag token logging.",
+                "actor": "tester",
+            },
+        ).json()
+
+        missing_result = self.client.post(
+            "/api/eval-runs",
+            json={
+                "variant_version_id": skill["variant_version_id"],
+                "eval_set_version_id": second_case["eval_set_version_id"],
+                "strategy": "manual_pass_fail",
+                "results": {first_case["eval_case_version_id"]: True},
+                "actor": "tester",
+            },
+        )
+
+        self.assertEqual(missing_result.status_code, 400)
+        self.assertEqual(
+            missing_result.json()["field_errors"][0],
+            {
+                "field": f"results.{second_case['eval_case_version_id']}",
+                "message": "确认该测试用例通过或不通过。",
+                "code": "eval_run.result_required",
+            },
+        )
+
+        unexpected_result = self.client.post(
+            "/api/eval-runs",
+            json={
+                "variant_version_id": skill["variant_version_id"],
+                "eval_set_version_id": second_case["eval_set_version_id"],
+                "strategy": "manual_pass_fail",
+                "results": {
+                    first_case["eval_case_version_id"]: True,
+                    second_case["eval_case_version_id"]: False,
+                    "casever-not-in-set": True,
+                },
+                "actor": "tester",
+            },
+        )
+
+        self.assertEqual(unexpected_result.status_code, 400)
+        self.assertEqual(
+            unexpected_result.json()["field_errors"][0],
+            {
+                "field": "results.casever-not-in-set",
+                "message": "测试结果不属于当前 EvalSetVersion。",
+                "code": "eval_run.result_unexpected",
+            },
+        )
+
     def test_batch_eval_cases_endpoint_creates_one_snapshot(self):
         skill = self.create_skill("batch-case-reviewer")
 

@@ -3,7 +3,7 @@ import json
 
 from sqlalchemy import create_engine, event, select
 
-from skillhub.domain.errors import InvariantError, NotFoundError
+from skillhub.domain.errors import FieldInvariantError, InvariantError, NotFoundError
 from skillhub.domain.models import ContentRef, digest_text
 from skillhub.infrastructure.db.repositories import SqlSkillRepository
 from skillhub.infrastructure.db.tables import (
@@ -693,7 +693,7 @@ class SqlSkillRepositoryTest(unittest.TestCase):
             variant_version_id=skill.variant_version_id,
             eval_set_version_id=second_case.eval_set_version_id,
             strategy="manual_pass_fail",
-            results={first_case.eval_case_version_id: True},
+            results={first_case.eval_case_version_id: True, second_case.eval_case_version_id: False},
             actor="tester",
         )
 
@@ -713,6 +713,53 @@ class SqlSkillRepositoryTest(unittest.TestCase):
             first_case.eval_case_version_id: True,
             second_case.eval_case_version_id: False,
         })
+
+    def test_record_eval_run_requires_exact_result_keys(self):
+        skill = self.create_skill()
+        first_case = self.repository.create_eval_case(
+            skill_id=skill.skill_id,
+            title="PR: missing owner check",
+            input_text="input 1",
+            expected_output="expected 1",
+            actor="tester",
+        )
+        second_case = self.repository.create_eval_case(
+            skill_id=skill.skill_id,
+            title="PR: token leak",
+            input_text="input 2",
+            expected_output="expected 2",
+            actor="tester",
+        )
+
+        with self.assertRaises(FieldInvariantError) as missing:
+            self.repository.record_eval_run(
+                variant_version_id=skill.variant_version_id,
+                eval_set_version_id=second_case.eval_set_version_id,
+                strategy="manual_pass_fail",
+                results={first_case.eval_case_version_id: True},
+                actor="tester",
+            )
+
+        self.assertEqual(missing.exception.field_errors[0].field, f"results.{second_case.eval_case_version_id}")
+        self.assertEqual(missing.exception.field_errors[0].message, "确认该测试用例通过或不通过。")
+        self.assertEqual(missing.exception.field_errors[0].code, "eval_run.result_required")
+
+        with self.assertRaises(FieldInvariantError) as unexpected:
+            self.repository.record_eval_run(
+                variant_version_id=skill.variant_version_id,
+                eval_set_version_id=second_case.eval_set_version_id,
+                strategy="manual_pass_fail",
+                results={
+                    first_case.eval_case_version_id: True,
+                    second_case.eval_case_version_id: False,
+                    "casever-not-in-set": True,
+                },
+                actor="tester",
+            )
+
+        self.assertEqual(unexpected.exception.field_errors[0].field, "results.casever-not-in-set")
+        self.assertEqual(unexpected.exception.field_errors[0].message, "测试结果不属于当前 EvalSetVersion。")
+        self.assertEqual(unexpected.exception.field_errors[0].code, "eval_run.result_unexpected")
 
     def test_record_eval_run_rejects_cross_skill_variant_and_eval_set_versions(self):
         first = self.create_skill(slug="code-reviewer", digest="digest-code")

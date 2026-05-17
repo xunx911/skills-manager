@@ -23,7 +23,7 @@
 - 工作台支持 `Cmd/Ctrl+K` 上下文命令菜单，可搜索并执行导入、创建、测评、历史、差异等高频动作；菜单使用 `dialog + combobox + listbox` 语义，方向键移动 active option，Tab 会限制在弹层内，关闭后焦点回到触发按钮。菜单会根据当前 mode、最近使用和当前 selection 排序：空工作台优先导入/新建，测评页可直接查看当前 case 历史，历史页可把当前 run 设为对照或候选；右侧 preview 会展示命令作用对象、scope 和禁用原因。
 - `/skills` 支持第二阶段 URL state：可以直达某个 skill 的 `概览 / 变体 / 测评 / 差异 / 历史 / 审计 / 评审`，并恢复 diff pair/file/filter、eval target/case、history filters、selected run、run comparison、matrix controls、audit filters 和 promotion review context；刷新、复制链接和浏览器 Back/Forward 都能还原这些证据上下文。
 - 工作台有基础 accessibility 护栏：键盘用户可用 skip link 直接进入主内容；全局 focus ring 更醒目；`prefers-reduced-motion` 会压低非必要动效；操作结果通过 `role=status` 暴露给读屏软件；命令菜单、Workbench mode tabs、Run matrix 和 Inspector action 焦点交接已有 E2E 回归。
-- 表单字段基础件已覆盖主要工作台表单：`SkillLaunchpad`、`WorkbenchInspector`、快速添加 case、case 详情内联编辑、skill 设置、访问控制、危险区确认、保存历史视图、history filters、run matrix controls 和 diff selectors 都使用共享字段壳层；业务 text/textarea 默认显式 `autocomplete="off"`。高频写入表单现在使用 `ValidatedForm` 做 required 字段错误摘要、需要修正的字段数量统计、字段旁错误、`aria-invalid` 和摘要链接聚焦，不再依赖浏览器原生 required 气泡；有 1000 字符服务端上限的低频长文本字段会显示剩余或超出的字符数，但不会用 `maxlength` 截断输入。后端唯一性和请求体校验错误会保留 `detail` 并返回 `field_errors`，新建/编辑 skill 时重复或格式错误的 Skill ID 会直接回填到 `Skill ID` 字段，非法 tag 会回填到 `约束标签` 字段，非法归属或成员 identity ref 会回填到 `归属` / `成员` 字段，variant 名称、说明和版本说明超限会回填到主工作区或 inspector 对应字段，保存历史视图的空白/重复/超长名称会回填到 `保存视图名称` 字段，accepted verification 的超长说明会回填到 `Accepted verification note` 字段，risky promotion 的缺失/超长说明会回填到 `设为当前版本说明` 字段，导入 bundle 的 `SKILL.md`、frontmatter 或 zip 解析错误会回填到对应的文件上传字段，直连 `POST /api/eval-cases/batch` 时缺字段也会返回 `cases[n].field` 行级错误。
+- 表单字段基础件已覆盖主要工作台表单：`SkillLaunchpad`、`WorkbenchInspector`、快速添加 case、case 详情内联编辑、skill 设置、访问控制、危险区确认、保存历史视图、history filters、run matrix controls 和 diff selectors 都使用共享字段壳层；业务 text/textarea 默认显式 `autocomplete="off"`。高频写入表单现在使用 `ValidatedForm` 做 required 字段错误摘要、需要修正的字段数量统计、字段旁错误、`aria-invalid` 和摘要链接聚焦，不再依赖浏览器原生 required 气泡；有 1000 字符服务端上限的低频长文本字段会显示剩余或超出的字符数，但不会用 `maxlength` 截断输入。后端唯一性和请求体校验错误会保留 `detail` 并返回 `field_errors`，新建/编辑 skill 时重复或格式错误的 Skill ID 会直接回填到 `Skill ID` 字段，非法 tag 会回填到 `约束标签` 字段，非法归属或成员 identity ref 会回填到 `归属` / `成员` 字段，variant 名称、说明和版本说明超限会回填到主工作区或 inspector 对应字段，保存历史视图的空白/重复/超长名称会回填到 `保存视图名称` 字段，accepted verification 的超长说明会回填到 `Accepted verification note` 字段，risky promotion 的缺失/超长说明会回填到 `设为当前版本说明` 字段，导入 bundle 的 `SKILL.md`、frontmatter 或 zip 解析错误会回填到对应的文件上传字段，直连 `POST /api/eval-cases/batch` 时缺字段会返回 `cases[n].field` 行级错误，直连 `POST /api/eval-runs` 时缺失或多余测评结果会返回 `results.<case_version_id>` 嵌套字段错误。
 - `测评` 页支持单条快速添加和批量粘贴 case；批量写入会生成一个新的 `EvalSetVersion`，避免逐条添加制造版本噪音。批量粘贴会显示逐行导入预览表，提交前可以扫到每行状态、标题、Input、Expected output 和 Notes；窄屏下 textarea、统计卡、预览表和提交按钮会纵向排布，预览表只在内部横向滚动；缺少标题、Input 或 Expected output 时会显示行号和错误摘要，服务端也会用同样的行级字段契约拒绝不完整批量请求。
 - Eval case 文本有服务端资产保护上限：标题最多 160 字符，Input 最多 20000 字符，Expected output 最多 10000 字符，Notes 最多 2000 字符；超限会回填到对应字段或 `cases[n].field`，不会自动截断。
 - `测评` 页的手工确认区是 review queue：可按全部/未确认/通过/不通过筛选，点击通过/不通过后自动前进到下一条未确认 case，并支持把未确认项批量标为通过。
@@ -163,7 +163,7 @@ python -m skillhub_demo.external_runner \
 ```
 
 如果要接入真实本地 evaluator，可以使用 `external_command` strategy。命令会从 stdin 接收
-`{"eval_set": ...}`，并输出 `{ "results": { "<case_version_id>": true } }`。
+`{"eval_set": ...}`，并输出完整的 `{ "results": { "<case_version_id>": true } }`；每个目标 `case_version_id` 都必须显式返回 `true` 或 `false`。
 [keyword_evaluator.py](examples/evaluators/keyword_evaluator.py) 是一个最小 evaluator 示例。
 
 ```bash
