@@ -1,0 +1,33 @@
+{
+  "id": "067",
+  "title": "低频长文本字符计数",
+  "status": "complete",
+  "goal": "为有明确服务端上限的低频长文本字段显示剩余或超出字符数，减少提交后才发现超限的返工。",
+  "scope": [
+    "为 TextAreaField 增加可选 characterLimit",
+    "把字符计数加入 aria-describedby",
+    "接入 variant summary、change summary、verification note 和 promotion decision note",
+    "新增 E2E 覆盖剩余/超出字符提示",
+    "更新 README、体验审计和任务记录"
+  ],
+  "out_of_scope": [
+    "改变服务端字段上限",
+    "使用 maxlength 截断输入",
+    "给所有文本字段显示计数",
+    "多语言 pluralization 抽象",
+    "自动测评策略或真实认证"
+  ],
+  "verification": [
+    "红灯 E2E：cd apps/web && npm run e2e -- form-errors.spec.ts -g \"limited textareas\" -> failed，Summary 字段只有 label，没有 `还可输入 1000 个字符`。",
+    "绿色 E2E target：cd apps/web && npm run e2e -- form-errors.spec.ts -g \"limited textareas\" -> 1 passed。",
+    "目标表单错误回归：cd apps/web && npm run e2e -- form-errors.spec.ts -> 11 passed。",
+    "后端全量：cd apps/api && UV_NO_CACHE=1 uv run pytest -> 109 passed。",
+    "前端单元：cd apps/web && npm run test:unit -> 5 files / 16 tests passed。",
+    "前端类型：cd apps/web && npm run typecheck -> passed。",
+    "前端构建：cd apps/web && npm run build -> passed。",
+    "依赖审计：cd apps/web && npm audit --omit=dev -> found 0 vulnerabilities。",
+    "视觉基线：cd apps/web && npm run e2e -- visual-workbench.spec.ts -g \"variants workspace composers\" --update-snapshots -> 1 passed，更新有意变化的 variant composer 基线。",
+    "E2E：cd apps/web && npm run e2e -> 73 passed。",
+    "结构检查：git diff --check -> passed；jq empty .agent/tasks.json .agent/tasks/TASK-067.json -> passed。"
+  ]
+}

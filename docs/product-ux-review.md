@@ -13,6 +13,7 @@
 - 中间工作区的 `概览 / 变体 / 测评 / 差异 / 历史` 已按 APG Tabs Pattern 建模：Tab 只进入当前 mode tab，左右方向键、Home、End 在同组模式中移动并激活对应 panel，减少键盘用户重复 Tab 的成本。
 - 从 catalog button 或命令菜单触发 `导入 bundle`、`新建 skill`、`添加 case` 等 Inspector action 后，焦点会进入对应表单的第一个可操作控件，键盘用户不用从旧触发点一路 Tab 到右侧面板。
 - `SkillLaunchpad` 和 `WorkbenchInspector` 高频写入表单已迁移到共享字段基础件：label、hint、`aria-describedby`、业务字段 `autocomplete="off"` 和局部 `:focus-visible` 行为保持一致；错误摘要会显示需要修正的字段数量，用户不用先扫完整列表才能知道工作量。
+- 有 1000 字符上限的低频长文本字段现在会显示还可输入或已超出的字符数，帮助用户在提交前调整 variant 说明、版本说明、验证说明和 promotion 决策说明；页面不会用 `maxlength` 截断输入，后端仍是最终校验来源。
 - 用户可以创建 skill、导入标准 Skill 文件夹或 zip、创建 variant、追加 bundle version、添加/编辑/归档 eval case，并记录手工通过/不通过测评。
 - `概览` 页现在提供 `身份与默认分发` 设置面板，用户可以直接修改 skill ID、归属，并选择默认分发 variant；非法归属会回填到字段错误摘要和 `归属` 输入框。
 - `概览` 页现在提供 `访问控制` 面板，用户可以查看 skill 作用域角色、当前 actor 的后端权威 capabilities，并添加或移除 owner/maintainer/evaluator/viewer；权限不足时相关按钮会 disabled 并显示需要的角色，非法成员 identity ref 会回填到 `成员` 输入框。
@@ -79,7 +80,7 @@
 - **RFC 9457 / JSON:API error object / FastAPI exception handlers:** API 错误应该把人读说明和机器可读定位分开，客户端不应该解析 `detail` 文案猜字段。SkillHub 适配为兼容式 `detail + field_errors`：重复 Skill ID、请求体校验错误和 Skill bundle 导入解析错误会回填到表单字段；批量 case 直连 API 会返回 `cases[n].field`，让客户端不用猜测哪一行失败。
 - **MDN form validation:** 客户端校验可以改善体验，但不能替代服务端校验。SkillHub 适配为服务端权威格式规则：手工新建 skill 的 `slug` 与标准 Skill bundle `name` 保持一致，tag 只允许稳定可查询字符；前端只显示服务端 `field_errors`。
 - **GitHub / Linear 类工作流产品:** 标题用于扫读和列表导航，正文承载长上下文。SkillHub 适配为 eval case 标题 160 字符、Input 20000 字符、Expected output 10000 字符、Notes 2000 字符；超限失败而不是截断，避免测试资产丢内容。
-- **GOV.UK Character count / MOJ Alert:** 只有有明确产品或技术理由时才限制字符数，表单验证错误不应该退化为普通 alert。SkillHub 适配为 saved view name 80 字符上限、accepted verification note 和 promotion decision note 1000 字符上限；空白、重复、超长或审计说明过长都会回填到对应字段，避免用户从 toast 里猜该修哪里。
+- **GOV.UK Character count / MOJ Alert:** 只有有明确产品或技术理由时才限制字符数，表单验证错误不应该退化为普通 alert。SkillHub 适配为 saved view name 80 字符上限、accepted verification note 和 promotion decision note 1000 字符上限；低频长文本字段会在字段辅助区显示剩余/超出字符数，但不截断输入；空白、重复、超长或审计说明过长都会回填到对应字段，避免用户从 toast 里猜该修哪里。
 - **GitHub Command Palette:** 命令菜单兼具导航、搜索和运行命令能力；SkillHub 借鉴其 scope 思路，把菜单限定在当前 skill 工作区，避免全局搜索过早膨胀。
 - **TestRail quick outline:** 测试用例管理工具会区分完整表单和快速 outline。SkillHub 借鉴“快速进入测试集”的速度，但不允许只填标题，仍要求 `input + expected output`，保证测评资产质量。
 - **TestRail Pass & Next / bulk result:** TestRail 在三栏执行视图里提供快速通过并进入下一条，也支持批量提交相同结果。SkillHub 适配为“通过/不通过后自动前进”和“仅把未确认项标为通过”，避免覆盖已发现的失败。
@@ -166,6 +167,7 @@
 48. 以前主工作区创建 variant 和追加候选版本还是 raw form，过长说明只会变成全局失败或直接入库；现在它们复用 `ValidatedForm` 和 `WorkbenchField`，variant 名称限制 80 字符，说明和版本说明限制 1000 字符，超限会显示错误摘要并回到具体字段。
 49. 以前 `owner_ref` 和 role `subject_id` 可以写入带空格或不可查询符号的脏身份引用；现在两者共享 identity ref 规则，最多 120 字符，只允许字母、数字、点、下划线、`@` 和连字符，并在概览页回填到 `归属` / `成员` 字段。
 50. 以前错误摘要只说“修正后再提交”，用户要扫列表才能知道有多少项；现在摘要直接显示需要修正的字段数量，错误恢复的工作量更可见。
+51. 以前 variant 说明、版本说明和发布决策说明要提交后才知道是否超过 1000 字符；现在这些低频长文本字段会显示剩余或超出字符数，用户能在提交前修正。
 
 ## 仍然存在的摩擦
 
@@ -179,7 +181,7 @@
 
 ## 下一轮优化队列
 
-1. 表单验证后续：更多嵌套写入表单的字段错误回填，以及低频字段的辅助说明/字符计数。
+1. 表单验证后续：更多嵌套写入表单的字段错误回填，以及低频字段的辅助说明。
 2. 接入真实认证：用真正的登录 session/token 替换本地登录码和 actor cookie，保留后端 capabilities 契约，前端不再允许开发期身份模拟。
 3. Diff / Promotion review 第二阶段：评估是否服务端持久化 viewed state、自动折叠已查看文件，或把 diff hunk 关联到 eval case。
 4. URL state 第三阶段：增加短链接、权限感知分享提示，并评估是否保存草稿到本地 session storage 而不是 URL。

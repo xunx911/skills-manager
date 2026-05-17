@@ -460,5 +460,12 @@
     "priority": 66,
     "passes": true,
     "spec": ".agent/tasks/TASK-066.json"
+  },
+  {
+    "id": "067",
+    "title": "低频长文本字符计数",
+    "priority": 67,
+    "passes": true,
+    "spec": ".agent/tasks/TASK-067.json"
   }
 ]

@@ -2,7 +2,7 @@
 
 日期：2026-05-14
 
-状态：当前产品闭环已经强于普通 demo，但还不是成熟产品。主要缺口不在“能不能跑通”，而在信息架构密度、历史/发布证据的可扫读性，以及真实认证、多用户协作、验证策略和少量深水区可访问性细节。移动端 first-run、证据视图 inspector 折叠、URL state 第二阶段、Audit Explorer 扫读重构、表单字段基础件第二阶段、表单验证错误摘要、后端字段错误映射、基础格式校验第一阶段、导入 bundle 字段错误映射第一阶段、批量 case 行级错误第一阶段、服务端批量 case 字段错误契约、eval case 文本长度校验、批量 case 导入预览表、批量 case 预览移动端护栏、保存视图名称字段级校验、accepted verification note 字段级校验、promotion decision note 字段级校验、Variant 写入字段校验、Skill capabilities 权限感知、本地登录门禁第一阶段、身份引用字段格式校验第一阶段、表单错误摘要统计、Command menu 第二阶段和 Diff / Promotion 文件 reviewed progress 第一阶段已经按本审计后续任务完成。
+状态：当前产品闭环已经强于普通 demo，但还不是成熟产品。主要缺口不在“能不能跑通”，而在信息架构密度、历史/发布证据的可扫读性，以及真实认证、多用户协作、验证策略和少量深水区可访问性细节。移动端 first-run、证据视图 inspector 折叠、URL state 第二阶段、Audit Explorer 扫读重构、表单字段基础件第二阶段、表单验证错误摘要、后端字段错误映射、基础格式校验第一阶段、导入 bundle 字段错误映射第一阶段、批量 case 行级错误第一阶段、服务端批量 case 字段错误契约、eval case 文本长度校验、批量 case 导入预览表、批量 case 预览移动端护栏、保存视图名称字段级校验、accepted verification note 字段级校验、promotion decision note 字段级校验、Variant 写入字段校验、Skill capabilities 权限感知、本地登录门禁第一阶段、身份引用字段格式校验第一阶段、表单错误摘要统计、低频长文本字符计数、Command menu 第二阶段和 Diff / Promotion 文件 reviewed progress 第一阶段已经按本审计后续任务完成。
 
 ## 审计输入
 
@@ -153,6 +153,7 @@
 - TASK-061 新增 promotion decision note 字段级校验：risky promotion 空说明或超过 1000 字符返回 `field_errors.decision_note`，Promotion review 决策表单会显示错误摘要和字段旁错误。
 - TASK-063 新增 variant 写入字段校验：variant 名称最多 80 字符，variant 说明和版本说明最多 1000 字符；主工作区 `新建约束 variant` 和 `追加候选版本` 会显示错误摘要、字段旁错误和 `aria-invalid`。
 - TASK-066 新增表单错误摘要统计：`ValidatedForm` 的错误摘要会显示需要修正的字段数量，保留原有 summary focus、摘要链接和字段旁错误。
+- TASK-067 新增低频长文本字符计数：`TextAreaField.characterLimit` 会显示剩余/超出字符数，并把计数节点加入 `aria-describedby`；variant summary、change summary、verification note 和 promotion decision note 已接入 1000 字符提示。
 
 影响：
 
@@ -167,11 +168,12 @@
 - 接受验证依据时，维护者不再能把过长审计说明塞进 verification pointer；超限错误会直接回到 `Accepted verification note`。
 - 有风险的设为当前版本不再靠 disabled button 暗示缺说明；用户点击后会得到可回焦的字段级修正路径。
 - 错误摘要不再只给泛化提示；用户能先看到本次有几个字段需要修正，再按摘要链接逐个处理。
+- 有明确 1000 字符上限的低频长文本字段不再等提交后才暴露超限；用户可以边写边看到剩余或超出字符数。
 - 后续新增表单应该优先复用 `WorkbenchField`，而不是在 pane 内继续手写 label/control。
 
 建议：
 
-- 下一轮表单方向应聚焦更复杂嵌套表单的字段级回填，以及低频字段的辅助说明/字符计数。
+- 下一轮表单方向应聚焦更复杂嵌套表单的字段级回填，以及低频字段的辅助说明。
 - 不建议为了“更像表单系统”而改成全受控输入；SkillHub 的长文本 case input/expected output 仍适合原生 form + FormData。
 
 ### 已解决第二阶段 / 仍需后续 - Command menu 已成为工作台操作入口层
@@ -232,7 +234,7 @@
 
 ## 下一轮任务排序
 
-1. **表单验证后续。** 错误统计、更复杂嵌套表单的字段级回填，以及低频字段的辅助说明/字符计数。
+1. **表单验证后续。** 更复杂嵌套表单的字段级回填，以及低频字段的辅助说明。
 2. **接入真实认证。** 用真实登录 session/token 替换本地登录码和 actor cookie，并复用当前 capability UI 契约。
 3. **组织级 Audit Explorer。** 跨 skill 查询、日期范围、分页、导出和保留策略。
 4. **Diff / Promotion reviewed progress 第二阶段。** 决定是否服务端持久化、自动折叠已查看文件或纳入 promotion checklist。

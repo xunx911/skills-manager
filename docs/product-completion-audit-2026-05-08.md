@@ -2,7 +2,7 @@
 
 日期：2026-05-17
 
-状态：尚未达到“成熟产品完成”。当前已经是一个强的正式垂直切片：主工作区 Skill Launchpad、移动端 first-run 单主路径、中等桌面证据视图 compact inspector rail、URL state 第二阶段、高频写入表单字段基础件第二阶段、表单验证错误摘要、表单错误摘要统计、后端字段错误映射、基础格式校验第一阶段、导入 bundle 字段错误映射第一阶段、批量 case 行级错误第一阶段、服务端批量 case 字段错误契约、eval case 文本长度校验、批量 case 导入预览表、批量 case 预览移动端护栏、保存视图名称字段级校验、accepted verification note 字段级校验、promotion decision note 字段级校验、Variant 写入字段校验、Skill capabilities 权限感知、本地登录门禁第一阶段、身份引用字段格式校验第一阶段、Command menu 第二阶段、Diff / Promotion 文件 reviewed progress 第一阶段、主工作区 Skill 设置、Skill 作用域访问控制、本地 session actor、基础 accessibility 护栏、Workbench mode tablist、Inspector action 焦点交接、Skill 治理与审计面板、Skill 审计 Explorer quick filters/readable timeline/structured detail、标准 Skill bundle 导入、导入后验证清单、variant/version、candidate verification handoff、eval set version、manual eval review queue、历史查看、run matrix 多维控制与表格语义、保存历史筛选视图、run-to-run comparison、accepted verification、bundle diff、candidate promotion review、上下文命令菜单 ARIA 和快速添加 case 都能闭环。但距离成熟产品还缺少真实认证、多用户协作、自动测评策略和更深的可访问性验证。
+状态：尚未达到“成熟产品完成”。当前已经是一个强的正式垂直切片：主工作区 Skill Launchpad、移动端 first-run 单主路径、中等桌面证据视图 compact inspector rail、URL state 第二阶段、高频写入表单字段基础件第二阶段、表单验证错误摘要、表单错误摘要统计、低频长文本字符计数、后端字段错误映射、基础格式校验第一阶段、导入 bundle 字段错误映射第一阶段、批量 case 行级错误第一阶段、服务端批量 case 字段错误契约、eval case 文本长度校验、批量 case 导入预览表、批量 case 预览移动端护栏、保存视图名称字段级校验、accepted verification note 字段级校验、promotion decision note 字段级校验、Variant 写入字段校验、Skill capabilities 权限感知、本地登录门禁第一阶段、身份引用字段格式校验第一阶段、Command menu 第二阶段、Diff / Promotion 文件 reviewed progress 第一阶段、主工作区 Skill 设置、Skill 作用域访问控制、本地 session actor、基础 accessibility 护栏、Workbench mode tablist、Inspector action 焦点交接、Skill 治理与审计面板、Skill 审计 Explorer quick filters/readable timeline/structured detail、标准 Skill bundle 导入、导入后验证清单、variant/version、candidate verification handoff、eval set version、manual eval review queue、历史查看、run matrix 多维控制与表格语义、保存历史筛选视图、run-to-run comparison、accepted verification、bundle diff、candidate promotion review、上下文命令菜单 ARIA 和快速添加 case 都能闭环。但距离成熟产品还缺少真实认证、多用户协作、自动测评策略和更深的可访问性验证。
 
 ## 目标拆解
 
@@ -43,7 +43,7 @@
 | Skill 审计 Explorer | `GET /api/skills/{skill_id}/audit-events` 支持 actor/action/resource_type filters，并纳入当前 skill 关联的 variant/eval_run audit events；前端 `SkillAuditExplorer` 支持 action quick filters、可读时间线、结构化详情和默认折叠的 Raw payload。 | 完成 |
 | Local login 门禁 | 右侧 inspector 显示当前本地 actor，切换为 `release-manager` 等身份时必须填写本地登录码；默认 `skillhub-dev`，可用 `SKILLHUB_LOCAL_SESSION_CODE` 覆盖。E2E 覆盖缺登录码的字段错误，以及登录后导入 skill 的 owner role 来自 session actor；视觉回归覆盖 session 面板。 | 完成第一阶段 |
 | Accessibility 基础护栏 | `AppShell` 提供 skip link；全局 `:focus-visible` 使用高对比双层 ring；`prefers-reduced-motion` 压低非必要 transition；`linearNotice` 使用 `role=status`；E2E 覆盖四条回归。 | 完成 |
-| 高频表单字段基础件 | `WorkbenchField` 系列统一 Launchpad、Inspector、QuickAddCases、EvalCaseDetailPanel、SkillSettingsPanel、SkillAccessPanel、SkillGovernancePanel、SavedRunViews、history filters、run matrix controls 和 diff selectors 的 label、hint、error、`aria-describedby`、业务字段 `autocomplete="off"` 和局部 `:focus-visible`；E2E 覆盖主要表单字段语义。 | 完成第二阶段 |
+| 高频表单字段基础件 | `WorkbenchField` 系列统一 Launchpad、Inspector、QuickAddCases、EvalCaseDetailPanel、SkillSettingsPanel、SkillAccessPanel、SkillGovernancePanel、SavedRunViews、history filters、run matrix controls 和 diff selectors 的 label、hint、error、`aria-describedby`、业务字段 `autocomplete="off"` 和局部 `:focus-visible`；`TextAreaField.characterLimit` 会在 1000 字符低频长文本字段上显示剩余/超出字符数，并把计数节点加入 `aria-describedby`；E2E 覆盖主要表单字段语义和字符计数提示。 | 完成低频长文本字符计数 |
 | 表单验证与字段错误 | `ValidatedForm` 统一高频写入表单的 required 校验；缺字段时展示 error summary、显示需要修正的字段数量、聚焦 summary、摘要链接回字段，并通过 `WorkbenchField` 显示字段旁错误和 `aria-invalid`；后端保留 `detail` 并返回 `field_errors`，创建/更新 skill 的重复或格式错误 Skill ID 会回填到 `slug` 字段，非法 tag 会回填到 `tags` 字段，非法 `owner_ref` / role `subject_id` 会回填到 `归属` / `成员` 字段，导入 bundle 的 `SKILL.md`、frontmatter 和 zip 解析错误会回填到 `folder_files` 或 `zip_file`；批量 case parser 会返回行级错误并回填到 `batch_cases` 字段，直连批量 API 缺字段会返回 `cases[n].field`；eval case 标题、Input、Expected output 和 Notes 超限会返回字段级错误；variant 名称、说明和版本说明超限会回填到 `label`、`summary` 或 `change_summary`；保存历史视图的空白、重复或超长名称会回填到 `name` 字段；accepted verification note 超过 1000 字符会回填到 `note` 字段；promotion decision note 缺失或超过 1000 字符会回填到 `decision_note` 字段；E2E 覆盖 Launchpad、QuickAddCases、错误摘要数量统计、服务端字段错误、服务端格式错误、bundle frontmatter 错误、主工作区 variant 字段错误、低频身份字段错误、批量 case 行级错误、saved view name 重名错误、accepted verification note 超长错误和 risky promotion decision note 错误，API 覆盖服务端行级字段错误、长度上限、saved view name 字段错误、accepted verification note 字段错误、promotion decision note 字段错误、variant 写入字段错误和 identity ref 字段错误。 | 完成表单错误摘要统计 |
 | Command menu ARIA | `CommandMenu` 使用 `role=dialog`、editable `combobox`、`listbox/option`、`aria-activedescendant`、关闭按钮和 Tab trap；E2E 覆盖方向键、弹层内焦点循环和关闭回焦点。 | 完成 |
 | Workbench mode tablist | 工作区模式切换使用 `role=tablist/tab/tabpanel`、`aria-selected`、roving `tabIndex` 和 Left/Right/Home/End 键盘导航；E2E 覆盖 tablist 语义和方向键切换。 | 完成 |
@@ -135,6 +135,7 @@ wc -l apps/api/skillhub/api/main.py apps/api/tests/test_api_commands.py apps/web
 - TASK-064 增量验证：本地登录门禁 API 红灯先失败于错误登录码仍能设置 session；E2E 红灯先失败于右侧面板没有本地登录码字段和 `登录 actor` 按钮；绿色后目标 API 3 passed、目标 E2E 2 passed；完整验证为 API 108 passed、Web unit 5 files / 16 tests passed、typecheck/build/audit 通过、Playwright E2E 71 passed、`git diff --check` 和任务 JSON 检查通过；完整验证记录见 `.agent/tasks/TASK-064.json`。
 - TASK-065 增量验证：identity ref API 红灯先失败于非法 `owner_ref` 返回 200；E2E 红灯先失败于 skill settings 没有 `.formErrorSummary`；绿色后目标 API 1 passed、目标 E2E 1 passed；完整验证为 API 109 passed、Web unit 5 files / 16 tests passed、typecheck/build/audit 通过、Playwright E2E 72 passed、`git diff --check` 和任务 JSON 检查通过；完整验证记录见 `.agent/tasks/TASK-065.json`。
 - TASK-066 增量验证：Launchpad required-fields E2E 红灯先失败于错误摘要缺少数量；绿色后目标 E2E 1 passed；完整验证为 API 109 passed、Web unit 5 files / 16 tests passed、typecheck/build/audit 通过、Playwright E2E 72 passed、`git diff --check` 和任务 JSON 检查通过；完整验证记录见 `.agent/tasks/TASK-066.json`。
+- TASK-067 增量验证：低频长文本字符计数 E2E 红灯先失败于 Summary 字段没有剩余字符提示；绿色后目标 E2E 1 passed，`form-errors.spec.ts` 11 passed；完整验证为 API 109 passed、Web unit 5 files / 16 tests passed、typecheck/build/audit 通过、Playwright E2E 73 passed、`git diff --check` 和任务 JSON 检查通过；完整验证记录见 `.agent/tasks/TASK-067.json`。
 
 本轮相关视觉资产：
 
@@ -176,7 +177,7 @@ wc -l apps/api/skillhub/api/main.py apps/api/tests/test_api_commands.py apps/web
 下一轮最有价值的方向：
 
 1. 接入真实认证：用真实登录 session/token 替换本地登录码和 actor cookie，前端只展示 capability，不再保留开发期身份模拟。
-2. 表单验证后续：更多嵌套字段错误回填，以及低频字段的辅助说明/字符计数。
+2. 表单验证后续：更多嵌套字段错误回填，以及低频字段的辅助说明。
 3. 把 run matrix 升级为多维表格：支持列配置、更多指标列、导出，并评估是否保存对照/候选 run 指针。
 4. 把 audit events 升级为跨 skill/组织级查询、可导出、可配置保留策略的审计系统。
 5. 把 eval strategy / runner registry 产品化。

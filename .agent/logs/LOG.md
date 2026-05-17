@@ -10,6 +10,15 @@
 
 ## Session Log
 
+### 2026-05-17 17:24 CST - TASK-067 低频长文本字符计数
+
+- 新增 `TextAreaField.characterLimit`，字段会显示 `还可输入 N 个字符` 或 `已超出 N 个字符`，并把计数节点加入 `aria-describedby`。
+- 首批接入 variant summary、change summary、workspace candidate version change summary、Launchpad/Inspector 1000 字符长文本、accepted verification note 和 promotion decision note；不使用 `maxlength`，服务端仍是最终校验来源。
+- `RunComparisonPanel` 的 `Verification note` 从单行 `TextField` 改为 `TextAreaField`，更符合 1000 字符审计说明的输入形态。
+- 新增 E2E 覆盖 Summary 字段初始剩余 1000 字符、输入 1001 字符后显示超出 1 个字符，以及 `aria-describedby` 包含 character count。
+- README、产品体验评审、摩擦审计、完成度审计、Superpowers spec/plan 和 TASK-067 任务记录已更新；variant composer 视觉基线按有意变化更新。
+- 已验证：红灯 E2E 先失败于缺少字符计数；绿色后目标 E2E 1 passed；`form-errors.spec.ts` 11 passed；`UV_NO_CACHE=1 uv run pytest` 109 passed；`npm run test:unit` 5 files/16 tests passed；`npm run typecheck` passed；`npm run build` passed；`npm audit --omit=dev` found 0 vulnerabilities；完整 `npm run e2e` 73 passed；`git diff --check` passed；任务 JSON 结构检查 passed。
+
 ### 2026-05-17 17:08 CST - TASK-066 表单错误摘要统计
 
 - `FormErrorSummary` 的说明文案从泛化的“修正后再提交。”升级为显示需要修正的字段数量，例如 `6 个字段需要修正。修正后再提交。`。

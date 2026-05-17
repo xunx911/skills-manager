@@ -53,6 +53,7 @@ export function WorkspaceVersionComposer({
           type="file"
         />
         <TextAreaField
+          characterLimit={1000}
           className="workspaceVersionSummary"
           label="Change summary"
           name="change_summary"

@@ -4,7 +4,7 @@ import { FormEvent, useState } from "react";
 
 import { Badge } from "@/components/chrome";
 import { ValidatedForm } from "@/components/forms/form-validation";
-import { TextField } from "@/components/forms/workbench-field";
+import { TextAreaField } from "@/components/forms/workbench-field";
 import { canUseCapability, capabilityDeniedReason } from "@/lib/capabilities";
 import { percent, shortId } from "@/lib/format";
 import type { EvalRunComparison, SkillCapabilities } from "@/lib/types";
@@ -114,8 +114,9 @@ export function RunComparisonPanel({
           <strong>{accepted ? "候选 run 已是验证依据" : "把候选 run 接受为验证依据"}</strong>
           {!canAcceptVerification ? <small>{acceptDeniedReason}</small> : null}
         </div>
-        <TextField
+        <TextAreaField
           aria-label="Accepted verification note"
+          characterLimit={1000}
           disabled={Boolean(accepted) || !canAcceptVerification}
           label="Verification note"
           name="note"

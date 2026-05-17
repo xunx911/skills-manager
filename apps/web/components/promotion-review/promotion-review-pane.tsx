@@ -122,6 +122,7 @@ export function PromotionReviewPane({
         </div>
         <TextAreaField
           aria-label="设为当前版本说明"
+          characterLimit={1000}
           data-required-message="填写设为当前版本说明。"
           label="设为当前版本说明"
           name="decision_note"

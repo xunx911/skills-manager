@@ -175,8 +175,8 @@ export function WorkbenchInspector({
           <TextField label="归属" name="owner_ref" placeholder="skillhub-lab" required />
           <TextField label="初始变体" name="variant_label" placeholder="Baseline" required />
           <TextField label="约束标签" name="tags" placeholder="codex, gpt5.4" required />
-          <TextAreaField label="简介" name="summary" placeholder="这个 skill 解决什么问题" required />
-          <TextAreaField label="初始版本说明" name="change_summary" placeholder="初始版本说明" required />
+          <TextAreaField characterLimit={1000} label="简介" name="summary" placeholder="这个 skill 解决什么问题" required />
+          <TextAreaField characterLimit={1000} label="初始版本说明" name="change_summary" placeholder="初始版本说明" required />
           <button disabled={busy} type="submit">创建</button>
         </ValidatedForm>
       ) : null}
@@ -205,8 +205,8 @@ export function WorkbenchInspector({
           <h3>添加 variant</h3>
           <TextField label="变体名称" name="label" placeholder="Codex + long-context" required />
           <TextField label="约束标签" name="tags" placeholder="codex, long-context" required />
-          <TextAreaField label="说明" name="summary" placeholder="这个约束下的最优解说明" required />
-          <TextAreaField label="初始版本说明" name="change_summary" placeholder="初始版本说明" required />
+          <TextAreaField characterLimit={1000} label="说明" name="summary" placeholder="这个约束下的最优解说明" required />
+          <TextAreaField characterLimit={1000} label="初始版本说明" name="change_summary" placeholder="初始版本说明" required />
           <label><input name="make_default" type="checkbox" /> 设为默认</label>
           <button disabled={busy} type="submit">创建 variant</button>
         </ValidatedForm>
@@ -224,7 +224,7 @@ export function WorkbenchInspector({
           <FileField className="fileDrop" label="选择新版本文件夹" {...versionFolderInputProps} />
           <FileField accept=".zip,application/zip" className="fileDrop" label="或选择新版本 zip" name="version_zip_file" type="file" />
           <TextAreaField label="内容来源" name="content" placeholder="没有文件时，可填写 content_ref 摘要或 locator 来源" />
-          <TextAreaField label="版本说明" name="change_summary" placeholder="这次更新的收益" required />
+          <TextAreaField characterLimit={1000} label="版本说明" name="change_summary" placeholder="这次更新的收益" required />
           <label><input name="make_current" type="checkbox" defaultChecked /> 设为 current</label>
           <button disabled={busy} type="submit">保存版本</button>
         </ValidatedForm>

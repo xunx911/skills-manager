@@ -141,6 +141,22 @@ test("variant workspace field errors stay on their fields", async ({ page }) => 
   }
 });
 
+test("limited textareas expose character count hints", async ({ page }) => {
+  await importSkillBundle(page, `textarea-count-${Date.now()}`);
+  await page.getByRole("tab", { name: "变体", exact: true }).click();
+
+  const variantComposer = page.locator(".variantCreationComposer");
+  await variantComposer.getByRole("button", { name: "新建约束 variant" }).click();
+
+  const summaryInput = variantComposer.locator('textarea[name="summary"]');
+  const summaryField = summaryInput.locator("xpath=ancestor::label[1]");
+  await expect(summaryField).toContainText("还可输入 1000 个字符");
+
+  await summaryInput.fill("x".repeat(1001));
+  await expect(summaryField).toContainText("已超出 1 个字符");
+  await expect(summaryInput).toHaveAttribute("aria-describedby", /character-count/);
+});
+
 test("quick case required fields show a focused error summary", async ({ page }) => {
   await importSkillBundle(page, `quick-case-errors-${Date.now()}`);
 

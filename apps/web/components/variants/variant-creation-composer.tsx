@@ -31,6 +31,7 @@ export function VariantCreationComposer({
           <TextField label="Label" name="label" placeholder="Codex + stricter auth" required />
           <TextField label="Tags" name="tags" placeholder="codex, strict-auth" required />
           <TextAreaField
+            characterLimit={1000}
             className="variantCreationFull"
             label="Summary"
             name="summary"
@@ -38,6 +39,7 @@ export function VariantCreationComposer({
             required
           />
           <TextAreaField
+            characterLimit={1000}
             className="variantCreationFull"
             label="Change summary"
             name="change_summary"

@@ -76,8 +76,22 @@ export function SkillLaunchpad({
           <TextField label="归属" name="owner_ref" placeholder="skillhub-lab" required />
           <TextField label="初始变体" name="variant_label" placeholder="Baseline" required />
           <TextField label="约束标签" name="tags" placeholder="codex, gpt5.4" required />
-          <TextAreaField className="skillLaunchpadFull" label="简介" name="summary" placeholder="这个 skill 解决什么问题" required />
-          <TextAreaField className="skillLaunchpadFull" label="初始版本说明" name="change_summary" placeholder="初始版本说明" required />
+          <TextAreaField
+            characterLimit={1000}
+            className="skillLaunchpadFull"
+            label="简介"
+            name="summary"
+            placeholder="这个 skill 解决什么问题"
+            required
+          />
+          <TextAreaField
+            characterLimit={1000}
+            className="skillLaunchpadFull"
+            label="初始版本说明"
+            name="change_summary"
+            placeholder="初始版本说明"
+            required
+          />
           <button disabled={busy} type="submit">
             创建 skill
           </button>
