@@ -11,6 +11,7 @@ from sqlalchemy.exc import IntegrityError
 
 from skillhub.application.promotion_review import build_promotion_case_comparisons, build_promotion_readiness
 from skillhub.application.run_comparison import build_run_case_comparisons, build_run_comparison_summary
+from skillhub.application.saved_views import normalize_saved_view_config, validate_saved_view_type
 from skillhub.domain.errors import FieldError, FieldInvariantError, InvariantError, NotFoundError, PermissionDeniedError
 from skillhub.domain.models import ContentRef, digest_text, new_id, normalize_tags, utc_now
 from skillhub.domain.permissions import ROLE_PERMISSIONS, VALID_ROLES, permission_label, role_allows
@@ -1297,7 +1298,7 @@ class SqlSkillRepository:
         }
 
     def list_saved_views(self, *, skill_id: str, view_type: str = "run_history") -> list[dict[str, Any]]:
-        self._validate_saved_view_type(view_type)
+        validate_saved_view_type(view_type)
         with self.engine.connect() as connection:
             self._skill_row(connection, skill_id)
             rows = (
@@ -1321,7 +1322,7 @@ class SqlSkillRepository:
         config: dict[str, Any],
         actor: str,
     ) -> dict[str, Any]:
-        self._validate_saved_view_type(view_type)
+        validate_saved_view_type(view_type)
         clean_name = name.strip()
         if not clean_name:
             raise FieldInvariantError(
@@ -1334,7 +1335,7 @@ class SqlSkillRepository:
             "skill_id": skill_id,
             "name": clean_name,
             "view_type": view_type,
-            "config": self._saved_view_config(config),
+            "config": normalize_saved_view_config(config),
             "created_at": created_at,
             "created_by": actor,
         }
@@ -1691,34 +1692,6 @@ class SqlSkillRepository:
             "case_comparisons": case_comparisons,
             "bundle_diff": bundle_diff,
         }
-
-    def _validate_saved_view_type(self, view_type: str) -> None:
-        if view_type != "run_history":
-            raise InvariantError(f"Unsupported saved view type: {view_type}")
-
-    def _saved_view_config(self, config: dict[str, Any]) -> dict[str, str]:
-        allowed_keys = {
-            "variant_version_id",
-            "eval_set_version_id",
-            "strategy",
-            "status",
-            "matrix_group_by",
-            "matrix_impact",
-            "matrix_show_impact",
-            "matrix_show_score",
-            "matrix_show_summary",
-            "compare_baseline_run_id",
-            "compare_candidate_run_id",
-        }
-        clean: dict[str, str] = {}
-        for key in allowed_keys:
-            value = config.get(key)
-            if not isinstance(value, str):
-                continue
-            value = value.strip()
-            if value and value != "all":
-                clean[key] = value
-        return clean
 
     def _filtered_eval_run_rows(
         self,

@@ -1,0 +1,34 @@
+{
+  "id": "077",
+  "title": "抽出 Saved view config normalizer",
+  "status": "complete",
+  "goal": "把 saved view 类型校验和 config 规范化从 SqlSkillRepository 抽到独立应用层模块，降低后续多维表格和指标列配置扩展的漏同步风险。",
+  "scope": [
+    "新增 saved view config normalizer 纯函数模块",
+    "新增 helper 单元测试覆盖 allowlist 和 view type 契约",
+    "SqlSkillRepository 调用新 helper，不再内联 allowlist",
+    "更新中文任务记录和完成度审计"
+  ],
+  "out_of_scope": [
+    "拆分整个 repository",
+    "新增 saved view 类型",
+    "改动数据库 schema",
+    "改动前端 saved view 行为",
+    "更新 README"
+  ],
+  "verification": [
+    "红灯 helper: cd apps/api && UV_NO_CACHE=1 uv run pytest tests/test_saved_views.py -> failed，ModuleNotFoundError: No module named 'skillhub.application.saved_views'。",
+    "绿色 helper: cd apps/api && UV_NO_CACHE=1 uv run pytest tests/test_saved_views.py -> 3 passed。",
+    "绿色 Repository: cd apps/api && UV_NO_CACHE=1 uv run pytest tests/test_sql_repository.py -k saved_run_view -> 2 passed, 33 deselected。",
+    "绿色 API: cd apps/api && UV_NO_CACHE=1 uv run pytest tests/test_api_commands.py -k saved_run_view -> 2 passed, 54 deselected。",
+    "完整 API: cd apps/api && UV_NO_CACHE=1 uv run pytest -> 114 passed。",
+    "完整 Web unit: cd apps/web && npm run test:unit -> 7 files / 23 tests passed。",
+    "完整 Web audit: cd apps/web && npm audit --omit=dev -> found 0 vulnerabilities。",
+    "完整 Web build: cd apps/web && npm run build -> passed。",
+    "完整 Web typecheck: cd apps/web && npm run typecheck -> passed。",
+    "完整 Playwright: cd apps/web && npm run e2e -> 74 passed。",
+    "行数检查: repositories.py -> 2444 lines；application/saved_views.py -> 41 lines；tests/test_saved_views.py -> 35 lines。",
+    "空白检查: git diff --check -> passed。",
+    "任务 JSON 检查: jq empty .agent/tasks.json .agent/tasks/TASK-077.json -> passed。"
+  ]
+}

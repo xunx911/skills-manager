@@ -10,6 +10,14 @@
 
 ## Session Log
 
+### 2026-05-17 19:26 CST - TASK-077 抽出 Saved view config normalizer
+
+- 新增 `skillhub.application.saved_views`，集中维护 `run_history` saved view 类型校验和 config allowlist/trim/空值过滤/`all` 过滤规则。
+- `SqlSkillRepository` 的 saved view 写入改为调用 `validate_saved_view_type` 和 `normalize_saved_view_config`，不再内联维护 `matrix_show_*` 与 comparison 指针 allowlist。
+- 新增 `tests/test_saved_views.py` 直接覆盖 normalizer 契约；repository 保留 round-trip 覆盖，API 保留端到端写入覆盖。
+- Superpowers spec/plan、TASK-077 任务记录和完成度审计已更新；README 未改，因为这是无用户可见行为变化的后端契约重构。
+- 已验证：红灯 helper 先失败于 `skillhub.application.saved_views` 模块不存在；绿色后 helper 3 passed、Repository saved view 2 passed、API saved view 2 passed；`UV_NO_CACHE=1 uv run pytest` 114 passed；`npm run test:unit` 7 files/23 tests passed；`npm audit --omit=dev` found 0 vulnerabilities；`npm run build` passed；`npm run typecheck` passed；完整 `npm run e2e` 74 passed；`git diff --check` 和任务 JSON 检查通过。
+
 ### 2026-05-17 19:19 CST - TASK-076 拆分 Workbench 历史实验 E2E
 
 - 新增 `apps/web/e2e/run-history-workbench.spec.ts`，承载历史记录、Run matrix、saved view、run comparison 和 case version history 相关测试。

@@ -530,5 +530,12 @@
     "priority": 76,
     "passes": true,
     "spec": ".agent/tasks/TASK-076.json"
+  },
+  {
+    "id": "077",
+    "title": "抽出 Saved view config normalizer",
+    "priority": 77,
+    "passes": true,
+    "spec": ".agent/tasks/TASK-077.json"
   }
 ]
