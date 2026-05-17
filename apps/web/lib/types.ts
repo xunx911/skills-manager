@@ -305,6 +305,7 @@ export type SavedView = {
     | "status"
     | "matrix_group_by"
     | "matrix_impact"
+    | "matrix_show_impact"
     | "matrix_show_score",
     string
   >>;

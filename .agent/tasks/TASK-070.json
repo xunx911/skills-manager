@@ -1,0 +1,36 @@
+{
+  "id": "070",
+  "title": "Run matrix Impact 列配置",
+  "status": "complete",
+  "goal": "让 Run matrix 支持隐藏 Impact 列，并把该列配置保存到 URL state 和 saved run views。",
+  "scope": [
+    "RunMatrixControls 新增 matrix_show_impact",
+    "RunMatrixPanel 新增 Impact column checkbox",
+    "Impact 列隐藏时更新 table 语义和 aria-colcount",
+    "URL state 保存 matrix_impact_column=false",
+    "saved view config 保存 matrix_show_impact",
+    "更新 README、产品审计和任务记录"
+  ],
+  "out_of_scope": [
+    "任意列拖拽或排序",
+    "自定义指标列",
+    "CSV/JSON 导出",
+    "把 table 改成 interactive grid",
+    "修改 run matrix 后端 read model"
+  ],
+  "verification": [
+    "红灯 Run matrix E2E: cd apps/web && npm run e2e -- skills-workbench.spec.ts -g \"run matrix\" 先失败于找不到 `Impact column`。",
+    "红灯 URL E2E: cd apps/web && npm run e2e -- url-state.spec.ts -g \"history comparison\" 先失败于找不到 `Impact column`。",
+    "红灯 API: cd apps/api && UV_NO_CACHE=1 uv run pytest tests/test_api_commands.py -k \"saved_run_view_endpoints\" 先失败于 saved view config 丢弃 matrix_show_impact。",
+    "绿色 API: cd apps/api && UV_NO_CACHE=1 uv run pytest tests/test_api_commands.py -k \"saved_run_view_endpoints\" -> 1 passed。",
+    "绿色 Run matrix E2E: cd apps/web && npm run e2e -- skills-workbench.spec.ts -g \"run matrix\" -> 1 passed。",
+    "绿色 URL E2E: cd apps/web && npm run e2e -- url-state.spec.ts -g \"history comparison\" -> 1 passed。",
+    "视觉基线: cd apps/web && npm run e2e -- visual-workbench.spec.ts -g \"run comparison\" --update-snapshots -> 1 passed。",
+    "API: cd apps/api && UV_NO_CACHE=1 uv run pytest -> 111 passed。",
+    "Web unit: cd apps/web && npm run test:unit -> 5 files / 16 tests passed。",
+    "Web build: cd apps/web && npm run build -> passed。",
+    "Web audit: cd apps/web && npm audit --omit=dev -> found 0 vulnerabilities。",
+    "Web typecheck: cd apps/web && npm run typecheck -> passed。",
+    "Web E2E: cd apps/web && npm run e2e -> 74 passed。"
+  ]
+}

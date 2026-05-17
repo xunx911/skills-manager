@@ -630,6 +630,7 @@ class ApiCommandTest(unittest.TestCase):
                     "matrix_group_by": "impact",
                     "matrix_impact": "fixed",
                     "matrix_show_score": "false",
+                    "matrix_show_impact": "false",
                     "unknown": "ignored",
                 },
                 "actor": "tester",
@@ -647,6 +648,7 @@ class ApiCommandTest(unittest.TestCase):
                 "matrix_group_by": "impact",
                 "matrix_impact": "fixed",
                 "matrix_show_score": "false",
+                "matrix_show_impact": "false",
             },
         )
 

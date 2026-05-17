@@ -11,6 +11,7 @@ export type MatrixImpact = "waiting" | "fixed" | "regressed" | "stable_pass" | "
 export type RunMatrixControls = {
   matrix_group_by: "none" | "impact";
   matrix_impact: "all" | MatrixImpact;
+  matrix_show_impact: "true" | "false";
   matrix_show_score: "true" | "false";
 };
 
@@ -64,11 +65,13 @@ export function RunMatrixPanel({
       rows: visibleRows.filter((item) => item.impact === impact),
     })).filter((group) => group.rows.length > 0)
     : [{ impact: "waiting" as MatrixImpact, label: null, rows: visibleRows }];
+  const showImpact = controls.matrix_show_impact !== "false";
   const showScore = controls.matrix_show_score !== "false";
   const descriptionId = useId();
   const groupRowCount = groupedRows.filter((group) => Boolean(group.label)).length;
   const tableRowCount = 1 + groupRowCount + visibleRows.length;
-  const tableColCount = runs.length + 2;
+  const tableColCount = runs.length + (showImpact ? 2 : 1);
+  const runColumnOffset = showImpact ? 3 : 2;
   const matrixDescription = loading
     ? "正在加载矩阵。"
     : `${runs.length} runs · ${cases.length} cases · 当前筛选生效`;
@@ -111,6 +114,13 @@ export function RunMatrixPanel({
           label="Score"
           onChange={(event) => onControlChange("matrix_show_score", event.currentTarget.checked ? "true" : "false")}
         />
+        <CheckboxField
+          aria-label="Impact column"
+          checked={showImpact}
+          className="runMatrixToggle"
+          label="Impact column"
+          onChange={(event) => onControlChange("matrix_show_impact", event.currentTarget.checked ? "true" : "false")}
+        />
       </div>
 
       {!loading && runs.length === 0 ? (
@@ -129,10 +139,10 @@ export function RunMatrixPanel({
             <thead>
               <tr aria-rowindex={1}>
                 <th aria-colindex={1} className="runMatrixCaseHeader" scope="col">Case</th>
-                <th aria-colindex={2} className="runMatrixImpactHeader" scope="col">Impact</th>
+                {showImpact ? <th aria-colindex={2} className="runMatrixImpactHeader" scope="col">Impact</th> : null}
                 {runs.map((row, runIndex) => (
                   <th
-                    aria-colindex={runIndex + 3}
+                    aria-colindex={runIndex + runColumnOffset}
                     className="runMatrixRunHeader"
                     key={row.eval_run.id}
                     scope="col"
@@ -160,18 +170,20 @@ export function RunMatrixPanel({
                           <strong>{row.case.title}</strong>
                           <span>{row.versions.map((version) => `v${version.version_number}`).join(", ")}</span>
                         </th>
-                        <td
-                          aria-colindex={2}
-                          aria-label={`${row.case.title} 的对照候选影响：${impactCopy[impact]}`}
-                          className="runMatrixImpactCell"
-                        >
-                          <span className={impactClass[impact]}>{impactCopy[impact]}</span>
-                        </td>
+                        {showImpact ? (
+                          <td
+                            aria-colindex={2}
+                            aria-label={`${row.case.title} 的对照候选影响：${impactCopy[impact]}`}
+                            className="runMatrixImpactCell"
+                          >
+                            <span className={impactClass[impact]}>{impactCopy[impact]}</span>
+                          </td>
+                        ) : null}
                         {runs.map((run, runIndex) => {
                           const cell = cells.get(`${run.eval_run.id}:${row.case.id}`);
                           return (
                             <td
-                              aria-colindex={runIndex + 3}
+                              aria-colindex={runIndex + runColumnOffset}
                               aria-label={resultLabel(row.case.title, run, cell?.passed ?? null)}
                               key={run.eval_run.id}
                             >

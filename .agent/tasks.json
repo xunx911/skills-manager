@@ -481,5 +481,12 @@
     "priority": 69,
     "passes": true,
     "spec": ".agent/tasks/TASK-069.json"
+  },
+  {
+    "id": "070",
+    "title": "Run matrix Impact 列配置",
+    "priority": 70,
+    "passes": true,
+    "spec": ".agent/tasks/TASK-070.json"
   }
 ]

@@ -828,6 +828,15 @@ test("operator can inspect run matrix across eval runs", async ({ page }) => {
   await expect(matrixTable.getByRole("cell", { name: /PR: token logging.*通过/ })).toHaveCount(2);
   await expect(matrixTable.getByRole("cell", { name: /PR: audit log leak.*未覆盖/ })).toBeVisible();
 
+  await expect(page.getByLabel("Impact column")).toBeChecked();
+  await page.getByLabel("Impact column").uncheck();
+  await expect(matrixTable).toHaveAttribute("aria-colcount", "3");
+  await expect(matrixTable.getByRole("columnheader", { name: "Impact" })).toHaveCount(0);
+  await expect(page.locator(".runMatrixImpactCell")).toHaveCount(0);
+  await expect(matrixTable.getByRole("cell", { name: /PR: token logging.*通过/ })).toHaveCount(2);
+  await page.getByLabel("Impact column").check();
+  await expect(matrixTable.getByRole("columnheader", { name: "Impact" })).toBeVisible();
+
   await page.locator(".historyRunRow").filter({ hasText: "1/2" }).getByRole("button", { name: "对照" }).click();
   await page.locator(".historyRunRow").filter({ hasText: "3/3" }).getByRole("button", { name: "候选" }).click();
   await expect(page.locator(".runMatrixImpactFixed")).toHaveCount(1);

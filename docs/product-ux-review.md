@@ -41,7 +41,7 @@
 - History mode 支持 `Run matrix`，把当前筛选下的 runs 展成 case x run 矩阵，快速识别哪些 case 在哪些 run 上通过、不通过或未覆盖；矩阵使用原生 table、caption、列/行标题和完整单元格标签，辅助技术不用靠颜色和视觉位置猜测结果。
 - History mode 支持保存、应用、删除当前筛选视图，用户可以把“候选 v2 / Primary v3”这类常用实验入口固化下来，不需要反复手动组合筛选。
 - 选择 `对照` 和 `候选` run 后，Run matrix 每个 case 行会显示 `修复`、`回退`、`稳定通过`、`仍未通过` 或 `缺失`，把样本级变化直接放到表格里。
-- Run matrix 支持按 impact 过滤 case、按 impact 分组、隐藏 run header 分数，并且这些矩阵控制项会随命名视图一起保存和恢复。
+- Run matrix 支持按 impact 过滤 case、按 impact 分组、隐藏 run header 分数、隐藏 `Impact` 列，并且这些矩阵控制项会随 URL 和命名视图一起保存和恢复。
 - History mode 支持把两次同 `EvalSetVersion` 的 run 标为对照/候选，直接查看通过率 delta、逐 case 修复/回退，并把候选 run 接受为当前验证依据。
 - `promotion` 和 `accepted verification` 已有后端角色门禁：只有 skill 的 owner/maintainer 能移动可信分发或验证指针；前端现在也会按 `SkillCapabilities` 禁用设为当前版本评审和接受验证依据入口。
 - 每个 eval case 可以在测评页内查看版本时间线，包括 input、expected output、notes，以及被哪些 eval set snapshot 包含；也可以从旧版本一键恢复为新的当前版本，历史不会被覆盖。
@@ -108,7 +108,7 @@
 - **LangSmith regression / improvement focus:** LangSmith 会基于 source experiment 标出 regression 和 improvement。SkillHub 适配为选择 `对照` 和 `候选` 后，在矩阵每个 case 行显示 impact chip，减少用户心算。
 - **W&B Tables:** W&B Tables 用表格比较模型版本、时间和具体样本结果。SkillHub 适配为 case x run 矩阵，把 skill 评测从两两比较扩展到多 run 浏览。
 - **WAI-ARIA APG Table:** APG 建议静态表格优先使用原生 `table`，只有需要单元格级交互时才使用 `grid`。SkillHub 的 Run matrix 是 read-only 分析视图，所以保留原生表格，补 caption、`scope`、row/col index 和单元格 `aria-label`，而不是过早引入 data grid。
-- **Linear Saved Views / Airtable Views:** 常用筛选不应该每次重建，视图保存的是查询意图而不是复制数据。SkillHub 适配为保存 `run_history` 筛选配置和 matrix 展示偏好，run 列表和矩阵仍实时读取同一份后端结果。
+- **Linear Saved Views / Airtable Views:** 常用筛选和列显示不应该每次重建，视图保存的是查询意图和展示偏好而不是复制数据。SkillHub 适配为保存 `run_history` 筛选配置、matrix 展示偏好和 `Impact` 列可见性，run 列表和矩阵仍实时读取同一份后端结果。
 - **W&B / release gate:** accepted verification 借鉴 pinned baseline / release gate 思路，用一个明确指针说明“当前分发依据是哪次测评”，而不是让用户猜最新 run 是否可信。
 - **Sentry issue timeline:** case history 留在当前排查上下文中，避免用户跳走后丢失对当前测试集的理解。
 - **GitHub / GitLab revert:** 恢复旧内容不应该覆盖历史，而应该创建新的提交。SkillHub 适配为从旧 `EvalCaseVersion` 恢复时创建新的 current case version，并生成新的 `EvalSetVersion`。
@@ -170,6 +170,7 @@
 51. 以前 variant 说明、版本说明和发布决策说明要提交后才知道是否超过 1000 字符；现在这些低频长文本字段会显示剩余或超出字符数，用户能在提交前修正。
 52. 以前本地 actor session 只有登录没有退出入口，用户要刷新或手动清 cookie 才能确认回到默认身份；现在 `Local login` 面板有 `退出登录`，退出后再导入 skill 会回到 `product-operator` owner。
 53. 以前 `POST /api/eval-runs` 会把遗漏的 case result 静默记为不通过，未知 result key 也会被忽略；现在缺失或多余结果都会返回 `results.<case_version_id>` 字段错误，测评事实不会靠平台猜测补齐。
+54. 以前 Run matrix 的 `Impact` 列固定显示，占用横向空间；现在可以关闭 `Impact column`，URL 和 saved view 都会恢复这个列配置。
 
 ## 仍然存在的摩擦
 
@@ -177,7 +178,7 @@
 2. 表单字段基础件已覆盖主要工作台表单，required 字段已有错误 summary、错误数量统计、提交后聚焦摘要、摘要链接回字段和字段旁错误；后端字段错误映射已覆盖重复 Skill ID、基础请求体校验、Skill ID 格式、tags 格式、owner_ref / subject_id 身份引用格式、导入 bundle 解析错误、批量 case 行级字段错误、EvalRun results map-key 字段错误、eval case 文本长度上限、variant 写入字段长度上限、保存视图名称字段错误、accepted verification note 字段错误和 promotion decision note 字段错误。还没有更广的表格型字段回填体验。
 3. Promotion review 已经展示 case impact、diff 和会话级文件 reviewed progress，但 viewed state 还没有服务端持久化，也没有把具体 diff hunk 关联到具体 eval case。
 4. URL state 已覆盖核心证据上下文，但还没有短链接、权限感知分享提示，也没有保存未提交草稿。
-5. Run matrix 已经提供 read-only 多 run x case 浏览、保存筛选视图、对照/候选 impact、impact 过滤和分组，但还没有列配置、自定义指标列、导出或保存对照/候选 run 指针。
+5. Run matrix 已经提供 read-only 多 run x case 浏览、保存筛选视图、对照/候选 impact、impact 过滤和分组，并完成 `Impact` 列隐藏这一条列配置；但还没有任意列配置、自定义指标列、导出或保存对照/候选 run 指针。
 6. 权限还没有真实认证来源。当前 actor 已从请求体和前端硬编码 header 收敛到带本地登录码的后端签名 cookie session，前端也已改为展示后端 capabilities，但仍不是多用户登录、token rotation 或组织级身份系统。
 7. Accessibility 仍未完整覆盖全路径。现在已有 skip link、focus ring、reduced-motion、status notice、命令菜单、Workbench mode tablist、Run matrix 表格语义、Inspector action focus handoff 和主要表单字段语义回归，但更广的全路径焦点巡检和人工读屏验收还需要继续补。
 
@@ -187,6 +188,6 @@
 2. 接入真实认证：用真正的登录 session/token 替换本地登录码和 actor cookie，保留后端 capabilities 契约，前端不再允许开发期身份模拟。
 3. Diff / Promotion review 第二阶段：评估是否服务端持久化 viewed state、自动折叠已查看文件，或把 diff hunk 关联到 eval case。
 4. URL state 第三阶段：增加短链接、权限感知分享提示，并评估是否保存草稿到本地 session storage 而不是 URL。
-5. 做 run matrix 多维表格：支持列配置、自定义指标列、导出，并考虑是否保存对照/候选 run 指针。
+5. 做 run matrix 多维表格后续：任意列配置、自定义指标列、导出，并考虑是否保存对照/候选 run 指针。
 6. Command menu 第三阶段：服务器端个性化、跨 skill 全局搜索、快捷键自定义和命令别名。
 7. 扩展 accessibility E2E：继续覆盖更广的全路径焦点巡检和人工读屏验收。

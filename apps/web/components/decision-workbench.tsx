@@ -1560,6 +1560,7 @@ function runMatrixControlsFromConfig(config: SavedView["config"]): Partial<RunMa
   return {
     ...(config.matrix_group_by === "impact" || config.matrix_group_by === "none" ? { matrix_group_by: config.matrix_group_by } : {}),
     ...(isMatrixImpactConfig(config.matrix_impact) ? { matrix_impact: config.matrix_impact } : {}),
+    ...(config.matrix_show_impact === "true" || config.matrix_show_impact === "false" ? { matrix_show_impact: config.matrix_show_impact } : {}),
     ...(config.matrix_show_score === "true" || config.matrix_show_score === "false" ? { matrix_show_score: config.matrix_show_score } : {}),
   };
 }

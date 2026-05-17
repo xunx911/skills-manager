@@ -1704,6 +1704,7 @@ class SqlSkillRepository:
             "status",
             "matrix_group_by",
             "matrix_impact",
+            "matrix_show_impact",
             "matrix_show_score",
         }
         clean: dict[str, str] = {}

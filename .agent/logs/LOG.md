@@ -10,6 +10,14 @@
 
 ## Session Log
 
+### 2026-05-17 18:12 CST - TASK-070 Run matrix Impact 列配置
+
+- `RunMatrixControls` 新增 `matrix_show_impact`，默认显示 `Impact` 列；Run matrix 控制条新增 `Impact column` checkbox。
+- 关闭 `Impact column` 后，表头和每行 `.runMatrixImpactCell` 不再渲染，`aria-colcount`、run column `aria-colindex` 和 group row `colSpan` 都跟随减少，pass/fail 单元格语义保持可读。
+- URL state 新增 `matrix_impact_column=false`，saved run view config 新增 `matrix_show_impact=false`，后端 saved view allowlist 同步保留该 key。
+- README、产品体验评审、摩擦审计、完成度审计、URL state 设计、Run matrix controls 设计、Superpowers spec/plan 和 TASK-070 任务记录已更新；run comparison 视觉基线已按意图更新。
+- 已验证：红灯 Run matrix E2E 先失败于没有 `Impact column`；红灯 URL E2E 先失败于没有 `Impact column`；红灯 API 先失败于 saved view config 丢弃 `matrix_show_impact`；绿色后目标 API 1 passed、Run matrix E2E 1 passed、URL E2E 1 passed；视觉基线更新 1 passed；`UV_NO_CACHE=1 uv run pytest` 111 passed；`npm run test:unit` 5 files/16 tests passed；`npm run build` passed；`npm run typecheck` passed；`npm audit --omit=dev` found 0 vulnerabilities；完整 `npm run e2e` 74 passed。
+
 ### 2026-05-17 17:57 CST - TASK-069 EvalRun results 精确字段校验
 
 - `POST /api/eval-runs` 现在要求 `results` key 集合完整、精确匹配目标 `EvalSetVersion` 的 case versions，不再把遗漏 case result 静默记为 `false`，也不再忽略未知 result key。

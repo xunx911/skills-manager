@@ -16,6 +16,7 @@ export const DEFAULT_RUN_FILTERS: HistoryRunFilters = {
 export const DEFAULT_RUN_MATRIX_CONTROLS: RunMatrixControls = {
   matrix_group_by: "none",
   matrix_impact: "all",
+  matrix_show_impact: "true",
   matrix_show_score: "true",
 };
 
@@ -67,6 +68,7 @@ const MATRIX_IMPACTS: RunMatrixControls["matrix_impact"][] = [
   "missing",
 ];
 const MATRIX_SCORES: RunMatrixControls["matrix_show_score"][] = ["true", "false"];
+const MATRIX_IMPACT_COLUMNS: RunMatrixControls["matrix_show_impact"][] = ["true", "false"];
 const AUDIT_RESOURCE_TYPES = ["all", "skill", "variant", "eval_run"];
 
 export function parseWorkbenchUrlState(search: string | URLSearchParams): WorkbenchUrlState {
@@ -95,6 +97,7 @@ export function parseWorkbenchUrlState(search: string | URLSearchParams): Workbe
     runMatrixControls: {
       matrix_group_by: enumValue(params.get("matrix_group"), MATRIX_GROUPS, "none"),
       matrix_impact: enumValue(params.get("matrix_impact"), MATRIX_IMPACTS, "all"),
+      matrix_show_impact: enumValue(params.get("matrix_impact_column"), MATRIX_IMPACT_COLUMNS, "true"),
       matrix_show_score: enumValue(params.get("matrix_score"), MATRIX_SCORES, "true"),
     },
     selectedCaseId: params.get("case"),
@@ -131,6 +134,7 @@ export function workbenchUrlForState({ hash, pathname, state }: WorkbenchUrlInpu
     setParam(params, "compare_candidate", state.compareCandidateRunId);
     setParam(params, "matrix_group", nonDefault(state.runMatrixControls.matrix_group_by, DEFAULT_RUN_MATRIX_CONTROLS.matrix_group_by));
     setParam(params, "matrix_impact", nonDefault(state.runMatrixControls.matrix_impact, DEFAULT_RUN_MATRIX_CONTROLS.matrix_impact));
+    setParam(params, "matrix_impact_column", nonDefault(state.runMatrixControls.matrix_show_impact, DEFAULT_RUN_MATRIX_CONTROLS.matrix_show_impact));
     setParam(params, "matrix_score", nonDefault(state.runMatrixControls.matrix_show_score, DEFAULT_RUN_MATRIX_CONTROLS.matrix_show_score));
   }
 
