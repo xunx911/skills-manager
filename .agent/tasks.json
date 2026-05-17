@@ -502,5 +502,12 @@
     "priority": 72,
     "passes": true,
     "spec": ".agent/tasks/TASK-072.json"
+  },
+  {
+    "id": "073",
+    "title": "Saved run view config helper 重构",
+    "priority": 73,
+    "passes": true,
+    "spec": ".agent/tasks/TASK-073.json"
   }
 ]

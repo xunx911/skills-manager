@@ -10,6 +10,14 @@
 
 ## Session Log
 
+### 2026-05-17 18:44 CST - TASK-073 Saved run view config helper 重构
+
+- 新增 `saved-run-view-config` helper，把 saved run view config 的构建、run filters 恢复、matrix controls 恢复和 comparison 指针恢复从 `DecisionWorkbench` 抽出。
+- 新增 Vitest 覆盖默认值过滤、非默认矩阵控制、comparison 指针写入、非法 matrix config 忽略和空 comparison 恢复。
+- `DecisionWorkbench` 删除本地 config helper，保存/应用视图改为调用专门 helper；用户行为和 API 契约不变。
+- Superpowers spec/plan、TASK-073 任务记录和完成度审计已更新；README 未改，因为这是无用户可见行为变化的内部重构。
+- 已验证：红灯单元测试先失败于 helper 不存在；绿色后目标单元测试 1 file/5 tests passed、目标 saved view E2E 1 passed；`UV_NO_CACHE=1 uv run pytest` 111 passed；`npm run test:unit` 7 files/23 tests passed；`npm run build` passed；`npm run typecheck` passed；`npm audit --omit=dev` found 0 vulnerabilities；完整 `npm run e2e` 74 passed；`git diff --check` 和任务 JSON 检查通过。
+
 ### 2026-05-17 18:37 CST - TASK-072 Saved run view 保存对照候选指针
 
 - saved view config allowlist 新增 `compare_baseline_run_id` 和 `compare_candidate_run_id`，保存视图时会保留当前 run comparison 指针。

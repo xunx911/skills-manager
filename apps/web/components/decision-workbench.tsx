@@ -22,6 +22,12 @@ import {
 import { WorkbenchOverviewPane } from "@/components/overview/workbench-overview-pane";
 import { PromotionReviewPane } from "@/components/promotion-review/promotion-review-pane";
 import type { RunMatrixControls } from "@/components/run-matrix/run-matrix-panel";
+import {
+  buildSavedRunViewConfig,
+  runComparisonFromConfig,
+  runFiltersFromConfig,
+  runMatrixControlsFromConfig,
+} from "@/components/saved-views/saved-run-view-config";
 import { SkillAuditExplorer, type AuditExplorerFilters } from "@/components/skills/skill-audit-explorer";
 import { SkillCatalog } from "@/components/skills/skill-catalog";
 import { useWorkbenchUrlStateSync } from "@/components/url-state/use-workbench-url-state";
@@ -602,8 +608,9 @@ export function DecisionWorkbench({
     }
     setRunFilters({ ...DEFAULT_RUN_FILTERS, ...runFiltersFromConfig(view.config) });
     setRunMatrixControls({ ...DEFAULT_RUN_MATRIX_CONTROLS, ...runMatrixControlsFromConfig(view.config) });
-    setCompareBaselineRunId(view.config.compare_baseline_run_id ?? null);
-    setCompareCandidateRunId(view.config.compare_candidate_run_id ?? null);
+    const comparison = runComparisonFromConfig(view.config);
+    setCompareBaselineRunId(comparison.baselineRunId);
+    setCompareCandidateRunId(comparison.candidateRunId);
   }
 
   async function createSavedRunView() {
@@ -618,11 +625,12 @@ export function DecisionWorkbench({
           skill_id: selectedDetail.skill.id,
           name,
           view_type: "run_history",
-          config: {
-            ...runFilterConfig(runFilters),
-            ...runMatrixControlConfig(runMatrixControls),
-            ...runComparisonConfig(compareBaselineRunId, compareCandidateRunId),
-          },
+          config: buildSavedRunViewConfig({
+            baselineRunId: compareBaselineRunId,
+            candidateRunId: compareCandidateRunId,
+            filters: runFilters,
+            matrixControls: runMatrixControls,
+          }),
         },
       });
       await loadSavedViews(selectedDetail.skill.id);
@@ -1544,45 +1552,6 @@ async function sourceFromSelectedBundle({
 
 function sortedVersions(versions: VariantVersion[]) {
   return [...versions].sort((left, right) => left.version_number - right.version_number);
-}
-
-function runFilterConfig(filters: RunFilters) {
-  return Object.fromEntries(Object.entries(filters).filter(([, value]) => value !== "all"));
-}
-
-function runMatrixControlConfig(controls: RunMatrixControls) {
-  return Object.fromEntries(
-    Object.entries(controls).filter(([key, value]) => value !== DEFAULT_RUN_MATRIX_CONTROLS[key as keyof RunMatrixControls]),
-  );
-}
-
-function runComparisonConfig(baselineRunId: string | null, candidateRunId: string | null) {
-  return {
-    ...(baselineRunId ? { compare_baseline_run_id: baselineRunId } : {}),
-    ...(candidateRunId ? { compare_candidate_run_id: candidateRunId } : {}),
-  };
-}
-
-function runFiltersFromConfig(config: SavedView["config"]): Partial<RunFilters> {
-  return {
-    ...(config.variant_version_id ? { variant_version_id: config.variant_version_id } : {}),
-    ...(config.eval_set_version_id ? { eval_set_version_id: config.eval_set_version_id } : {}),
-    ...(config.strategy ? { strategy: config.strategy } : {}),
-    ...(config.status ? { status: config.status } : {}),
-  };
-}
-
-function runMatrixControlsFromConfig(config: SavedView["config"]): Partial<RunMatrixControls> {
-  return {
-    ...(config.matrix_group_by === "impact" || config.matrix_group_by === "none" ? { matrix_group_by: config.matrix_group_by } : {}),
-    ...(isMatrixImpactConfig(config.matrix_impact) ? { matrix_impact: config.matrix_impact } : {}),
-    ...(config.matrix_show_impact === "true" || config.matrix_show_impact === "false" ? { matrix_show_impact: config.matrix_show_impact } : {}),
-    ...(config.matrix_show_score === "true" || config.matrix_show_score === "false" ? { matrix_show_score: config.matrix_show_score } : {}),
-  };
-}
-
-function isMatrixImpactConfig(value: string | undefined): value is RunMatrixControls["matrix_impact"] {
-  return value === "all" || value === "waiting" || value === "fixed" || value === "regressed" || value === "stable_pass" || value === "stable_fail" || value === "missing";
 }
 
 function defaultDiffPair(variant: VariantDetail | null): { left: VariantVersion; right: VariantVersion } | null {

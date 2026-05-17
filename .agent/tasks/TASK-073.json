@@ -1,0 +1,32 @@
+{
+  "id": "073",
+  "title": "Saved run view config helper 重构",
+  "status": "complete",
+  "goal": "把 saved run view config 的读写规则从 DecisionWorkbench 抽出，并用单元测试锁住行为。",
+  "scope": [
+    "新增 saved-run-view-config helper",
+    "新增 helper 单元测试",
+    "DecisionWorkbench 复用 helper，删除本地 config 读写函数",
+    "保持 saved view API 和 UI 行为不变",
+    "更新任务记录和工程日志"
+  ],
+  "out_of_scope": [
+    "拆分整个 DecisionWorkbench",
+    "改变 saved view API 契约",
+    "修改 UI 文案或视觉",
+    "新增状态管理库"
+  ],
+  "verification": [
+    "红灯单元测试: cd apps/web && npm run test:unit -- components/saved-views/saved-run-view-config.test.ts 先失败于找不到 `./saved-run-view-config`。",
+    "绿色目标单元测试: cd apps/web && npm run test:unit -- components/saved-views/saved-run-view-config.test.ts -> 1 file / 5 tests passed。",
+    "绿色目标 E2E: cd apps/web && npm run e2e -- skills-workbench.spec.ts -g \"save and reapply\" -> 1 passed。",
+    "API: cd apps/api && UV_NO_CACHE=1 uv run pytest -> 111 passed。",
+    "Web unit: cd apps/web && npm run test:unit -> 7 files / 23 tests passed。",
+    "Web build: cd apps/web && npm run build -> passed。",
+    "Web audit: cd apps/web && npm audit --omit=dev -> found 0 vulnerabilities。",
+    "Web typecheck: cd apps/web && npm run typecheck -> passed。",
+    "Web E2E: cd apps/web && npm run e2e -> 74 passed。",
+    "Whitespace: git diff --check -> passed。",
+    "Task JSON: jq empty .agent/tasks.json .agent/tasks/TASK-073.json -> passed。"
+  ]
+}
