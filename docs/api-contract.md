@@ -33,7 +33,7 @@
 
 ### RoleAssignment
 
-`RoleAssignment` 显式绑定到某个 skill，不做组织级隐式继承。本地前端通过后端签名的 `skillhub_actor` HttpOnly cookie 表示当前 actor；直接调 API 的脚本仍可用 `X-SkillHub-Actor` 请求头作为兼容 fallback。正式认证接入后，这个 actor context 应由服务端 session/token 注入。
+`RoleAssignment` 显式绑定到某个 skill，不做组织级隐式继承。本地前端通过本地登录码换取后端签名的 `skillhub_actor` HttpOnly cookie 表示当前 actor；直接调 API 的脚本仍可用 `X-SkillHub-Actor` 请求头作为兼容 fallback。正式认证接入后，这个 actor context 应由服务端 session/token 注入。
 
 | 字段 | 类型 | 说明 |
 | --- | --- | --- |
@@ -95,7 +95,7 @@
 2. `X-SkillHub-Actor` header，仅用于直接 API 调用和自动化脚本兼容。
 3. 缺省本地 actor：`product-operator`。
 
-如果 cookie 存在但签名无效，后端返回 `400 Invalid actor session.`，不会回退到默认 actor。旧客户端如果继续在 body 中传 `actor`，后端会忽略；审计字段 `created_by`、`actor_ref` 和权限判断都以请求级 actor context 为准。正式认证版本应把这个 dependency 替换为真实 session、JWT 或 OIDC token 校验。
+如果 cookie 存在但签名无效，后端返回 `400 Invalid actor session.`，不会回退到默认 actor。旧客户端如果继续在业务 mutation body 中传 `actor`，后端会忽略；审计字段 `created_by`、`actor_ref` 和权限判断都以请求级 actor context 为准。正式认证版本应把这个 dependency 替换为真实 session、JWT 或 OIDC token 校验。
 
 ### Error Response
 
@@ -191,13 +191,16 @@ POST /api/session
 Content-Type: application/json
 
 {
-  "actor": "release-manager"
+  "actor": "release-manager",
+  "access_code": "skillhub-dev"
 }
 ```
 
 行为：
 
 - 校验 actor 只能包含字母、数字、`.`、`_`、`@`、`-`，长度 1 到 120。
+- 校验 `access_code` 必须匹配 `SKILLHUB_LOCAL_SESSION_CODE`；本地默认值为 `skillhub-dev`。
+- 错误登录码返回 `403 Invalid local session access code.`，并且不会写入 `skillhub_actor` cookie。
 - 写入 `skillhub_actor` HttpOnly cookie，`SameSite=Lax`，默认 30 天有效。
 - 返回设置后的 actor。
 
@@ -1072,5 +1075,5 @@ Content-Type: application/json
 正式化前还需要补：
 
 - 持久化迁移：schema version、迁移脚本、SQL 化关键查询。
-- 真实认证：把本地 `X-SkillHub-Actor` 替换成 session、JWT 或 OIDC token。
+- 真实认证：把本地登录码和 `X-SkillHub-Actor` fallback 替换成真实 session、JWT 或 OIDC token。
 - 更完整 capability：谁能创建 skill、发布版本、切默认入口仍需要从本地默认策略升级为可配置策略。

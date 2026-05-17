@@ -234,7 +234,8 @@ test("viewer sees protected actions disabled from skill capabilities", async ({ 
 
   const sessionPanel = page.locator(".localSessionPanel");
   await sessionPanel.getByPlaceholder("release-manager").fill("capability-viewer");
-  await sessionPanel.getByRole("button", { name: "切换 actor" }).click();
+  await sessionPanel.getByPlaceholder("skillhub-dev").fill("skillhub-dev");
+  await sessionPanel.getByRole("button", { name: "登录 actor" }).click();
   await expect(sessionPanel).toContainText("capability-viewer");
 
   await expect(accessPanel).toContainText("当前角色 Viewer");
@@ -254,7 +255,14 @@ test("operator can switch local session actor before importing a skill", async (
   await gotoSkills(page);
   await expect(sessionPanel).toContainText("product-operator");
   await sessionPanel.getByPlaceholder("release-manager").fill("release-manager");
-  await sessionPanel.getByRole("button", { name: "切换 actor" }).click();
+  await sessionPanel.getByRole("button", { name: "登录 actor" }).click();
+  const summary = sessionPanel.locator(".formErrorSummary");
+  await expect(summary).toBeVisible();
+  await expect(summary).toContainText("填写本地登录码。");
+  await expect(sessionPanel.locator('input[name="access_code"]')).toHaveAttribute("aria-invalid", "true");
+
+  await sessionPanel.getByPlaceholder("skillhub-dev").fill("skillhub-dev");
+  await sessionPanel.getByRole("button", { name: "登录 actor" }).click();
   await expect(sessionPanel).toContainText("release-manager");
 
   await importSkillBundle(page, `session-actor-${Date.now()}`);

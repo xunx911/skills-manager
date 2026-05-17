@@ -439,5 +439,12 @@
     "priority": 63,
     "passes": true,
     "spec": ".agent/tasks/TASK-063.json"
+  },
+  {
+    "id": "064",
+    "title": "本地登录门禁第一阶段",
+    "priority": 64,
+    "passes": true,
+    "spec": ".agent/tasks/TASK-064.json"
   }
 ]

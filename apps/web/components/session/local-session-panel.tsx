@@ -2,6 +2,9 @@
 
 import type { FormEvent } from "react";
 
+import { ValidatedForm } from "@/components/forms/form-validation";
+import { TextField } from "@/components/forms/workbench-field";
+
 type LocalSessionPanelProps = {
   actor: string;
   busy: boolean;
@@ -13,19 +16,24 @@ export function LocalSessionPanel({ actor, busy, onSwitchActor }: LocalSessionPa
     <section className="localSessionPanel">
       <div className="localSessionHeader">
         <div>
-          <span>Local session</span>
+          <span>Local login</span>
           <strong>{actor}</strong>
         </div>
-        <small>HttpOnly signed cookie</small>
+        <small>HttpOnly session</small>
       </div>
-      <p>本地 actor 负责创建、审计和权限归属；正式登录接入后会替换这里的本地身份。</p>
-      <form className="localSessionForm" onSubmit={onSwitchActor}>
-        <label>
-          <span>切换 actor</span>
-          <input name="actor" placeholder="release-manager" />
-        </label>
-        <button disabled={busy} type="submit">切换 actor</button>
-      </form>
+      <p>本地登录码保护 actor session；正式认证接入后会替换为真实登录。</p>
+      <ValidatedForm className="localSessionForm" onValidSubmit={onSwitchActor}>
+        <TextField label="Actor" name="actor" placeholder="release-manager" required />
+        <TextField
+          data-required-message="填写本地登录码。"
+          label="本地登录码"
+          name="access_code"
+          placeholder="skillhub-dev"
+          required
+          type="password"
+        />
+        <button disabled={busy} type="submit">登录 actor</button>
+      </ValidatedForm>
     </section>
   );
 }

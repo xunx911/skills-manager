@@ -1,8 +1,8 @@
 # SkillHub 产品完成度审计
 
-日期：2026-05-15
+日期：2026-05-17
 
-状态：尚未达到“成熟产品完成”。当前已经是一个强的正式垂直切片：主工作区 Skill Launchpad、移动端 first-run 单主路径、中等桌面证据视图 compact inspector rail、URL state 第二阶段、高频写入表单字段基础件第二阶段、表单验证错误摘要、后端字段错误映射、基础格式校验第一阶段、导入 bundle 字段错误映射第一阶段、批量 case 行级错误第一阶段、服务端批量 case 字段错误契约、eval case 文本长度校验、批量 case 导入预览表、批量 case 预览移动端护栏、保存视图名称字段级校验、accepted verification note 字段级校验、promotion decision note 字段级校验、Variant 写入字段校验、Skill capabilities 权限感知、Command menu 第二阶段、Diff / Promotion 文件 reviewed progress 第一阶段、主工作区 Skill 设置、Skill 作用域访问控制、本地 session actor、基础 accessibility 护栏、Workbench mode tablist、Inspector action 焦点交接、Skill 治理与审计面板、Skill 审计 Explorer quick filters/readable timeline/structured detail、标准 Skill bundle 导入、导入后验证清单、variant/version、candidate verification handoff、eval set version、manual eval review queue、历史查看、run matrix 多维控制与表格语义、保存历史筛选视图、run-to-run comparison、accepted verification、bundle diff、candidate promotion review、上下文命令菜单 ARIA 和快速添加 case 都能闭环。但距离成熟产品还缺少真实认证、多用户协作、自动测评策略和更深的可访问性验证。
+状态：尚未达到“成熟产品完成”。当前已经是一个强的正式垂直切片：主工作区 Skill Launchpad、移动端 first-run 单主路径、中等桌面证据视图 compact inspector rail、URL state 第二阶段、高频写入表单字段基础件第二阶段、表单验证错误摘要、后端字段错误映射、基础格式校验第一阶段、导入 bundle 字段错误映射第一阶段、批量 case 行级错误第一阶段、服务端批量 case 字段错误契约、eval case 文本长度校验、批量 case 导入预览表、批量 case 预览移动端护栏、保存视图名称字段级校验、accepted verification note 字段级校验、promotion decision note 字段级校验、Variant 写入字段校验、Skill capabilities 权限感知、本地登录门禁第一阶段、Command menu 第二阶段、Diff / Promotion 文件 reviewed progress 第一阶段、主工作区 Skill 设置、Skill 作用域访问控制、本地 session actor、基础 accessibility 护栏、Workbench mode tablist、Inspector action 焦点交接、Skill 治理与审计面板、Skill 审计 Explorer quick filters/readable timeline/structured detail、标准 Skill bundle 导入、导入后验证清单、variant/version、candidate verification handoff、eval set version、manual eval review queue、历史查看、run matrix 多维控制与表格语义、保存历史筛选视图、run-to-run comparison、accepted verification、bundle diff、candidate promotion review、上下文命令菜单 ARIA 和快速添加 case 都能闭环。但距离成熟产品还缺少真实认证、多用户协作、自动测评策略和更深的可访问性验证。
 
 ## 目标拆解
 
@@ -41,7 +41,7 @@
 | 本地 session ActorContext | Mutation endpoint 优先从签名 `skillhub_actor` HttpOnly cookie 获取本地 actor，前端 `apiSend/apiGet` 统一带 credentials，不再硬编码 actor header；直接 API 调用仍可用 `X-SkillHub-Actor` fallback，JSON body 中的 actor 被忽略。 | 完成 |
 | Skill 治理与审计 | `GET /api/skills/{skill_id}/audit-events` 和 skill detail 返回最近审计事件；`DELETE /api/skills/{skill_id}` 需要 owner 权限、写入 `skill.archived`；概览页 `SkillGovernancePanel` 展示治理摘要、审计时间线和 slug 确认危险区。 | 完成 |
 | Skill 审计 Explorer | `GET /api/skills/{skill_id}/audit-events` 支持 actor/action/resource_type filters，并纳入当前 skill 关联的 variant/eval_run audit events；前端 `SkillAuditExplorer` 支持 action quick filters、可读时间线、结构化详情和默认折叠的 Raw payload。 | 完成 |
-| Local session 面板 | 右侧 inspector 显示当前本地 actor，可切换为 `release-manager` 等身份；E2E 覆盖切换后导入 skill，owner role 来自 session actor；视觉回归覆盖 session 面板。 | 完成 |
+| Local login 门禁 | 右侧 inspector 显示当前本地 actor，切换为 `release-manager` 等身份时必须填写本地登录码；默认 `skillhub-dev`，可用 `SKILLHUB_LOCAL_SESSION_CODE` 覆盖。E2E 覆盖缺登录码的字段错误，以及登录后导入 skill 的 owner role 来自 session actor；视觉回归覆盖 session 面板。 | 完成第一阶段 |
 | Accessibility 基础护栏 | `AppShell` 提供 skip link；全局 `:focus-visible` 使用高对比双层 ring；`prefers-reduced-motion` 压低非必要 transition；`linearNotice` 使用 `role=status`；E2E 覆盖四条回归。 | 完成 |
 | 高频表单字段基础件 | `WorkbenchField` 系列统一 Launchpad、Inspector、QuickAddCases、EvalCaseDetailPanel、SkillSettingsPanel、SkillAccessPanel、SkillGovernancePanel、SavedRunViews、history filters、run matrix controls 和 diff selectors 的 label、hint、error、`aria-describedby`、业务字段 `autocomplete="off"` 和局部 `:focus-visible`；E2E 覆盖主要表单字段语义。 | 完成第二阶段 |
 | 表单验证与字段错误 | `ValidatedForm` 统一高频写入表单的 required 校验；缺字段时展示 error summary、聚焦 summary、摘要链接回字段，并通过 `WorkbenchField` 显示字段旁错误和 `aria-invalid`；后端保留 `detail` 并返回 `field_errors`，创建/更新 skill 的重复或格式错误 Skill ID 会回填到 `slug` 字段，非法 tag 会回填到 `tags` 字段，导入 bundle 的 `SKILL.md`、frontmatter 和 zip 解析错误会回填到 `folder_files` 或 `zip_file`；批量 case parser 会返回行级错误并回填到 `batch_cases` 字段，直连批量 API 缺字段会返回 `cases[n].field`；eval case 标题、Input、Expected output 和 Notes 超限会返回字段级错误；variant 名称、说明和版本说明超限会回填到 `label`、`summary` 或 `change_summary`；保存历史视图的空白、重复或超长名称会回填到 `name` 字段；accepted verification note 超过 1000 字符会回填到 `note` 字段；promotion decision note 缺失或超过 1000 字符会回填到 `decision_note` 字段；E2E 覆盖 Launchpad、QuickAddCases、服务端字段错误、服务端格式错误、bundle frontmatter 错误、主工作区 variant 字段错误、批量 case 行级错误、saved view name 重名错误、accepted verification note 超长错误和 risky promotion decision note 错误，API 覆盖服务端行级字段错误、长度上限、saved view name 字段错误、accepted verification note 字段错误、promotion decision note 字段错误和 variant 写入字段错误。 | 完成 Variant 写入字段校验 |
@@ -132,6 +132,7 @@ wc -l apps/api/skillhub/api/main.py apps/api/tests/test_api_commands.py apps/web
 - TASK-061 增量验证：promotion decision note API 红灯先失败于空 risky note 缺少 `field_errors`；E2E 红灯先失败于 risky promotion 按钮仍 disabled；完整验证记录见 `.agent/tasks/TASK-061.json`。
 - TASK-062 增量验证：skill capabilities API 红灯先失败于 endpoint 不存在；E2E 红灯先失败于 viewer 下访问控制没有 `当前角色 Viewer` 且 protected action 未禁用；绿色后目标 API 1 passed、目标 E2E 1 passed、zip/first verification 稳定性回归 2 passed；完整验证为 API 106 passed、Web unit 5 files / 16 tests passed、typecheck/build/audit 通过、Playwright E2E 70 passed、`git diff --check` 和任务 JSON 检查通过；完整验证记录见 `.agent/tasks/TASK-062.json`。
 - TASK-063 增量验证：variant 写入字段 API 红灯先失败于过长 variant label 返回 200；E2E 红灯先失败于主工作区 variant 表单没有 `.formErrorSummary`；绿色后目标 API 1 passed、目标 E2E 1 passed；完整验证为 API 107 passed、Web unit 5 files / 16 tests passed、typecheck/build/audit 通过、Playwright E2E 71 passed、`git diff --check` 和任务 JSON 检查通过；完整验证记录见 `.agent/tasks/TASK-063.json`。
+- TASK-064 增量验证：本地登录门禁 API 红灯先失败于错误登录码仍能设置 session；E2E 红灯先失败于右侧面板没有本地登录码字段和 `登录 actor` 按钮；绿色后目标 API 3 passed、目标 E2E 2 passed；完整验证为 API 108 passed、Web unit 5 files / 16 tests passed、typecheck/build/audit 通过、Playwright E2E 71 passed、`git diff --check` 和任务 JSON 检查通过；完整验证记录见 `.agent/tasks/TASK-064.json`。
 
 本轮相关视觉资产：
 
@@ -158,7 +159,7 @@ wc -l apps/api/skillhub/api/main.py apps/api/tests/test_api_commands.py apps/web
 
 ## 仍然阻塞“成熟产品完成”的风险
 
-1. **真实认证和多用户协作还没实现。** 当前已有 skill 作用域 owner/maintainer/evaluator/viewer、受保护动作门禁、后端 capabilities 和签名本地 actor session，但它仍是开发期身份切换，不是真正的登录、token rotation 或组织级身份系统。
+1. **真实认证和多用户协作还没实现。** 当前已有 skill 作用域 owner/maintainer/evaluator/viewer、受保护动作门禁、后端 capabilities 和带本地登录码的签名 actor session，但它仍是开发期 session gate，不是真正的登录、token rotation 或组织级身份系统。
 2. **部分操作仍偏表单。** 移动端 first-run 已去掉重复入口，中等桌面证据视图已把 inspector 收成 verification rail；Launchpad/Inspector 高频写入字段已有共享基础件；Command menu 已按当前 mode、最近使用和当前 selection 把高频动作前置；导入后清单、case 新增、case 详情内联编辑、主区创建 variant、主区追加候选版本、主区创建 skill、主区 skill 设置、访问控制、治理审计、记录 run 和 candidate 验证已更连续，但部分低频设置和筛选控件仍主要依赖局部表单或尚未产品化。
 3. **自动测评策略还没产品化。** 当前支持手工 pass/fail 和外部结果导入，但还没有内置 strategy registry、runner 调度和自动优化流水线。
 4. **URL sharing 还有协作层缺口。** 深层证据上下文已进 URL，但还没有短链接、权限感知分享提示，也没有草稿恢复策略。
@@ -172,7 +173,7 @@ wc -l apps/api/skillhub/api/main.py apps/api/tests/test_api_commands.py apps/web
 
 下一轮最有价值的方向：
 
-1. 接入真实认证：用真实登录 session/token 替换本地 actor cookie，前端只展示 capability，不再自由切换开发身份。
+1. 接入真实认证：用真实登录 session/token 替换本地登录码和 actor cookie，前端只展示 capability，不再保留开发期身份模拟。
 2. 表单验证后续：错误统计、低频身份/归属字段格式校验、更多嵌套字段错误回填。
 3. 把 run matrix 升级为多维表格：支持列配置、更多指标列、导出，并评估是否保存对照/候选 run 指针。
 4. 把 audit events 升级为跨 skill/组织级查询、可导出、可配置保留策略的审计系统。

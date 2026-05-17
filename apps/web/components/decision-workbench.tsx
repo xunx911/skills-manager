@@ -842,11 +842,12 @@ export function DecisionWorkbench({
     const formElement = event.currentTarget;
     const form = new FormData(formElement);
     const nextActor = textValue(form, "actor");
+    const accessCode = textValue(form, "access_code");
     if (!nextActor) return;
     await runCommand("Actor 已切换。", async () => {
       const session = await apiSend<SessionResponse>("/api/session", {
         method: "POST",
-        body: { actor: nextActor },
+        body: { actor: nextActor, access_code: accessCode },
       });
       setActor(session.actor);
       formElement.reset();

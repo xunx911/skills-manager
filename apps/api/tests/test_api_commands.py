@@ -1397,7 +1397,7 @@ class ApiCommandTest(unittest.TestCase):
     def test_session_actor_cookie_controls_created_owner(self):
         client = TestClient(create_app(create_local_sqlite_engine()))
 
-        session = client.post("/api/session", json={"actor": "release-manager"})
+        session = client.post("/api/session", json={"actor": "release-manager", "access_code": "skillhub-dev"})
         created = client.post(
             "/api/skills",
             json={
@@ -1422,6 +1422,19 @@ class ApiCommandTest(unittest.TestCase):
         self.assertEqual(created.status_code, 200)
         assignments = client.get(f"/api/skills/{created.json()['skill_id']}/role-assignments").json()
         self.assertEqual(assignments[0]["subject_id"], "release-manager")
+
+    def test_session_actor_requires_local_access_code(self):
+        client = TestClient(create_app(create_local_sqlite_engine()))
+
+        rejected = client.post("/api/session", json={"actor": "release-manager", "access_code": "wrong-code"})
+        accepted = client.post("/api/session", json={"actor": "release-manager", "access_code": "skillhub-dev"})
+
+        self.assertEqual(rejected.status_code, 403)
+        self.assertIn("Invalid local session access code", rejected.json()["detail"])
+        self.assertNotIn("skillhub_actor=", rejected.headers.get("set-cookie", ""))
+        self.assertEqual(accepted.status_code, 200)
+        self.assertEqual(accepted.json()["actor"], "release-manager")
+        self.assertIn("skillhub_actor=", accepted.headers["set-cookie"])
 
     def test_tampered_session_actor_cookie_is_rejected(self):
         client = TestClient(create_app(create_local_sqlite_engine()))

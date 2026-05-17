@@ -38,7 +38,8 @@ test("async workbench notices are exposed as polite status updates", async ({ pa
 
   const sessionPanel = page.locator(".localSessionPanel");
   await sessionPanel.getByPlaceholder("release-manager").fill("accessibility-operator");
-  await sessionPanel.getByRole("button", { name: "切换 actor" }).click();
+  await sessionPanel.getByPlaceholder("skillhub-dev").fill("skillhub-dev");
+  await sessionPanel.getByRole("button", { name: "登录 actor" }).click();
 
   await expect(page.getByRole("status")).toContainText("Actor 已切换。");
 });

@@ -1,6 +1,6 @@
 # SkillHub 产品体验评审
 
-更新时间：2026-05-16
+更新时间：2026-05-17
 
 ## 当前可用流程
 
@@ -17,7 +17,7 @@
 - `概览` 页现在提供 `身份与默认分发` 设置面板，用户可以直接修改 skill ID、归属，并选择默认分发 variant。
 - `概览` 页现在提供 `访问控制` 面板，用户可以查看 skill 作用域角色、当前 actor 的后端权威 capabilities，并添加或移除 owner/maintainer/evaluator/viewer；权限不足时相关按钮会 disabled 并显示需要的角色。
 - `概览` 页现在提供 `治理与审计` 面板，集中展示 lifecycle、角色态势、最近 audit events，并把归档放进需要输入当前 skill ID 的危险区；用户也可以进入 `审计 Explorer`，用 action quick filters、actor/action/resource type 过滤、可读时间线和结构化详情追踪事件，Raw payload 默认折叠。
-- 右侧 inspector 顶部新增 `Local session` 面板，显示当前本地 actor，并允许切换为 `release-manager` 等本地身份；后端用签名 HttpOnly cookie 承载 actor，前端 mutation 不再硬编码身份 header。
+- 右侧 inspector 顶部新增 `Local login` 面板，显示当前本地 actor；切换为 `release-manager` 等本地身份时必须填写本地登录码。后端用签名 HttpOnly cookie 承载 actor，前端 mutation 不再硬编码身份 header。
 - 工作台新增基础 accessibility 护栏：首个 Tab 可聚焦 `跳到主要内容`，焦点 ring 更高对比，reduced-motion 下非必要 transition 被压低，异步操作结果用 `role=status` 暴露。
 - `测评` 页支持单条快速添加和批量粘贴 case；批量写入只产生一个新的 `EvalSetVersion`，不会把一次整理工作拆成多段版本噪音。批量粘贴会标出缺字段的行号并阻止静默跳过无效行；移动端会把批量 textarea、统计卡、预览表和提交按钮纵向排布，避免窄屏挤压。
 - `测评` 页的手工确认区已变成 review queue：支持按状态筛选、点击结果后自动前进、未确认项批量标为通过、清空本地草稿和键盘确认。
@@ -68,7 +68,7 @@
 - **GitHub Enterprise Audit Log:** GitHub 用 actor、action、repo、created 等结构化限定符查询审计事件。SkillHub 适配为当前 skill 的 actor/action/resource_type 过滤，避免无边界全文搜索。
 - **Stripe request logs:** Stripe Workbench 把常用过滤、时间/状态摘要和单条日志下钻分层，payload 是排障细节，不是第一视觉层。SkillHub 适配为 Audit Explorer 的 quick filters、readable timeline、结构化详情和 Raw payload disclosure。
 - **GitHub Danger Zone:** GitHub 把危险操作放到 repository settings 底部，并要求明确确认。SkillHub 适配为 `治理与审计` 面板中的危险区，输入当前 skill ID 才能归档。
-- **本地开发 session 面板:** 参考很多开发者工具把环境身份、workspace 或 account switcher 放在固定侧栏的做法。SkillHub 适配为 inspector 顶部的 `Local session`，让用户明确“接下来写入和审计会以谁的身份发生”，同时把真实认证留给下一阶段。
+- **本地开发登录面板:** 参考很多开发者工具把环境身份、workspace 或 account switcher 放在固定侧栏的做法。SkillHub 适配为 inspector 顶部的 `Local login`，用户必须输入本地登录码才能更新 actor session；这比自由切换更接近真实账号登录，同时仍把 OIDC/JWT 留给下一阶段。
 - **W3C WCAG / Vercel Web Interface Guidelines:** WCAG 强调可见焦点、焦点外观和 reduced-motion；Vercel guidelines 强调 skip link、`:focus-visible`、`aria-live` 和 icon/button label。SkillHub 适配为可测试的键盘和读屏护栏，而不是只写文档承诺。
 - **WAI-ARIA APG Combobox / Dialog:** APG 对 editable combobox 的建议是把 DOM focus 留在输入框，并用 `aria-activedescendant` 报告当前 option；modal dialog 要求 Tab 不离开弹层、Escape 可关闭、关闭后焦点回到触发点。SkillHub 适配为命令菜单搜索框控制 listbox，option 不进入 Tab 序列，关闭按钮提供明确出口。
 - **WAI-ARIA APG Tabs Pattern:** APG 建议 tablist 只把当前 tab 放进 Tab 顺序，方向键在 tablist 内移动，tabpanel 用 `aria-labelledby` 关联 active tab。SkillHub 适配为工作区 mode switcher，保留原生 button 和既有 click 行为，同时补齐 `role=tablist/tab/tabpanel`。
@@ -141,7 +141,7 @@
 23. 以前 mutation payload 里还能传 `actor`，权限判断和业务输入混在一起；现在前端通过后端签名的 HttpOnly cookie 进入 ActorContext，body actor 会被忽略；直接 API 调用仍可用 `X-SkillHub-Actor` header 兼容。
 24. 以前归档 skill 是 inspector 里的普通按钮，缺少权限和确认语义；现在归档需要 owner 权限、输入当前 skill ID，并写入 `skill.archived` audit event。
 25. 以前治理面板只能看最近几条 skill 级事件；现在 `审计 Explorer` 能读取当前 skill 关联的 skill、variant、eval_run 事件，并按 actor、action、resource type 过滤后检查 payload。
-26. 以前切换本地 actor 只能改代码里的常量或请求 header；现在可以在页面右侧直接切换本地 session actor，并通过 E2E 验证新导入 skill 的 owner 来自该 session。
+26. 以前切换本地 actor 只能改代码里的常量或请求 header，后来又变成右侧面板自由切换；现在页面右侧必须填写本地登录码后才能更新 actor session，并通过 E2E 验证新导入 skill 的 owner 来自该 session。
 27. 以前键盘和读屏只有零散 smoke；现在有独立 accessibility E2E，覆盖 skip link、focus indicator、reduced-motion、status notice、命令菜单的 combobox/listbox 关系、Tab trap 和关闭回焦点、Workbench mode tablist、Run matrix 的 table/header/cell 语义，以及 Inspector action 的焦点交接。
 28. 以前从左侧或命令菜单触发右侧表单后，键盘用户仍停在旧触发点；现在 action 切换会把焦点送到对应表单的第一个字段。
 29. 以前工作区模式是一排普通按钮，键盘用户要逐个 Tab 经过；现在它是一个 tablist，当前 mode 是唯一 tab stop，方向键负责组内移动。
@@ -172,13 +172,13 @@
 3. Promotion review 已经展示 case impact、diff 和会话级文件 reviewed progress，但 viewed state 还没有服务端持久化，也没有把具体 diff hunk 关联到具体 eval case。
 4. URL state 已覆盖核心证据上下文，但还没有短链接、权限感知分享提示，也没有保存未提交草稿。
 5. Run matrix 已经提供 read-only 多 run x case 浏览、保存筛选视图、对照/候选 impact、impact 过滤和分组，但还没有列配置、自定义指标列、导出或保存对照/候选 run 指针。
-6. 权限还没有真实认证来源。当前 actor 已从请求体和前端硬编码 header 收敛到后端签名的本地 cookie session，前端也已改为展示后端 capabilities，但仍不是多用户登录、token rotation 或组织级身份系统。
+6. 权限还没有真实认证来源。当前 actor 已从请求体和前端硬编码 header 收敛到带本地登录码的后端签名 cookie session，前端也已改为展示后端 capabilities，但仍不是多用户登录、token rotation 或组织级身份系统。
 7. Accessibility 仍未完整覆盖全路径。现在已有 skip link、focus ring、reduced-motion、status notice、命令菜单、Workbench mode tablist、Run matrix 表格语义、Inspector action focus handoff 和主要表单字段语义回归，但更广的全路径焦点巡检和人工读屏验收还需要继续补。
 
 ## 下一轮优化队列
 
 1. 表单验证后续：错误统计、owner_ref / role subject_id 等低频字段格式校验，以及更多嵌套写入表单的字段错误回填。
-2. 接入真实认证：用真正的登录 session/token 替换本地 actor cookie，保留后端 capabilities 契约，前端不再允许自由切换开发身份。
+2. 接入真实认证：用真正的登录 session/token 替换本地登录码和 actor cookie，保留后端 capabilities 契约，前端不再允许开发期身份模拟。
 3. Diff / Promotion review 第二阶段：评估是否服务端持久化 viewed state、自动折叠已查看文件，或把 diff hunk 关联到 eval case。
 4. URL state 第三阶段：增加短链接、权限感知分享提示，并评估是否保存草稿到本地 session storage 而不是 URL。
 5. 做 run matrix 多维表格：支持列配置、自定义指标列、导出，并考虑是否保存对照/候选 run 指针。

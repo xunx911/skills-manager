@@ -10,6 +10,15 @@
 
 ## Session Log
 
+### 2026-05-17 16:44 CST - TASK-064 本地登录门禁第一阶段
+
+- `POST /api/session` 从 `{ actor }` 升级为 `{ actor, access_code }`；后端用 `SKILLHUB_LOCAL_SESSION_CODE` 校验本地登录码，默认 `skillhub-dev`，错误码返回 `403 Invalid local session access code.` 且不写入 actor cookie。
+- `LocalSessionPanel` 从自由切换 actor 改成 `Local login`：使用 `ValidatedForm + TextField`，必须填写 actor 和本地登录码，按钮文案为 `登录 actor`；表单布局改成两列输入加全宽按钮，避免 inspector 内字段被挤压。
+- `DecisionWorkbench.switchActor` 提交 access code；session actor 切换、capabilities 刷新和后续创建/导入 owner 归属继续复用签名 HttpOnly cookie。
+- E2E 覆盖缺登录码时错误摘要、`access_code` 字段 `aria-invalid`，以及填写 `skillhub-dev` 后再导入 skill 的 owner 来自 session actor；视觉基线更新了受 Local login 面板影响的桌面和移动端截图。
+- README、API contract、产品体验评审、摩擦审计、完成度审计、Superpowers spec/plan 和 TASK-064 任务记录已更新，明确本地登录门禁不是最终 OIDC/JWT。
+- 已验证：红灯 API 先失败于错误登录码返回 200；绿色后目标 API 3 passed；红灯 E2E 先失败于没有 `登录 actor` 按钮；绿色后目标 E2E 2 passed；视觉基线更新目标 5 passed；`UV_NO_CACHE=1 uv run pytest` 108 passed；`npm run test:unit` 5 files/16 tests passed；`npm run typecheck` passed；`npm run build` passed；`npm audit --omit=dev` found 0 vulnerabilities；`npm run e2e` 71 passed；`git diff --check` passed；任务 JSON 结构检查 passed。
+
 ### 2026-05-17 16:14 CST - TASK-063 Variant 写入字段校验
 
 - 新增 `docs/superpowers/specs/2026-05-17-variant-field-validation-design.md` 和执行计划，记录 GOV.UK / Atlassian / Material 表单错误实践对 variant 高频写入路径的适配。

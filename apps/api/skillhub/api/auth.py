@@ -9,12 +9,13 @@ from os import environ
 
 from fastapi import Cookie, Header, Response
 
-from skillhub.domain.errors import InvariantError
+from skillhub.domain.errors import InvariantError, PermissionDeniedError
 
 ACTOR_HEADER = "X-SkillHub-Actor"
 ACTOR_COOKIE = "skillhub_actor"
 DEFAULT_LOCAL_ACTOR = "product-operator"
 ACTOR_PATTERN = re.compile(r"^[A-Za-z0-9._@-]{1,120}$")
+DEFAULT_LOCAL_SESSION_CODE = "skillhub-dev"
 
 
 @dataclass(frozen=True)
@@ -63,6 +64,12 @@ def set_actor_cookie(response: Response, actor: str) -> None:
 
 def clear_actor_cookie(response: Response) -> None:
     response.delete_cookie(key=ACTOR_COOKIE, path="/")
+
+
+def verify_local_session_access_code(access_code: str) -> None:
+    expected = environ.get("SKILLHUB_LOCAL_SESSION_CODE", DEFAULT_LOCAL_SESSION_CODE)
+    if not expected or not hmac.compare_digest(access_code, expected):
+        raise PermissionDeniedError("Invalid local session access code.")
 
 
 def actor_dependency(

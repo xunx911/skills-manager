@@ -2,7 +2,7 @@
 
 日期：2026-05-14
 
-状态：当前产品闭环已经强于普通 demo，但还不是成熟产品。主要缺口不在“能不能跑通”，而在信息架构密度、历史/发布证据的可扫读性，以及真实认证、多用户协作、验证策略和少量深水区可访问性细节。移动端 first-run、证据视图 inspector 折叠、URL state 第二阶段、Audit Explorer 扫读重构、表单字段基础件第二阶段、表单验证错误摘要、后端字段错误映射、基础格式校验第一阶段、导入 bundle 字段错误映射第一阶段、批量 case 行级错误第一阶段、服务端批量 case 字段错误契约、eval case 文本长度校验、批量 case 导入预览表、批量 case 预览移动端护栏、保存视图名称字段级校验、accepted verification note 字段级校验、promotion decision note 字段级校验、Variant 写入字段校验、Skill capabilities 权限感知、Command menu 第二阶段和 Diff / Promotion 文件 reviewed progress 第一阶段已经按本审计后续任务完成。
+状态：当前产品闭环已经强于普通 demo，但还不是成熟产品。主要缺口不在“能不能跑通”，而在信息架构密度、历史/发布证据的可扫读性，以及真实认证、多用户协作、验证策略和少量深水区可访问性细节。移动端 first-run、证据视图 inspector 折叠、URL state 第二阶段、Audit Explorer 扫读重构、表单字段基础件第二阶段、表单验证错误摘要、后端字段错误映射、基础格式校验第一阶段、导入 bundle 字段错误映射第一阶段、批量 case 行级错误第一阶段、服务端批量 case 字段错误契约、eval case 文本长度校验、批量 case 导入预览表、批量 case 预览移动端护栏、保存视图名称字段级校验、accepted verification note 字段级校验、promotion decision note 字段级校验、Variant 写入字段校验、Skill capabilities 权限感知、本地登录门禁第一阶段、Command menu 第二阶段和 Diff / Promotion 文件 reviewed progress 第一阶段已经按本审计后续任务完成。
 
 ## 审计输入
 
@@ -34,7 +34,7 @@
 
 证据：
 
-- `apps/web/e2e/visual-workbench.spec.ts-snapshots/mobile-empty-workbench-chromium-darwin.png` 显示移动端先展示 Launchpad，往下又展示 Verification、Local session、action menu 和第二份 `导入标准 Skill` inspector 表单。
+- `apps/web/e2e/visual-workbench.spec.ts-snapshots/mobile-empty-workbench-chromium-darwin.png` 当时显示移动端先展示 Launchpad，往下又展示 Verification、Local session、action menu 和第二份 `导入标准 Skill` inspector 表单；后续已改为 first-run 单主路径。
 - `apps/web/components/skills/skill-launchpad.tsx:53` 到 `84` 已经提供完整导入表单。
 - `apps/web/components/inspector/workbench-inspector.tsx:183` 到 `205` 又提供一份导入表单。
 - `apps/web/app/globals.css:7604` 到 `7619` 在窄屏下把 inspector 放到主区下方，导致重复入口直接串成长页面。
@@ -49,7 +49,7 @@
 
 - 在 mobile/first-run 下默认隐藏 inspector action form，仅保留 Launchpad。
 - inspector 改为 collapsible action drawer：用户点 `Cmd K`、catalog 或 explicit action 后再展开。
-- Empty skill 状态下 Verification/Local session 可以压缩为一行状态，而不是完整卡片。
+- Empty skill 状态下 Verification/Local login 可以压缩为一行状态，而不是完整卡片。
 
 ### P1 - 1280 宽桌面三栏固定宽度让主工作区偏窄
 
@@ -122,7 +122,7 @@
 
 建议：
 
-- 下一阶段应接入真实认证，让 capability 来自登录 session/token，而不是本地开发 cookie。
+- 下一阶段应接入真实认证，让 capability 来自真实登录 session/token，而不是带本地登录码的开发期 cookie。
 - 低频 admin action 也可以逐步接入 capability 提示，但不要在没有真实角色体系前发散到自定义权限编辑器。
 
 ### 已解决字段错误映射第一阶段 / 仍需后续 - 表单字段语义已统一，验证体验继续深化
@@ -231,7 +231,7 @@
 ## 下一轮任务排序
 
 1. **表单验证后续。** 错误统计、低频身份/归属字段格式校验，以及更复杂嵌套表单的字段级回填。
-2. **接入真实认证。** 用真实登录 session/token 替换本地 actor cookie，并复用当前 capability UI 契约。
+2. **接入真实认证。** 用真实登录 session/token 替换本地登录码和 actor cookie，并复用当前 capability UI 契约。
 3. **组织级 Audit Explorer。** 跨 skill 查询、日期范围、分页、导出和保留策略。
 4. **Diff / Promotion reviewed progress 第二阶段。** 决定是否服务端持久化、自动折叠已查看文件或纳入 promotion checklist。
 5. **URL state 第三阶段。** 短链接、权限感知分享提示和草稿恢复策略。

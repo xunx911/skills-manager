@@ -21,6 +21,7 @@ from skillhub.api.auth import (
     clear_actor_cookie,
     normalize_actor,
     set_actor_cookie,
+    verify_local_session_access_code,
 )
 from skillhub.domain.errors import FieldError, FieldInvariantError, InvariantError, NotFoundError, PermissionDeniedError
 from skillhub.domain.models import ContentRef
@@ -175,6 +176,7 @@ class CreateSavedViewPayload(BaseModel):
 
 class SetSessionPayload(BaseModel):
     actor: str
+    access_code: str
 
 
 def create_app(engine: Engine | None = None) -> FastAPI:
@@ -221,6 +223,7 @@ def create_app(engine: Engine | None = None) -> FastAPI:
 
     @app.post("/api/session")
     def set_session(payload: SetSessionPayload, response: Response):
+        verify_local_session_access_code(payload.access_code)
         actor = normalize_actor(payload.actor)
         set_actor_cookie(response, actor)
         return {"actor": actor, "subject_type": "user"}
