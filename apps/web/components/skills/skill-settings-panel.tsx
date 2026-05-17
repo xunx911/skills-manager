@@ -2,6 +2,7 @@
 
 import type { FormEvent } from "react";
 
+import { ValidatedForm } from "@/components/forms/form-validation";
 import { SelectField, TextField } from "@/components/forms/workbench-field";
 import { passRate } from "@/lib/api";
 import type { EvalRunRecord, SkillDetail, VariantDetail } from "@/lib/types";
@@ -35,7 +36,7 @@ export function SkillSettingsPanel({
         <p>这里编辑 SkillHub 入口本身；bundle 内容和评测证据仍由 variant version 与 eval run 维护。</p>
       </div>
 
-      <form className="skillSettingsForm" key={selectedDetail.skill.id} onSubmit={onUpdateSkill}>
+      <ValidatedForm className="skillSettingsForm" key={selectedDetail.skill.id} onValidSubmit={onUpdateSkill}>
         <TextField defaultValue={selectedDetail.skill.slug} label="Skill ID" name="slug" required />
         <TextField defaultValue={selectedDetail.skill.owner_ref} label="归属" name="owner_ref" required />
         <SelectField className="skillSettingsWide" defaultValue={defaultVariant?.id ?? ""} label="默认分发 variant" name="default_variant_id">
@@ -46,7 +47,7 @@ export function SkillSettingsPanel({
           ))}
         </SelectField>
         <button disabled={busy} type="submit">保存 skill 设置</button>
-      </form>
+      </ValidatedForm>
 
       <div className="skillSettingsDistribution">
         <span>当前默认</span>

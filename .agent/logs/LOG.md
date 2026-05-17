@@ -10,6 +10,15 @@
 
 ## Session Log
 
+### 2026-05-17 16:56 CST - TASK-065 身份引用字段格式校验
+
+- 新增 `IdentityRef` API 字段类型，`owner_ref` 和 role `subject_id` 统一限制为最多 120 字符，只允许字母、数字、点、下划线、`@` 和连字符。
+- `CreateSkillPayload.owner_ref`、`ImportSkillPayload.owner_ref`、`UpdateSkillPayload.owner_ref` 和 `AssignSkillRolePayload.subject_id` 都接入同一格式规则；错误会返回 `field_errors.owner_ref` 或 `field_errors.subject_id`。
+- `SkillSettingsPanel` 和 `SkillAccessPanel` 从 raw form 迁移到 `ValidatedForm`；保存非法归属或添加非法成员时，错误摘要聚焦，并把 `aria-invalid` 标到 `归属` / `成员` 字段。
+- `DecisionWorkbench.assignSkillRole` 现在会把 API 字段错误重新抛给表单处理，避免低频 admin action 退回全局 notice。
+- README、API contract、产品体验评审、摩擦审计、完成度审计、Superpowers spec/plan 和 TASK-065 任务记录已更新，明确这仍不是 identity store 或真实认证。
+- 已验证：红灯 API 先失败于非法 `owner_ref` 返回 200；绿色后目标 API 1 passed；红灯 E2E 先失败于 `.skillSettingsPanel .formErrorSummary` 不存在；绿色后目标 E2E 1 passed；`UV_NO_CACHE=1 uv run pytest` 109 passed；`npm run test:unit` 5 files/16 tests passed；`npm run typecheck` passed；`npm run build` passed；`npm audit --omit=dev` found 0 vulnerabilities；`npm run e2e` 72 passed；`git diff --check` passed；任务 JSON 结构检查 passed。
+
 ### 2026-05-17 16:44 CST - TASK-064 本地登录门禁第一阶段
 
 - `POST /api/session` 从 `{ actor }` 升级为 `{ actor, access_code }`；后端用 `SKILLHUB_LOCAL_SESSION_CODE` 校验本地登录码，默认 `skillhub-dev`，错误码返回 `403 Invalid local session access code.` 且不写入 actor cookie。

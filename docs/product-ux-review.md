@@ -14,8 +14,8 @@
 - 从 catalog button 或命令菜单触发 `导入 bundle`、`新建 skill`、`添加 case` 等 Inspector action 后，焦点会进入对应表单的第一个可操作控件，键盘用户不用从旧触发点一路 Tab 到右侧面板。
 - `SkillLaunchpad` 和 `WorkbenchInspector` 高频写入表单已迁移到共享字段基础件：label、hint、`aria-describedby`、业务字段 `autocomplete="off"` 和局部 `:focus-visible` 行为保持一致。
 - 用户可以创建 skill、导入标准 Skill 文件夹或 zip、创建 variant、追加 bundle version、添加/编辑/归档 eval case，并记录手工通过/不通过测评。
-- `概览` 页现在提供 `身份与默认分发` 设置面板，用户可以直接修改 skill ID、归属，并选择默认分发 variant。
-- `概览` 页现在提供 `访问控制` 面板，用户可以查看 skill 作用域角色、当前 actor 的后端权威 capabilities，并添加或移除 owner/maintainer/evaluator/viewer；权限不足时相关按钮会 disabled 并显示需要的角色。
+- `概览` 页现在提供 `身份与默认分发` 设置面板，用户可以直接修改 skill ID、归属，并选择默认分发 variant；非法归属会回填到字段错误摘要和 `归属` 输入框。
+- `概览` 页现在提供 `访问控制` 面板，用户可以查看 skill 作用域角色、当前 actor 的后端权威 capabilities，并添加或移除 owner/maintainer/evaluator/viewer；权限不足时相关按钮会 disabled 并显示需要的角色，非法成员 identity ref 会回填到 `成员` 输入框。
 - `概览` 页现在提供 `治理与审计` 面板，集中展示 lifecycle、角色态势、最近 audit events，并把归档放进需要输入当前 skill ID 的危险区；用户也可以进入 `审计 Explorer`，用 action quick filters、actor/action/resource type 过滤、可读时间线和结构化详情追踪事件，Raw payload 默认折叠。
 - 右侧 inspector 顶部新增 `Local login` 面板，显示当前本地 actor；切换为 `release-manager` 等本地身份时必须填写本地登录码。后端用签名 HttpOnly cookie 承载 actor，前端 mutation 不再硬编码身份 header。
 - 工作台新增基础 accessibility 护栏：首个 Tab 可聚焦 `跳到主要内容`，焦点 ring 更高对比，reduced-motion 下非必要 transition 被压低，异步操作结果用 `role=status` 暴露。
@@ -164,11 +164,12 @@
 46. 以前 risky promotion 用禁用按钮解释缺少说明，且超长说明没有字段保护；现在提交后会把缺失或超过 1000 字符的说明回填到 `设为当前版本说明`。
 47. 以前用户只有点了受保护动作才知道自己没权限；现在概览页显示当前 actor 角色和 capability，访问控制、设为当前版本评审和接受验证依据入口会提前 disabled 并给出需要 owner/maintainer 的原因。
 48. 以前主工作区创建 variant 和追加候选版本还是 raw form，过长说明只会变成全局失败或直接入库；现在它们复用 `ValidatedForm` 和 `WorkbenchField`，variant 名称限制 80 字符，说明和版本说明限制 1000 字符，超限会显示错误摘要并回到具体字段。
+49. 以前 `owner_ref` 和 role `subject_id` 可以写入带空格或不可查询符号的脏身份引用；现在两者共享 identity ref 规则，最多 120 字符，只允许字母、数字、点、下划线、`@` 和连字符，并在概览页回填到 `归属` / `成员` 字段。
 
 ## 仍然存在的摩擦
 
 1. Command menu 已完成第二阶段：支持 mode-aware 排序、本地最近使用、selected case/run 命令和右侧 preview；还没有服务器端个性化、跨 skill 全局搜索或快捷键自定义。
-2. 表单字段基础件已覆盖主要工作台表单，required 字段已有错误 summary、提交后聚焦摘要、摘要链接回字段和字段旁错误；后端字段错误映射已覆盖重复 Skill ID、基础请求体校验、Skill ID 格式、tags 格式、导入 bundle 解析错误、批量 case 行级字段错误、eval case 文本长度上限、variant 写入字段长度上限、保存视图名称字段错误、accepted verification note 字段错误和 promotion decision note 字段错误。还没有错误统计和更复杂嵌套字段回填。
+2. 表单字段基础件已覆盖主要工作台表单，required 字段已有错误 summary、提交后聚焦摘要、摘要链接回字段和字段旁错误；后端字段错误映射已覆盖重复 Skill ID、基础请求体校验、Skill ID 格式、tags 格式、owner_ref / subject_id 身份引用格式、导入 bundle 解析错误、批量 case 行级字段错误、eval case 文本长度上限、variant 写入字段长度上限、保存视图名称字段错误、accepted verification note 字段错误和 promotion decision note 字段错误。还没有错误统计和更复杂嵌套字段回填。
 3. Promotion review 已经展示 case impact、diff 和会话级文件 reviewed progress，但 viewed state 还没有服务端持久化，也没有把具体 diff hunk 关联到具体 eval case。
 4. URL state 已覆盖核心证据上下文，但还没有短链接、权限感知分享提示，也没有保存未提交草稿。
 5. Run matrix 已经提供 read-only 多 run x case 浏览、保存筛选视图、对照/候选 impact、impact 过滤和分组，但还没有列配置、自定义指标列、导出或保存对照/候选 run 指针。
@@ -177,7 +178,7 @@
 
 ## 下一轮优化队列
 
-1. 表单验证后续：错误统计、owner_ref / role subject_id 等低频字段格式校验，以及更多嵌套写入表单的字段错误回填。
+1. 表单验证后续：错误统计、更多嵌套写入表单的字段错误回填，以及低频字段的辅助说明/字符计数。
 2. 接入真实认证：用真正的登录 session/token 替换本地登录码和 actor cookie，保留后端 capabilities 契约，前端不再允许开发期身份模拟。
 3. Diff / Promotion review 第二阶段：评估是否服务端持久化 viewed state、自动折叠已查看文件，或把 diff hunk 关联到 eval case。
 4. URL state 第三阶段：增加短链接、权限感知分享提示，并评估是否保存草稿到本地 session storage 而不是 URL。

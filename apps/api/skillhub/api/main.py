@@ -31,9 +31,11 @@ from skillhub.infrastructure.db.tables import metadata
 
 SLUG_PATTERN = r"^[a-z0-9][a-z0-9-]{0,63}$"
 TAG_PATTERN = r"^[A-Za-z0-9._-]+$"
+IDENTITY_REF_PATTERN = r"^[A-Za-z0-9._@-]{1,120}$"
 SkillSlug = Annotated[str, Field(min_length=1, max_length=64, pattern=SLUG_PATTERN)]
 TagValue = Annotated[str, Field(min_length=1, max_length=64, pattern=TAG_PATTERN)]
 TagsPayload = Annotated[list[TagValue], Field(min_length=1)]
+IdentityRef = Annotated[str, Field(min_length=1, max_length=120, pattern=IDENTITY_REF_PATTERN)]
 EVAL_CASE_TITLE_MAX_LENGTH = 160
 EVAL_CASE_INPUT_MAX_LENGTH = 20_000
 EVAL_CASE_EXPECTED_OUTPUT_MAX_LENGTH = 10_000
@@ -65,7 +67,7 @@ class ContentRefPayload(BaseModel):
 
 class CreateSkillPayload(BaseModel):
     slug: SkillSlug
-    owner_ref: str
+    owner_ref: IdentityRef
     variant_name: str
     variant_label: VariantLabel
     variant_summary: VariantSummary
@@ -75,7 +77,7 @@ class CreateSkillPayload(BaseModel):
 
 
 class ImportSkillPayload(BaseModel):
-    owner_ref: str
+    owner_ref: IdentityRef
     tags: TagsPayload
     source: dict[str, Any]
     variant_label: VariantLabel = "Imported"
@@ -111,12 +113,12 @@ class PromoteVariantVersionPayload(BaseModel):
 
 class UpdateSkillPayload(BaseModel):
     slug: SkillSlug
-    owner_ref: str
+    owner_ref: IdentityRef
     default_variant_id: str | None = None
 
 
 class AssignSkillRolePayload(BaseModel):
-    subject_id: str
+    subject_id: IdentityRef
     role: str
     subject_type: str = "user"
 
@@ -807,6 +809,10 @@ def request_validation_message(field: str, error_type: str) -> str:
         return "至少填写一个约束标签。"
     if field == "tags" and error_type in {"string_pattern_mismatch", "string_too_long", "string_too_short"}:
         return "约束标签只能使用字母、数字、点、下划线和连字符，每个最多 64 个字符。"
+    if field == "owner_ref" and error_type in {"string_pattern_mismatch", "string_too_long", "string_too_short"}:
+        return "归属只能使用字母、数字、点、下划线、@ 和连字符，最多 120 个字符。"
+    if field == "subject_id" and error_type in {"string_pattern_mismatch", "string_too_long", "string_too_short"}:
+        return "成员只能使用字母、数字、点、下划线、@ 和连字符，最多 120 个字符。"
     if field == "name" and error_type == "string_too_long":
         return f"保存视图名称最多 {SAVED_VIEW_NAME_MAX_LENGTH} 个字符。"
     if field == "name" and error_type in {"missing", "string_too_short"}:
@@ -888,6 +894,7 @@ API_FIELD_LABELS = {
     "name": "保存视图名称",
     "note": "验证说明",
     "decision_note": "设为当前版本说明",
+    "subject_id": "成员",
 }
 
 

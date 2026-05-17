@@ -98,6 +98,35 @@ class ApiCommandTest(unittest.TestCase):
             "约束标签只能使用字母、数字、点、下划线和连字符，每个最多 64 个字符。",
         )
 
+    def test_identity_ref_fields_reject_invalid_values(self):
+        create_payload = self.skill_payload("identity-ref-create")
+        create_payload["owner_ref"] = "team name"
+
+        created = self.client.post("/api/skills", json=create_payload)
+
+        self.assertEqual(created.status_code, 422)
+        self.assertEqual(created.json()["field_errors"][0]["field"], "owner_ref")
+        self.assertIn("归属只能使用", created.json()["field_errors"][0]["message"])
+
+        skill = self.create_skill("identity-ref-fields")
+        updated = self.client.patch(
+            f"/api/skills/{skill['skill_id']}",
+            json={"slug": "identity-ref-fields", "owner_ref": "platform team"},
+        )
+
+        self.assertEqual(updated.status_code, 422)
+        self.assertEqual(updated.json()["field_errors"][0]["field"], "owner_ref")
+        self.assertIn("归属只能使用", updated.json()["field_errors"][0]["message"])
+
+        assigned = self.client.post(
+            f"/api/skills/{skill['skill_id']}/role-assignments",
+            json={"subject_id": "qa reviewer", "role": "evaluator"},
+        )
+
+        self.assertEqual(assigned.status_code, 422)
+        self.assertEqual(assigned.json()["field_errors"][0]["field"], "subject_id")
+        self.assertIn("成员只能使用", assigned.json()["field_errors"][0]["message"])
+
     def test_create_skill_rejects_empty_tags_with_tags_field_error(self):
         payload = self.skill_payload("empty-tags-format")
         payload["tags"] = []

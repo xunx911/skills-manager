@@ -2,7 +2,7 @@
 
 日期：2026-05-14
 
-状态：当前产品闭环已经强于普通 demo，但还不是成熟产品。主要缺口不在“能不能跑通”，而在信息架构密度、历史/发布证据的可扫读性，以及真实认证、多用户协作、验证策略和少量深水区可访问性细节。移动端 first-run、证据视图 inspector 折叠、URL state 第二阶段、Audit Explorer 扫读重构、表单字段基础件第二阶段、表单验证错误摘要、后端字段错误映射、基础格式校验第一阶段、导入 bundle 字段错误映射第一阶段、批量 case 行级错误第一阶段、服务端批量 case 字段错误契约、eval case 文本长度校验、批量 case 导入预览表、批量 case 预览移动端护栏、保存视图名称字段级校验、accepted verification note 字段级校验、promotion decision note 字段级校验、Variant 写入字段校验、Skill capabilities 权限感知、本地登录门禁第一阶段、Command menu 第二阶段和 Diff / Promotion 文件 reviewed progress 第一阶段已经按本审计后续任务完成。
+状态：当前产品闭环已经强于普通 demo，但还不是成熟产品。主要缺口不在“能不能跑通”，而在信息架构密度、历史/发布证据的可扫读性，以及真实认证、多用户协作、验证策略和少量深水区可访问性细节。移动端 first-run、证据视图 inspector 折叠、URL state 第二阶段、Audit Explorer 扫读重构、表单字段基础件第二阶段、表单验证错误摘要、后端字段错误映射、基础格式校验第一阶段、导入 bundle 字段错误映射第一阶段、批量 case 行级错误第一阶段、服务端批量 case 字段错误契约、eval case 文本长度校验、批量 case 导入预览表、批量 case 预览移动端护栏、保存视图名称字段级校验、accepted verification note 字段级校验、promotion decision note 字段级校验、Variant 写入字段校验、Skill capabilities 权限感知、本地登录门禁第一阶段、身份引用字段格式校验第一阶段、Command menu 第二阶段和 Diff / Promotion 文件 reviewed progress 第一阶段已经按本审计后续任务完成。
 
 ## 审计输入
 
@@ -169,7 +169,7 @@
 
 建议：
 
-- 下一轮表单方向应聚焦错误统计、owner_ref / role subject_id 等低频字段格式校验，以及更复杂嵌套表单的字段级回填。
+- 下一轮表单方向应聚焦错误统计、更复杂嵌套表单的字段级回填，以及低频字段的辅助说明/字符计数。
 - 不建议为了“更像表单系统”而改成全受控输入；SkillHub 的长文本 case input/expected output 仍适合原生 form + FormData。
 
 ### 已解决第二阶段 / 仍需后续 - Command menu 已成为工作台操作入口层
@@ -230,7 +230,7 @@
 
 ## 下一轮任务排序
 
-1. **表单验证后续。** 错误统计、低频身份/归属字段格式校验，以及更复杂嵌套表单的字段级回填。
+1. **表单验证后续。** 错误统计、更复杂嵌套表单的字段级回填，以及低频字段的辅助说明/字符计数。
 2. **接入真实认证。** 用真实登录 session/token 替换本地登录码和 actor cookie，并复用当前 capability UI 契约。
 3. **组织级 Audit Explorer。** 跨 skill 查询、日期范围、分页、导出和保留策略。
 4. **Diff / Promotion reviewed progress 第二阶段。** 决定是否服务端持久化、自动折叠已查看文件或纳入 promotion checklist。

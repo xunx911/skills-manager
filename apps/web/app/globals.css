@@ -4916,6 +4916,10 @@ body {
   gap: 10px;
 }
 
+.skillSettingsForm .formErrorSummary {
+  grid-column: 1 / -1;
+}
+
 .skillSettingsForm .workbenchField {
   display: grid;
   gap: 6px;
@@ -5237,6 +5241,10 @@ body {
   grid-template-columns: minmax(180px, 1fr) minmax(150px, 0.4fr) auto;
   gap: 8px;
   align-items: end;
+}
+
+.skillAccessForm .formErrorSummary {
+  grid-column: 1 / -1;
 }
 
 .skillAccessForm .workbenchField {

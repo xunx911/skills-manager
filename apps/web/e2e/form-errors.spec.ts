@@ -69,6 +69,30 @@ test("server format errors map to the matching launchpad field", async ({ page, 
   await expect(form.locator('input[name="slug"]')).toHaveAttribute("aria-invalid", "true");
 });
 
+test("identity reference format errors map to low-frequency admin fields", async ({ page }) => {
+  await importSkillBundle(page, `identity-field-errors-${Date.now()}`);
+
+  const settingsPanel = page.locator(".skillSettingsPanel");
+  await settingsPanel.getByLabel("归属").fill("platform team");
+  await settingsPanel.getByRole("button", { name: "保存 skill 设置" }).click();
+
+  const settingsSummary = settingsPanel.locator(".formErrorSummary");
+  await expect(settingsSummary).toBeVisible();
+  await expect(settingsSummary).toBeFocused();
+  await expect(settingsSummary).toContainText("归属只能使用");
+  await expect(settingsPanel.locator('input[name="owner_ref"]')).toHaveAttribute("aria-invalid", "true");
+
+  const accessPanel = page.locator(".skillAccessPanel");
+  await accessPanel.getByLabel("成员").fill("qa reviewer");
+  await accessPanel.getByRole("button", { name: "添加成员" }).click();
+
+  const accessSummary = accessPanel.locator(".formErrorSummary");
+  await expect(accessSummary).toBeVisible();
+  await expect(accessSummary).toBeFocused();
+  await expect(accessSummary).toContainText("成员只能使用");
+  await expect(accessPanel.locator('input[name="subject_id"]')).toHaveAttribute("aria-invalid", "true");
+});
+
 test("variant workspace field errors stay on their fields", async ({ page }) => {
   await importSkillBundle(page, `variant-workspace-errors-${Date.now()}`);
   await page.getByRole("tab", { name: "变体", exact: true }).click();

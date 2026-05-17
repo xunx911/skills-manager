@@ -993,16 +993,20 @@ export function DecisionWorkbench({
     event.preventDefault();
     const formElement = event.currentTarget;
     const form = new FormData(formElement);
-    await runCommand("成员角色已添加。", async () => {
-      await apiSend(`/api/skills/${selectedDetail.skill.id}/role-assignments`, {
-        method: "POST",
-        body: {
-          subject_id: textValue(form, "subject_id"),
-          role: textValue(form, "role"),
-        },
-      });
-      formElement.reset();
-    });
+    await runCommand(
+      "成员角色已添加。",
+      async () => {
+        await apiSend(`/api/skills/${selectedDetail.skill.id}/role-assignments`, {
+          method: "POST",
+          body: {
+            subject_id: textValue(form, "subject_id"),
+            role: textValue(form, "role"),
+          },
+        });
+        formElement.reset();
+      },
+      { rethrowFieldErrors: true },
+    );
   }
 
   async function revokeSkillRole(roleAssignmentId: string) {

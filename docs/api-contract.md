@@ -27,7 +27,7 @@
 | --- | --- | --- |
 | `id` | string | 内部唯一 ID。 |
 | `slug` | string | hub 上展示和搜索用的稳定名称，例如 `code-reviewer`。 |
-| `owner_ref` | string | 所有者引用，用于展示和筛选；真实动作权限由 `RoleAssignment` 判定。 |
+| `owner_ref` | string | 所有者引用，用于展示和筛选；最多 120 个字符，只能使用字母、数字、点、下划线、`@` 和连字符；真实动作权限由 `RoleAssignment` 判定。 |
 | `default_variant_ref` | string | 默认入口指向的 `Variant.id`。 |
 | `created_at` | ISO datetime | 创建时间。 |
 
@@ -39,7 +39,7 @@
 | --- | --- | --- |
 | `id` | string | 内部唯一 ID。 |
 | `subject_type` | string | 当前支持 `user`。 |
-| `subject_id` | string | 用户或服务账号标识。 |
+| `subject_id` | string | 用户或服务账号标识；最多 120 个字符，只能使用字母、数字、点、下划线、`@` 和连字符。 |
 | `resource_type` | string | 当前支持 `skill`。 |
 | `resource_id` | string | 所属 `Skill.id`。 |
 | `role` | enum | `owner`、`maintainer`、`evaluator`、`viewer`。 |
@@ -487,6 +487,7 @@ Content-Type: application/json
 行为：
 
 - 创建 `Skill`。
+- `owner_ref` 最多 120 个字符，只能使用字母、数字、点、下划线、`@` 和连字符。
 - 创建对应 `EvalCorpus`。
 - 创建空的 `EvalSetVersion v1`。
 - 创建默认 `Variant` 和初始 `VariantVersion v1`。
@@ -508,6 +509,7 @@ Content-Type: application/json
 行为：
 
 - 更新 skill 元数据。
+- `owner_ref` 最多 120 个字符，只能使用字母、数字、点、下划线、`@` 和连字符。
 - 如果提供 `default_variant_id`，必须指向同一个 skill 下的 variant。
 - 不创建新版本，因为入口指针不是内容快照。
 
@@ -704,6 +706,7 @@ X-SkillHub-Actor: product-operator
 
 规则：
 
+- `subject_id` 最多 120 个字符，只能使用字母、数字、点、下划线、`@` 和连字符。
 - 授予和撤销需要 `owner`。
 - 删除最后一个 `owner` 会被拒绝。
 - 重复授予同一个 `subject + skill + role` 会返回已有记录。

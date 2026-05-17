@@ -2,6 +2,7 @@
 
 import type { FormEvent } from "react";
 
+import { ValidatedForm } from "@/components/forms/form-validation";
 import { SelectField, TextField } from "@/components/forms/workbench-field";
 import { canUseCapability, capabilityDeniedReason, roleSummary } from "@/lib/capabilities";
 import type { RoleAssignment, SkillCapabilities, SkillPermission } from "@/lib/types";
@@ -75,7 +76,7 @@ export function SkillAccessPanel({
         })}
       </div>
 
-      <form className="skillAccessForm" onSubmit={onAssignRole}>
+      <ValidatedForm className="skillAccessForm" onValidSubmit={onAssignRole}>
         <TextField label="成员" name="subject_id" placeholder="qa-reviewer" required />
         <SelectField aria-label="Access role" defaultValue="evaluator" label="角色" name="role">
           <option value="maintainer">Maintainer</option>
@@ -84,7 +85,7 @@ export function SkillAccessPanel({
           <option value="owner">Owner</option>
         </SelectField>
         <button disabled={busy || !canManageRoles} title={!canManageRoles ? capabilityDeniedReason("role.manage") : undefined} type="submit">添加成员</button>
-      </form>
+      </ValidatedForm>
     </section>
   );
 }

@@ -1,0 +1,36 @@
+{
+  "id": "065",
+  "title": "身份引用字段格式校验",
+  "status": "complete",
+  "goal": "为 owner_ref 和 role subject_id 增加统一身份引用格式校验，并让概览页低频身份表单展示字段级错误。",
+  "scope": [
+    "新增 IdentityRef API 字段类型",
+    "校验 CreateSkillPayload.owner_ref、ImportSkillPayload.owner_ref、UpdateSkillPayload.owner_ref",
+    "校验 AssignSkillRolePayload.subject_id",
+    "SkillSettingsPanel 接入 ValidatedForm",
+    "SkillAccessPanel 接入 ValidatedForm",
+    "更新低频身份字段错误 E2E",
+    "更新 README、API contract、体验审计和任务记录"
+  ],
+  "out_of_scope": [
+    "真实认证",
+    "用户目录或 identity store",
+    "成员自动补全",
+    "邀请流程",
+    "历史数据迁移",
+    "移除 X-SkillHub-Actor fallback"
+  ],
+  "verification": [
+    "红灯 API：cd apps/api && UV_NO_CACHE=1 uv run pytest tests/test_api_commands.py -k \"identity_ref\" -> failed，非法 owner_ref 返回 200。",
+    "绿色 API target：cd apps/api && UV_NO_CACHE=1 uv run pytest tests/test_api_commands.py -k \"identity_ref\" -> 1 passed。",
+    "红灯 E2E：cd apps/web && npm run e2e -- form-errors.spec.ts -g \"identity reference\" -> failed，`.skillSettingsPanel .formErrorSummary` 不存在。",
+    "绿色 E2E target：cd apps/web && npm run e2e -- form-errors.spec.ts -g \"identity reference\" -> 1 passed。",
+    "后端全量：cd apps/api && UV_NO_CACHE=1 uv run pytest -> 109 passed。",
+    "前端单元：cd apps/web && npm run test:unit -> 5 files / 16 tests passed。",
+    "前端类型：cd apps/web && npm run typecheck -> passed。",
+    "前端构建：cd apps/web && npm run build -> passed。",
+    "依赖审计：cd apps/web && npm audit --omit=dev -> found 0 vulnerabilities。",
+    "E2E：cd apps/web && npm run e2e -> 72 passed。",
+    "结构检查：git diff --check -> passed；jq empty .agent/tasks.json .agent/tasks/TASK-065.json -> passed。"
+  ]
+}

@@ -446,5 +446,12 @@
     "priority": 64,
     "passes": true,
     "spec": ".agent/tasks/TASK-064.json"
+  },
+  {
+    "id": "065",
+    "title": "身份引用字段格式校验",
+    "priority": 65,
+    "passes": true,
+    "spec": ".agent/tasks/TASK-065.json"
   }
 ]
