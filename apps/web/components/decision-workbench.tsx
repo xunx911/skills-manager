@@ -596,10 +596,14 @@ export function DecisionWorkbench({
     if (!view) {
       setRunFilters(DEFAULT_RUN_FILTERS);
       setRunMatrixControls(DEFAULT_RUN_MATRIX_CONTROLS);
+      setCompareBaselineRunId(null);
+      setCompareCandidateRunId(null);
       return;
     }
     setRunFilters({ ...DEFAULT_RUN_FILTERS, ...runFiltersFromConfig(view.config) });
     setRunMatrixControls({ ...DEFAULT_RUN_MATRIX_CONTROLS, ...runMatrixControlsFromConfig(view.config) });
+    setCompareBaselineRunId(view.config.compare_baseline_run_id ?? null);
+    setCompareCandidateRunId(view.config.compare_candidate_run_id ?? null);
   }
 
   async function createSavedRunView() {
@@ -614,7 +618,11 @@ export function DecisionWorkbench({
           skill_id: selectedDetail.skill.id,
           name,
           view_type: "run_history",
-          config: { ...runFilterConfig(runFilters), ...runMatrixControlConfig(runMatrixControls) },
+          config: {
+            ...runFilterConfig(runFilters),
+            ...runMatrixControlConfig(runMatrixControls),
+            ...runComparisonConfig(compareBaselineRunId, compareCandidateRunId),
+          },
         },
       });
       await loadSavedViews(selectedDetail.skill.id);
@@ -674,6 +682,7 @@ export function DecisionWorkbench({
   }
 
   function chooseComparisonRun(role: "baseline" | "candidate", runId: string) {
+    setSelectedSavedViewId("adhoc");
     if (role === "baseline") {
       setCompareBaselineRunId(runId);
       if (compareCandidateRunId === runId) setCompareCandidateRunId(null);
@@ -1545,6 +1554,13 @@ function runMatrixControlConfig(controls: RunMatrixControls) {
   return Object.fromEntries(
     Object.entries(controls).filter(([key, value]) => value !== DEFAULT_RUN_MATRIX_CONTROLS[key as keyof RunMatrixControls]),
   );
+}
+
+function runComparisonConfig(baselineRunId: string | null, candidateRunId: string | null) {
+  return {
+    ...(baselineRunId ? { compare_baseline_run_id: baselineRunId } : {}),
+    ...(candidateRunId ? { compare_candidate_run_id: candidateRunId } : {}),
+  };
 }
 
 function runFiltersFromConfig(config: SavedView["config"]): Partial<RunFilters> {

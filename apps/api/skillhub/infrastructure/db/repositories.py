@@ -1706,6 +1706,8 @@ class SqlSkillRepository:
             "matrix_impact",
             "matrix_show_impact",
             "matrix_show_score",
+            "compare_baseline_run_id",
+            "compare_candidate_run_id",
         }
         clean: dict[str, str] = {}
         for key in allowed_keys:

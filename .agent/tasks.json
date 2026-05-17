@@ -495,5 +495,12 @@
     "priority": 71,
     "passes": true,
     "spec": ".agent/tasks/TASK-071.json"
+  },
+  {
+    "id": "072",
+    "title": "Saved run view 保存对照候选指针",
+    "priority": 72,
+    "passes": true,
+    "spec": ".agent/tasks/TASK-072.json"
   }
 ]

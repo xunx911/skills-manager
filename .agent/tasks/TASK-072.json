@@ -1,0 +1,36 @@
+{
+  "id": "072",
+  "title": "Saved run view 保存对照候选指针",
+  "status": "complete",
+  "goal": "让 History saved view 可以保存和恢复 run comparison 的对照/候选 run 指针。",
+  "scope": [
+    "saved view config 允许 compare_baseline_run_id 和 compare_candidate_run_id",
+    "保存 run view 时写入当前对照/候选 run id",
+    "应用 run view 时恢复对照/候选 run id 并触发现有 comparison 加载",
+    "手动切换对照/候选后回到 adhoc 视图",
+    "更新 README、产品审计和任务记录"
+  ],
+  "out_of_scope": [
+    "新增 URL 参数",
+    "保存 comparison 结果快照",
+    "跨 skill comparison",
+    "校验 run id 是否仍属于当前筛选之外的额外后端查询",
+    "saved view 分享权限提示"
+  ],
+  "verification": [
+    "红灯 API: cd apps/api && UV_NO_CACHE=1 uv run pytest tests/test_api_commands.py -k saved_run_view_endpoints_create_list_and_delete_view 先失败于 saved view config 丢弃 compare_baseline_run_id / compare_candidate_run_id。",
+    "红灯 Repository: cd apps/api && UV_NO_CACHE=1 uv run pytest tests/test_sql_repository.py -k saved_run_view_round_trip_normalizes_filters 先失败于 normalizer 丢弃 compare_baseline_run_id / compare_candidate_run_id。",
+    "红灯 E2E: cd apps/web && npm run e2e -- skills-workbench.spec.ts -g \"save and reapply\" 先失败于应用 saved view 后 `对照` 按钮没有恢复 active。",
+    "绿色目标 API: cd apps/api && UV_NO_CACHE=1 uv run pytest tests/test_api_commands.py -k saved_run_view_endpoints_create_list_and_delete_view -> 1 passed。",
+    "绿色目标 Repository: cd apps/api && UV_NO_CACHE=1 uv run pytest tests/test_sql_repository.py -k saved_run_view_round_trip_normalizes_filters -> 1 passed。",
+    "绿色目标 E2E: cd apps/web && npm run e2e -- skills-workbench.spec.ts -g \"save and reapply\" -> 1 passed。",
+    "API: cd apps/api && UV_NO_CACHE=1 uv run pytest -> 111 passed。",
+    "Web unit: cd apps/web && npm run test:unit -> 6 files / 18 tests passed。",
+    "Web build: cd apps/web && npm run build -> passed。",
+    "Web audit: cd apps/web && npm audit --omit=dev -> found 0 vulnerabilities。",
+    "Web typecheck: cd apps/web && npm run typecheck -> passed。",
+    "Web E2E: cd apps/web && npm run e2e -> 74 passed。",
+    "Whitespace: git diff --check -> passed。",
+    "Task JSON: jq empty .agent/tasks.json .agent/tasks/TASK-072.json -> passed。"
+  ]
+}

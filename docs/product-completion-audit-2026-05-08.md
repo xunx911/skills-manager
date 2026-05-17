@@ -2,7 +2,7 @@
 
 日期：2026-05-17
 
-状态：尚未达到“成熟产品完成”。当前已经是一个强的正式垂直切片：主工作区 Skill Launchpad、移动端 first-run 单主路径、中等桌面证据视图 compact inspector rail、URL state 第二阶段、高频写入表单字段基础件第二阶段、表单验证错误摘要、表单错误摘要统计、低频长文本字符计数、后端字段错误映射、基础格式校验第一阶段、导入 bundle 字段错误映射第一阶段、批量 case 行级错误第一阶段、服务端批量 case 字段错误契约、EvalRun results 精确字段校验、eval case 文本长度校验、批量 case 导入预览表、批量 case 预览移动端护栏、保存视图名称字段级校验、accepted verification note 字段级校验、promotion decision note 字段级校验、Variant 写入字段校验、Skill capabilities 权限感知、本地登录门禁第一阶段、本地 session 退出控制、身份引用字段格式校验第一阶段、Command menu 第二阶段、Diff / Promotion 文件 reviewed progress 第一阶段、主工作区 Skill 设置、Skill 作用域访问控制、本地 session actor、基础 accessibility 护栏、Workbench mode tablist、Inspector action 焦点交接、Skill 治理与审计面板、Skill 审计 Explorer quick filters/readable timeline/structured detail、标准 Skill bundle 导入、导入后验证清单、variant/version、candidate verification handoff、eval set version、manual eval review queue、历史查看、run matrix 多维控制、Impact 列配置与表格语义、保存历史筛选视图、run-to-run comparison、accepted verification、bundle diff、candidate promotion review、上下文命令菜单 ARIA 和快速添加 case 都能闭环。但距离成熟产品还缺少真实认证、多用户协作、自动测评策略和更深的可访问性验证。
+状态：尚未达到“成熟产品完成”。当前已经是一个强的正式垂直切片：主工作区 Skill Launchpad、移动端 first-run 单主路径、中等桌面证据视图 compact inspector rail、URL state 第二阶段、高频写入表单字段基础件第二阶段、表单验证错误摘要、表单错误摘要统计、低频长文本字符计数、后端字段错误映射、基础格式校验第一阶段、导入 bundle 字段错误映射第一阶段、批量 case 行级错误第一阶段、服务端批量 case 字段错误契约、EvalRun results 精确字段校验、eval case 文本长度校验、批量 case 导入预览表、批量 case 预览移动端护栏、保存视图名称字段级校验、accepted verification note 字段级校验、promotion decision note 字段级校验、Variant 写入字段校验、Skill capabilities 权限感知、本地登录门禁第一阶段、本地 session 退出控制、身份引用字段格式校验第一阶段、Command menu 第二阶段、Diff / Promotion 文件 reviewed progress 第一阶段、主工作区 Skill 设置、Skill 作用域访问控制、本地 session actor、基础 accessibility 护栏、Workbench mode tablist、Inspector action 焦点交接、Skill 治理与审计面板、Skill 审计 Explorer quick filters/readable timeline/structured detail、标准 Skill bundle 导入、导入后验证清单、variant/version、candidate verification handoff、eval set version、manual eval review queue、历史查看、run matrix 多维控制、Impact 列配置与表格语义、保存历史筛选视图和对照/候选指针、run-to-run comparison、accepted verification、bundle diff、candidate promotion review、上下文命令菜单 ARIA 和快速添加 case 都能闭环。但距离成熟产品还缺少真实认证、多用户协作、自动测评策略和更深的可访问性验证。
 
 ## 目标拆解
 
@@ -75,7 +75,7 @@
 | Run history | `GET /api/skills/{skill_id}/eval-runs`；前端 history mode 可过滤并查看 case result；E2E 覆盖。 | 完成 |
 | Run matrix | `GET /api/skills/{skill_id}/eval-run-matrix`；History mode 展示 case x run pass/fail 矩阵；选择对照/候选后显示逐 case `修复/回退/稳定/缺失` impact；支持 impact 过滤、按 impact 分组、隐藏 run header 分数、隐藏 `Impact` 列，并可把当前可见矩阵导出 CSV；E2E 覆盖多 case、多 run、impact、列配置、CSV 下载和矩阵控制。 | 完成当前视图 CSV 导出 |
 | Run matrix 表格语义 | `RunMatrixPanel` 使用命名原生 table、caption、列/行 header、row/col count 和完整 cell aria-label；E2E 覆盖 table/header/cell role 查询。 | 完成 |
-| Saved run views | `saved_views` 表；`GET /api/skills/{skill_id}/saved-views`、`POST /api/saved-views`、`DELETE /api/saved-views/{id}`；History mode 可保存、应用、删除当前 run filters 和 matrix 控制项；保存视图名称限制 1-80 字符，空白、重复或超长会返回字段错误并在前端回填到 `保存视图名称`。 | 完成 |
+| Saved run views | `saved_views` 表；`GET /api/skills/{skill_id}/saved-views`、`POST /api/saved-views`、`DELETE /api/saved-views/{id}`；History mode 可保存、应用、删除当前 run filters、matrix 控制项和对照/候选 run 指针；保存视图名称限制 1-80 字符，空白、重复或超长会返回字段错误并在前端回填到 `保存视图名称`。 | 完成 comparison 指针保存 |
 | Run-to-run comparison | `GET /api/eval-runs/compare` 只允许同 `EvalSetVersion` 的 finished run 比较；History mode 可选择对照/候选并查看 delta、修复/回退。 | 完成 |
 | Accepted verification | `POST /api/eval-runs/accepted-verifications` 要求 skill `owner/maintainer` 权限，写入 `(variant_id, eval_set_version_id)` 指针和 audit event；History row 显示 `Accepted`；可选 note 最多 1000 字符，超限会在 run comparison 接受表单回填字段错误。 | 完成 |
 | 上下文命令菜单 | `Cmd/Ctrl+K` 和可见按钮可打开命令菜单；E2E 覆盖搜索 `添加 case` 并跳转表单。`buildWorkbenchCommands` 已按 current mode 排序；`CommandMenu` 会记录本地最近 5 个命令；selected case/run 会生成上下文命令；右侧 preview 展示作用对象、scope 和禁用原因；Vitest/E2E 覆盖。 | 完成第二阶段 |
@@ -140,6 +140,7 @@ wc -l apps/api/skillhub/api/main.py apps/api/tests/test_api_commands.py apps/web
 - TASK-069 增量验证：EvalRun results API 红灯先失败于缺失 result 返回 200；Repository 红灯先失败于缺失 result 没有抛 `FieldInvariantError`；绿色后目标 API 1 passed、目标 Repository 1 passed；完整验证为 API 111 passed、Web unit 5 files / 16 tests passed、typecheck/build/audit 通过、Playwright E2E 74 passed、`git diff --check` 和任务 JSON 检查通过；完整验证记录见 `.agent/tasks/TASK-069.json`。
 - TASK-070 增量验证：Run matrix E2E 红灯先失败于没有 `Impact column`；URL state E2E 红灯先失败于没有 `Impact column`；saved view API 红灯先失败于 config 丢弃 `matrix_show_impact`；绿色后目标 API 1 passed、目标 Run matrix E2E 1 passed、目标 URL E2E 1 passed；run comparison 视觉基线更新 1 passed；完整验证为 API 111 passed、Web unit 5 files / 16 tests passed、typecheck/build/audit 通过、Playwright E2E 74 passed、`git diff --check` 和任务 JSON 检查通过；完整验证记录见 `.agent/tasks/TASK-070.json`。
 - TASK-071 增量验证：Run matrix CSV 单元测试红灯先失败于 helper 不存在；Run matrix E2E 红灯先失败于没有 `Export CSV` 且等待 download 超时；绿色后目标单元测试 1 file / 2 tests passed、目标 Run matrix E2E 1 passed；run comparison 视觉基线更新 1 passed；完整验证为 API 111 passed、Web unit 6 files / 18 tests passed、typecheck/build/audit 通过、Playwright E2E 74 passed、`git diff --check` 和任务 JSON 检查通过；完整验证记录见 `.agent/tasks/TASK-071.json`。
+- TASK-072 增量验证：saved view API 红灯先失败于 config 丢弃 `compare_baseline_run_id` / `compare_candidate_run_id`；Repository 红灯先失败于 normalizer 丢弃这两个字段；E2E 红灯先失败于应用 saved view 后对照按钮没有恢复 active；绿色后目标 API 1 passed、目标 Repository 1 passed、目标 E2E 1 passed；完整验证为 API 111 passed、Web unit 6 files / 18 tests passed、typecheck/build/audit 通过、Playwright E2E 74 passed、`git diff --check` 和任务 JSON 检查通过；完整验证记录见 `.agent/tasks/TASK-072.json`。
 
 本轮相关视觉资产：
 
@@ -170,7 +171,7 @@ wc -l apps/api/skillhub/api/main.py apps/api/tests/test_api_commands.py apps/web
 2. **部分操作仍偏表单。** 移动端 first-run 已去掉重复入口，中等桌面证据视图已把 inspector 收成 verification rail；Launchpad/Inspector 高频写入字段已有共享基础件；Command menu 已按当前 mode、最近使用和当前 selection 把高频动作前置；导入后清单、case 新增、case 详情内联编辑、主区创建 variant、主区追加候选版本、主区创建 skill、主区 skill 设置、访问控制、治理审计、记录 run 和 candidate 验证已更连续，但部分低频设置和筛选控件仍主要依赖局部表单或尚未产品化。
 3. **自动测评策略还没产品化。** 当前支持手工 pass/fail 和外部结果导入，但还没有内置 strategy registry、runner 调度和自动优化流水线。
 4. **URL sharing 还有协作层缺口。** 深层证据上下文已进 URL，但还没有短链接、权限感知分享提示，也没有草稿恢复策略。
-5. **Run matrix 还不是完整多维表格。** 现在能保存筛选视图、看 case x run pass/fail、高亮对照/候选的修复和回退，并支持 impact 过滤/分组/分数显示控制、`Impact` 列隐藏和当前视图 CSV 导出，但还不能做任意列配置、自定义指标或保存对照/候选 run 指针。
+5. **Run matrix 还不是完整多维表格。** 现在能保存筛选视图和对照/候选 run 指针、看 case x run pass/fail、高亮对照/候选的修复和回退，并支持 impact 过滤/分组/分数显示控制、`Impact` 列隐藏和当前视图 CSV 导出，但还不能做任意列配置或自定义指标。
 6. **Accessibility 深水区还没完整覆盖。** 已有 skip link、可见 focus ring、reduced-motion、status notice、command menu ARIA、Workbench mode tablist、Run matrix table semantics 和 Inspector action focus handoff 回归，但更广的全路径焦点巡检和人工读屏验收仍未完成。
 7. **Ralph Loop 未真正持续运行。** 配置已安装，但本地 Docker Sandboxes 需要 `sbx login` 授权；没有登录就不能让 Ralph 持续接管任务。
 
@@ -182,7 +183,7 @@ wc -l apps/api/skillhub/api/main.py apps/api/tests/test_api_commands.py apps/web
 
 1. 接入真实认证：用真实登录 session/token 替换本地登录码和 actor cookie，前端只展示 capability，不再保留开发期身份模拟。
 2. 表单验证后续：更多嵌套字段错误回填和表格型错误定位；EvalRun results 精确校验已完成第一阶段。
-3. 把 run matrix 升级为更完整的多维表格：任意列配置、更多指标列，并评估是否保存对照/候选 run 指针。
+3. 把 run matrix 升级为更完整的多维表格：任意列配置和更多指标列。
 4. 把 audit events 升级为跨 skill/组织级查询、可导出、可配置保留策略的审计系统。
 5. 把 eval strategy / runner registry 产品化。
 6. 继续补 accessibility：更广的全路径焦点巡检、后端错误摘要和人工读屏验收。

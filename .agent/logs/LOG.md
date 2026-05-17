@@ -10,6 +10,14 @@
 
 ## Session Log
 
+### 2026-05-17 18:37 CST - TASK-072 Saved run view 保存对照候选指针
+
+- saved view config allowlist 新增 `compare_baseline_run_id` 和 `compare_candidate_run_id`，保存视图时会保留当前 run comparison 指针。
+- 前端保存 run view 时写入当前 `对照` / `候选` run id；应用 saved view 时恢复这两个 id 并复用现有 comparison 加载链路；手动切换对照/候选会把当前视图状态打回 `adhoc`。
+- E2E 覆盖保存含 comparison 的命名视图、切换到另一组对照/候选、应用视图后恢复原按钮 active 状态和 `+100%` comparison panel。
+- README、产品体验评审、摩擦审计、完成度审计、Superpowers spec/plan 和 TASK-072 任务记录已更新。
+- 已验证：红灯 API 和 Repository 先失败于 saved view config 丢弃 comparison keys；红灯 E2E 先失败于应用 saved view 后对照按钮没有恢复 active；绿色后目标 API 1 passed、目标 Repository 1 passed、目标 E2E 1 passed；`UV_NO_CACHE=1 uv run pytest` 111 passed；`npm run test:unit` 6 files/18 tests passed；`npm run build` passed；`npm run typecheck` passed；`npm audit --omit=dev` found 0 vulnerabilities；完整 `npm run e2e` 74 passed；`git diff --check` 和任务 JSON 检查通过。
+
 ### 2026-05-17 18:27 CST - TASK-071 Run matrix CSV 导出
 
 - `RunMatrixPanel` 新增 `Export CSV` 按钮，导出当前可见 Run matrix rows，并跟随 `Impact column` 可见性决定是否输出 `Impact` 列。

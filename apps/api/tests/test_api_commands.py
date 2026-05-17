@@ -631,6 +631,8 @@ class ApiCommandTest(unittest.TestCase):
                     "matrix_impact": "fixed",
                     "matrix_show_score": "false",
                     "matrix_show_impact": "false",
+                    "compare_baseline_run_id": "run-baseline",
+                    "compare_candidate_run_id": "run-candidate",
                     "unknown": "ignored",
                 },
                 "actor": "tester",
@@ -649,6 +651,8 @@ class ApiCommandTest(unittest.TestCase):
                 "matrix_impact": "fixed",
                 "matrix_show_score": "false",
                 "matrix_show_impact": "false",
+                "compare_baseline_run_id": "run-baseline",
+                "compare_candidate_run_id": "run-candidate",
             },
         )
 
