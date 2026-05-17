@@ -813,9 +813,10 @@ test("operator can inspect run matrix across eval runs", async ({ page }) => {
   await expect(page.getByTestId("run-matrix-panel")).toBeVisible();
   const matrixTable = page.getByRole("table", { name: "Run matrix results" });
   await expect(matrixTable).toBeVisible();
-  await expect(matrixTable).toHaveAttribute("aria-colcount", "4");
+  await expect(matrixTable).toHaveAttribute("aria-colcount", "5");
   await expect(matrixTable.getByRole("columnheader", { name: "Case" })).toBeVisible();
   await expect(matrixTable.getByRole("columnheader", { name: "Impact" })).toBeVisible();
+  await expect(matrixTable.getByRole("columnheader", { name: "Summary" })).toBeVisible();
   await expect(page.locator(".runMatrixCaseHeader")).toHaveCSS("left", "0px");
   await expect(page.locator(".runMatrixRunHeader").first()).toHaveCSS("position", "sticky");
   await expect(page.locator(".runMatrixRunHeader").first()).toHaveCSS("top", "0px");
@@ -827,9 +828,10 @@ test("operator can inspect run matrix across eval runs", async ({ page }) => {
   await expect(page.locator(".runMatrixCellPass")).toHaveCount(4);
   await expect(page.locator(".runMatrixCellMissing")).toHaveCount(1);
   await expect(matrixTable.getByRole("rowheader", { name: /PR: missing tenant scope/ })).toBeVisible();
-  await expect(matrixTable.getByRole("cell", { name: /PR: missing tenant scope.*不通过/ })).toBeVisible();
-  await expect(matrixTable.getByRole("cell", { name: /PR: token logging.*通过/ })).toHaveCount(2);
-  await expect(matrixTable.getByRole("cell", { name: /PR: audit log leak.*未覆盖/ })).toBeVisible();
+  await expect(matrixTable.getByRole("cell", { name: /PR: missing tenant scope.*结果：不通过/ })).toBeVisible();
+  await expect(matrixTable.getByRole("cell", { name: /PR: token logging.*结果：通过/ })).toHaveCount(2);
+  await expect(matrixTable.getByRole("cell", { name: /PR: audit log leak.*结果：未覆盖/ })).toBeVisible();
+  await expect(matrixTable.getByRole("cell", { name: /PR: audit log leak.*摘要：1\/2 通过.*1 未覆盖/ })).toBeVisible();
 
   const fullMatrixDownload = page.waitForEvent("download");
   await page.getByRole("button", { name: "Export CSV" }).click();
@@ -838,18 +840,19 @@ test("operator can inspect run matrix across eval runs", async ({ page }) => {
   const fullMatrixCsvPath = await fullMatrixCsv.path();
   expect(fullMatrixCsvPath).toBeTruthy();
   const fullMatrixCsvText = await readFile(fullMatrixCsvPath!, "utf8");
-  expect(fullMatrixCsvText).toContain("Case,Versions,Impact");
+  expect(fullMatrixCsvText).toContain("Case,Versions,Impact,Summary");
   expect(fullMatrixCsvText).toContain("PR: missing tenant scope");
   expect(fullMatrixCsvText).toContain("PR: token logging");
+  expect(fullMatrixCsvText).toContain("1/2 通过");
   expect(fullMatrixCsvText).toContain("不通过");
   expect(fullMatrixCsvText).toContain("通过");
 
   await expect(page.getByLabel("Impact column")).toBeChecked();
   await page.getByLabel("Impact column").uncheck();
-  await expect(matrixTable).toHaveAttribute("aria-colcount", "3");
+  await expect(matrixTable).toHaveAttribute("aria-colcount", "4");
   await expect(matrixTable.getByRole("columnheader", { name: "Impact" })).toHaveCount(0);
   await expect(page.locator(".runMatrixImpactCell")).toHaveCount(0);
-  await expect(matrixTable.getByRole("cell", { name: /PR: token logging.*通过/ })).toHaveCount(2);
+  await expect(matrixTable.getByRole("cell", { name: /PR: token logging.*结果：通过/ })).toHaveCount(2);
   const compactMatrixDownload = page.waitForEvent("download");
   await page.getByRole("button", { name: "Export CSV" }).click();
   const compactMatrixCsv = await compactMatrixDownload;
@@ -859,6 +862,21 @@ test("operator can inspect run matrix across eval runs", async ({ page }) => {
   expect(compactMatrixCsvText.split("\n")[0]).not.toContain("Impact");
   await page.getByLabel("Impact column").check();
   await expect(matrixTable.getByRole("columnheader", { name: "Impact" })).toBeVisible();
+
+  await expect(page.getByLabel("Summary column")).toBeChecked();
+  await page.getByLabel("Summary column").uncheck();
+  await expect(matrixTable).toHaveAttribute("aria-colcount", "4");
+  await expect(matrixTable.getByRole("columnheader", { name: "Summary" })).toHaveCount(0);
+  await expect(page.locator(".runMatrixSummaryCell")).toHaveCount(0);
+  const noSummaryDownload = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Export CSV" }).click();
+  const noSummaryCsv = await noSummaryDownload;
+  const noSummaryCsvPath = await noSummaryCsv.path();
+  expect(noSummaryCsvPath).toBeTruthy();
+  const noSummaryCsvText = await readFile(noSummaryCsvPath!, "utf8");
+  expect(noSummaryCsvText.split("\n")[0]).not.toContain("Summary");
+  await page.getByLabel("Summary column").check();
+  await expect(matrixTable.getByRole("columnheader", { name: "Summary" })).toBeVisible();
 
   await page.locator(".historyRunRow").filter({ hasText: "1/2" }).getByRole("button", { name: "对照" }).click();
   await page.locator(".historyRunRow").filter({ hasText: "3/3" }).getByRole("button", { name: "候选" }).click();
@@ -912,6 +930,7 @@ test("operator can save and reapply an eval run history view", async ({ page }) 
 
   await page.getByLabel("Matrix group by").selectOption("impact");
   await page.getByLabel("Show matrix score").uncheck();
+  await page.getByLabel("Summary column").uncheck();
 
   await page.getByLabel("保存视图名称").fill("候选对照复盘");
   await page.getByRole("button", { name: "保存当前视图" }).click();
@@ -921,6 +940,7 @@ test("operator can save and reapply an eval run history view", async ({ page }) 
   await baselineRunRow.getByRole("button", { name: "候选" }).click();
   await page.getByLabel("Matrix group by").selectOption("none");
   await page.getByLabel("Show matrix score").check();
+  await page.getByLabel("Summary column").check();
   await expect(page.getByLabel("Saved run view")).toHaveValue("adhoc");
   await expect(page.locator(".historyRunRow")).toHaveCount(2);
   await page.getByLabel("Saved run view").selectOption({ label: "候选对照复盘" });
@@ -929,6 +949,7 @@ test("operator can save and reapply an eval run history view", async ({ page }) 
   await expect(page.getByTestId("run-comparison-panel").getByText("+100%", { exact: true })).toBeVisible();
   await expect(page.getByLabel("Matrix group by")).toHaveValue("impact");
   await expect(page.getByLabel("Show matrix score")).not.toBeChecked();
+  await expect(page.getByLabel("Summary column")).not.toBeChecked();
 
   await page.getByRole("button", { name: "删除视图" }).click();
   await expect(page.getByLabel("Saved run view")).not.toContainText("候选对照复盘");

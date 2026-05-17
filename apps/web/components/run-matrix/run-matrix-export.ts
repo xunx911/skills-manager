@@ -12,6 +12,7 @@ export type RunMatrixCsvInput = {
   rows: RunMatrixCsvRow[];
   runs: EvalRunMatrix["runs"];
   showImpact: boolean;
+  showSummary: boolean;
 };
 
 export const impactCopy: Record<MatrixImpact, string> = {
@@ -25,14 +26,15 @@ export const impactCopy: Record<MatrixImpact, string> = {
 
 export const impactOrder: MatrixImpact[] = ["fixed", "regressed", "stable_fail", "stable_pass", "missing", "waiting"];
 
-export function buildRunMatrixCsv({ cells, rows, runs, showImpact }: RunMatrixCsvInput) {
+export function buildRunMatrixCsv({ cells, rows, runs, showImpact, showSummary }: RunMatrixCsvInput) {
   const cellMap = new Map(cells.map((cell) => [`${cell.run_id}:${cell.case_id}`, cell]));
-  const header = ["Case", "Versions", ...(showImpact ? ["Impact"] : []), ...runs.map(runMatrixRunLabel)];
+  const header = ["Case", "Versions", ...(showImpact ? ["Impact"] : []), ...(showSummary ? ["Summary"] : []), ...runs.map(runMatrixRunLabel)];
   const csvRows = rows.map(({ impact, row }) => {
     const values = [
       row.case.title,
       row.versions.map((version) => `v${version.version_number}`).join(", "),
       ...(showImpact ? [impactCopy[impact]] : []),
+      ...(showSummary ? [caseResultSummaryText(caseResultSummary(cellMap, runs, row.case.id))] : []),
       ...runs.map((run) => resultText(cellMap.get(`${run.eval_run.id}:${row.case.id}`)?.passed ?? null)),
     ];
 
@@ -67,6 +69,30 @@ export function runMatrixCsvFilename(skillSlug: string, timestamp = new Date()) 
 
 export function runMatrixRunLabel(row: EvalRunMatrix["runs"][number]) {
   return `${row.variant.label} v${row.variant_version.version_number} / ${row.eval_set.name} v${row.eval_set_version.version_number}`;
+}
+
+export function caseResultSummary(
+  cells: Map<string, EvalRunMatrix["cells"][number]>,
+  runs: EvalRunMatrix["runs"],
+  caseId: string,
+) {
+  return runs.reduce(
+    (summary, run) => {
+      const cell = cells.get(`${run.eval_run.id}:${caseId}`);
+      if (!cell) return { ...summary, missing: summary.missing + 1 };
+      return cell.passed
+        ? { ...summary, passed: summary.passed + 1 }
+        : { ...summary, failed: summary.failed + 1 };
+    },
+    { failed: 0, missing: 0, passed: 0, total: runs.length },
+  );
+}
+
+export function caseResultSummaryText(summary: ReturnType<typeof caseResultSummary>) {
+  const parts = [`${summary.passed}/${summary.total} 通过`];
+  if (summary.failed > 0) parts.push(`${summary.failed} 不通过`);
+  if (summary.missing > 0) parts.push(`${summary.missing} 未覆盖`);
+  return parts.join(" · ");
 }
 
 function resultText(passed: boolean | null) {

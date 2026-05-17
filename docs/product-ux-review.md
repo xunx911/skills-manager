@@ -38,10 +38,10 @@
 - 标准 bundle version 可以在专门的 diff mode 里比较文件状态、筛选 changed/added/removed/binary，并查看行级 diff。
 - Diff mode 和 Promotion review 的 bundle diff 都支持会话级文件 `已查看` 标记，并显示 `Reviewed x/y` 或 `x/y reviewed`，用户能按文件推进审查。
 - History mode 支持按 exact variant version、eval set version、strategy、status 过滤 eval run，并查看每个 run 的逐 case 结果。
-- History mode 支持 `Run matrix`，把当前筛选下的 runs 展成 case x run 矩阵，快速识别哪些 case 在哪些 run 上通过、不通过或未覆盖；矩阵使用原生 table、caption、列/行标题、sticky case 首列、sticky 表头和完整单元格标签，辅助技术不用靠颜色和视觉位置猜测结果。
+- History mode 支持 `Run matrix`，把当前筛选下的 runs 展成 case x run 矩阵，快速识别哪些 case 在哪些 run 上通过、不通过或未覆盖；矩阵使用原生 table、caption、列/行标题、sticky case 首列、sticky 表头、Summary 指标列和完整单元格标签，辅助技术不用靠颜色和视觉位置猜测结果。
 - History mode 支持保存、应用、删除当前筛选视图，用户可以把“候选 v2 / Primary v3”这类常用实验入口固化下来；保存视图也会恢复对照/候选 run 指针，不需要反复手动组合筛选和比较上下文。
 - 选择 `对照` 和 `候选` run 后，Run matrix 每个 case 行会显示 `修复`、`回退`、`稳定通过`、`仍未通过` 或 `缺失`，把样本级变化直接放到表格里。
-- Run matrix 支持按 impact 过滤 case、按 impact 分组、隐藏 run header 分数、隐藏 `Impact` 列，并且这些矩阵控制项会随 URL 和命名视图一起保存和恢复；当前可见矩阵还能直接导出 CSV，用于外部复盘和评审。
+- Run matrix 支持按 impact 过滤 case、按 impact 分组、隐藏 run header 分数、隐藏 `Impact` 列、隐藏 `Summary` 指标列，并且这些矩阵控制项会随 URL 和命名视图一起保存和恢复；当前可见矩阵还能直接导出 CSV，用于外部复盘和评审。
 - History mode 支持把两次同 `EvalSetVersion` 的 run 标为对照/候选，直接查看通过率 delta、逐 case 修复/回退，并把候选 run 接受为当前验证依据。
 - `promotion` 和 `accepted verification` 已有后端角色门禁：只有 skill 的 owner/maintainer 能移动可信分发或验证指针；前端现在也会按 `SkillCapabilities` 禁用设为当前版本评审和接受验证依据入口。
 - 每个 eval case 可以在测评页内查看版本时间线，包括 input、expected output、notes，以及被哪些 eval set snapshot 包含；也可以从旧版本一键恢复为新的当前版本，历史不会被覆盖。
@@ -174,6 +174,7 @@
 55. 以前用户只能在页面里看 Run matrix，想带到外部评审要手动复制；现在 `Export CSV` 会导出当前可见 rows 和当前列配置，`Impact column` 关闭时 CSV 也不会导出该列。
 56. 以前 saved view 只能恢复 run filters 和 matrix 偏好，用户仍要重新点 `对照` / `候选`；现在 saved view 会保存和恢复这两个 run 指针，并重新显示对应 comparison。
 57. 以前 Run matrix 只有 case 首列 sticky，纵向扫读时 run header 会离开视口；现在表头也 sticky，用户看深处 case 时仍能看到每个结果列对应哪次 run。
+58. 以前用户要横向心算每个 case 在当前 runs 中的整体表现；现在 `Summary` 指标列直接显示 `x/y 通过`，并补充不通过和未覆盖数量，也可以隐藏并保存到 URL / saved view / CSV。
 
 ## 仍然存在的摩擦
 
@@ -181,7 +182,7 @@
 2. 表单字段基础件已覆盖主要工作台表单，required 字段已有错误 summary、错误数量统计、提交后聚焦摘要、摘要链接回字段和字段旁错误；后端字段错误映射已覆盖重复 Skill ID、基础请求体校验、Skill ID 格式、tags 格式、owner_ref / subject_id 身份引用格式、导入 bundle 解析错误、批量 case 行级字段错误、EvalRun results map-key 字段错误、eval case 文本长度上限、variant 写入字段长度上限、保存视图名称字段错误、accepted verification note 字段错误和 promotion decision note 字段错误。还没有更广的表格型字段回填体验。
 3. Promotion review 已经展示 case impact、diff 和会话级文件 reviewed progress，但 viewed state 还没有服务端持久化，也没有把具体 diff hunk 关联到具体 eval case。
 4. URL state 已覆盖核心证据上下文，但还没有短链接、权限感知分享提示，也没有保存未提交草稿。
-5. Run matrix 已经提供 read-only 多 run x case 浏览、保存筛选视图、对照/候选 impact、impact 过滤和分组、`Impact` 列隐藏、当前视图 CSV 导出，并能把对照/候选 run 指针保存进命名视图；但还没有任意列配置或自定义指标列。
+5. Run matrix 已经提供 read-only 多 run x case 浏览、保存筛选视图、对照/候选 impact、impact 过滤和分组、`Impact` 列隐藏、`Summary` 指标列、当前视图 CSV 导出，并能把对照/候选 run 指针保存进命名视图；但还没有用户自定义指标公式或任意列排序。
 6. 权限还没有真实认证来源。当前 actor 已从请求体和前端硬编码 header 收敛到带本地登录码的后端签名 cookie session，前端也已改为展示后端 capabilities，但仍不是多用户登录、token rotation 或组织级身份系统。
 7. Accessibility 仍未完整覆盖全路径。现在已有 skip link、focus ring、reduced-motion、status notice、命令菜单、Workbench mode tablist、Run matrix 表格语义、Inspector action focus handoff 和主要表单字段语义回归，但更广的全路径焦点巡检和人工读屏验收还需要继续补。
 
@@ -191,6 +192,6 @@
 2. 接入真实认证：用真正的登录 session/token 替换本地登录码和 actor cookie，保留后端 capabilities 契约，前端不再允许开发期身份模拟。
 3. Diff / Promotion review 第二阶段：评估是否服务端持久化 viewed state、自动折叠已查看文件，或把 diff hunk 关联到 eval case。
 4. URL state 第三阶段：增加短链接、权限感知分享提示，并评估是否保存草稿到本地 session storage 而不是 URL。
-5. 做 run matrix 多维表格后续：任意列配置和自定义指标列。
+5. 做 run matrix 多维表格后续：用户自定义指标公式和任意列排序。
 6. Command menu 第三阶段：服务器端个性化、跨 skill 全局搜索、快捷键自定义和命令别名。
 7. 扩展 accessibility E2E：继续覆盖更广的全路径焦点巡检和人工读屏验收。

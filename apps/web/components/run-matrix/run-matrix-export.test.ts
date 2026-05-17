@@ -174,25 +174,28 @@ describe("buildRunMatrixCsv", () => {
       rows,
       runs: matrix.runs,
       showImpact: true,
+      showSummary: true,
     });
 
     expect(csv).toBe([
-      "Case,Versions,Impact,Baseline v1 / Regression set v3,Candidate v2 / Regression set v3",
-      "\"PR: comma, \"\"quote\"\" leak\",\"v1, v2\",修复,不通过,通过",
-      "PR: missing new case,v1,缺失,未覆盖,通过",
+      "Case,Versions,Impact,Summary,Baseline v1 / Regression set v3,Candidate v2 / Regression set v3",
+      "\"PR: comma, \"\"quote\"\" leak\",\"v1, v2\",修复,1/2 通过 · 1 不通过,不通过,通过",
+      "PR: missing new case,v1,缺失,1/2 通过 · 1 未覆盖,未覆盖,通过",
     ].join("\n"));
   });
 
-  it("omits the Impact column when the current view hides it", () => {
+  it("omits configurable columns when the current view hides them", () => {
     const csv = buildRunMatrixCsv({
       cells: matrix.cells,
       rows,
       runs: matrix.runs,
       showImpact: false,
+      showSummary: false,
     });
 
     expect(csv.split("\n")[0]).toBe("Case,Versions,Baseline v1 / Regression set v3,Candidate v2 / Regression set v3");
     expect(csv).not.toContain("Impact");
+    expect(csv).not.toContain("Summary");
     expect(csv).not.toContain("修复");
   });
 });

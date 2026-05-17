@@ -22,6 +22,7 @@ const defaultMatrixControls: RunMatrixControls = {
   matrix_group_by: "none",
   matrix_impact: "all",
   matrix_show_impact: "true",
+  matrix_show_summary: "true",
   matrix_show_score: "true",
 };
 
@@ -38,12 +39,14 @@ describe("saved run view config", () => {
       matrixControls: {
         ...defaultMatrixControls,
         matrix_group_by: "impact",
+        matrix_show_summary: "false",
         matrix_show_score: "false",
       },
     })).toEqual({
       compare_baseline_run_id: "run-baseline",
       compare_candidate_run_id: "run-candidate",
       matrix_group_by: "impact",
+      matrix_show_summary: "false",
       matrix_show_score: "false",
       strategy: "manual_pass_fail",
       variant_version_id: "version-candidate",
@@ -75,11 +78,13 @@ describe("saved run view config", () => {
       matrix_group_by: "impact",
       matrix_impact: "fixed",
       matrix_show_impact: "false",
+      matrix_show_summary: "false",
       matrix_show_score: "maybe",
     })).toEqual({
       matrix_group_by: "impact",
       matrix_impact: "fixed",
       matrix_show_impact: "false",
+      matrix_show_summary: "false",
     });
   });
 

@@ -516,5 +516,12 @@
     "priority": 74,
     "passes": true,
     "spec": ".agent/tasks/TASK-074.json"
+  },
+  {
+    "id": "075",
+    "title": "Run matrix 结果摘要列",
+    "priority": 75,
+    "passes": true,
+    "spec": ".agent/tasks/TASK-075.json"
   }
 ]

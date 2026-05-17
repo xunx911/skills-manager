@@ -160,6 +160,7 @@
 - TASK-071 新增 Run matrix CSV 导出：用户可以把当前可见矩阵视图导出为 CSV，导出会遵循当前 rows 和 `Impact column` 可见性。
 - TASK-072 新增 Saved run view 对照/候选指针：保存命名视图时会保存当前 comparison run ids，应用视图后恢复对应对照/候选按钮和 comparison panel。
 - TASK-074 新增 Run matrix sticky header：矩阵表头会在滚动时保持可见，case 首列和 run 列上下文都不再轻易丢失。
+- TASK-075 新增 Run matrix `Summary` 指标列：每个 case 直接展示当前 runs 下的通过/不通过/未覆盖摘要，列可隐藏，并随 URL、saved view 和 CSV 导出同步。
 
 影响：
 
@@ -236,7 +237,7 @@
 建议：
 
 - 下一轮视觉重构不要先换颜色；先做信息密度层级：primary decision surface、supporting evidence、secondary admin actions 分层。
-- 对 `history/run matrix` 和 `promotion` 使用更密的数据产品排版，对 first-run 使用更强引导排版。Run matrix 已完成第一条列配置、当前视图 CSV 导出、saved view comparison 指针和 sticky header，后续继续做自定义指标列和更自由的列配置。
+- 对 `history/run matrix` 和 `promotion` 使用更密的数据产品排版，对 first-run 使用更强引导排版。Run matrix 已完成第一条列配置、Summary 指标列、当前视图 CSV 导出、saved view comparison 指针和 sticky header，后续继续做用户自定义指标公式和更自由的列排序。
 
 ## 下一轮任务排序
 

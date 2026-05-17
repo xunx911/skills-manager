@@ -1,0 +1,40 @@
+{
+  "id": "075",
+  "title": "Run matrix 结果摘要列",
+  "status": "complete",
+  "goal": "给 Run matrix 增加可隐藏的 Summary 指标列，汇总每个 case 在当前 runs 下的通过/失败/未覆盖情况。",
+  "scope": [
+    "Run matrix 默认显示 Summary 列",
+    "Summary column 可隐藏，并进入 URL state 和 saved run view",
+    "CSV 导出遵循 Summary 列可见性",
+    "saved view API allowlist 保留 matrix_show_summary",
+    "更新 README、产品审计和任务记录"
+  ],
+  "out_of_scope": [
+    "用户自定义公式",
+    "列拖拽排序",
+    "新增后端 read model 字段",
+    "改变 eval run 原始结果"
+  ],
+  "verification": [
+    "红灯 Web unit: cd apps/web && npm run test:unit -- components/run-matrix/run-matrix-export.test.ts components/saved-views/saved-run-view-config.test.ts -> failed，CSV 尚无 Summary，saved view 尚未恢复 matrix_show_summary。",
+    "红灯 API: cd apps/api && UV_NO_CACHE=1 uv run pytest tests/test_api_commands.py -k saved_run_view_endpoints_create_list_and_delete_view -> failed，saved view config 丢弃 matrix_show_summary。",
+    "红灯 Repository: cd apps/api && UV_NO_CACHE=1 uv run pytest tests/test_sql_repository.py -k saved_run_view_round_trip_normalizes_filters -> failed，Repository normalizer 丢弃 matrix_show_summary。",
+    "红灯 E2E: cd apps/web && npm run e2e -- skills-workbench.spec.ts -g \"run matrix|save and reapply\" -> failed，Run matrix 没有 Summary column / saved view 没有 Summary column 控制。",
+    "绿色目标 Web unit: cd apps/web && npm run test:unit -- components/run-matrix/run-matrix-export.test.ts components/saved-views/saved-run-view-config.test.ts -> 2 files / 7 tests passed。",
+    "绿色目标 API: cd apps/api && UV_NO_CACHE=1 uv run pytest tests/test_api_commands.py -k saved_run_view_endpoints_create_list_and_delete_view -> 1 passed。",
+    "绿色目标 Repository: cd apps/api && UV_NO_CACHE=1 uv run pytest tests/test_sql_repository.py -k saved_run_view_round_trip_normalizes_filters -> 1 passed。",
+    "绿色目标 E2E: cd apps/web && npm run e2e -- skills-workbench.spec.ts -g \"run matrix|save and reapply\" -> 2 passed。",
+    "绿色目标 URL E2E: cd apps/web && npm run e2e -- url-state.spec.ts -g \"history comparison\" -> 1 passed。",
+    "视觉基线: cd apps/web && npm run e2e -- visual-workbench.spec.ts -g \"run comparison\" --update-snapshots -> 1 passed。",
+    "完整 API: cd apps/api && UV_NO_CACHE=1 uv run pytest -> 111 passed。",
+    "完整 Web unit: cd apps/web && npm run test:unit -> 7 files / 23 tests passed。",
+    "完整 Web build: cd apps/web && npm run build -> passed。",
+    "完整 Web audit: cd apps/web && npm audit --omit=dev -> found 0 vulnerabilities。",
+    "完整 Web typecheck: cd apps/web && npm run typecheck -> first failed on missing default matrix_show_summary in saved-run-view-config.test.ts, fixed, then passed。",
+    "完整 Playwright: cd apps/web && npm run e2e -> 74 passed。",
+    "收口 Web unit 复跑: cd apps/web && npm run test:unit -> 7 files / 23 tests passed。",
+    "空白检查: git diff --check -> passed。",
+    "任务 JSON 检查: jq empty .agent/tasks.json .agent/tasks/TASK-075.json -> passed。"
+  ]
+}

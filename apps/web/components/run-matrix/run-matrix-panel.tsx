@@ -5,6 +5,8 @@ import { Fragment, useId } from "react";
 import { CheckboxField, SelectField } from "@/components/forms/workbench-field";
 import {
   buildRunMatrixCsv,
+  caseResultSummary,
+  caseResultSummaryText,
   getCaseImpact,
   impactCopy,
   impactOrder,
@@ -21,6 +23,7 @@ export type RunMatrixControls = {
   matrix_impact: "all" | MatrixImpact;
   matrix_show_impact: "true" | "false";
   matrix_show_score: "true" | "false";
+  matrix_show_summary: "true" | "false";
 };
 
 const impactClass: Record<MatrixImpact, string> = {
@@ -65,11 +68,13 @@ export function RunMatrixPanel({
     : [{ impact: "waiting" as MatrixImpact, label: null, rows: visibleRows }];
   const showImpact = controls.matrix_show_impact !== "false";
   const showScore = controls.matrix_show_score !== "false";
+  const showSummary = controls.matrix_show_summary !== "false";
   const descriptionId = useId();
   const groupRowCount = groupedRows.filter((group) => Boolean(group.label)).length;
   const tableRowCount = 1 + groupRowCount + visibleRows.length;
-  const tableColCount = runs.length + (showImpact ? 2 : 1);
-  const runColumnOffset = showImpact ? 3 : 2;
+  const tableColCount = runs.length + 1 + (showImpact ? 1 : 0) + (showSummary ? 1 : 0);
+  const summaryColumnIndex = 2 + (showImpact ? 1 : 0);
+  const runColumnOffset = 2 + (showImpact ? 1 : 0) + (showSummary ? 1 : 0);
   const matrixDescription = loading
     ? "正在加载矩阵。"
     : `${runs.length} runs · ${cases.length} cases · 当前筛选生效`;
@@ -83,6 +88,7 @@ export function RunMatrixPanel({
       rows: visibleRows,
       runs,
       showImpact,
+      showSummary,
     });
     const href = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
     const link = document.createElement("a");
@@ -141,6 +147,13 @@ export function RunMatrixPanel({
           label="Impact column"
           onChange={(event) => onControlChange("matrix_show_impact", event.currentTarget.checked ? "true" : "false")}
         />
+        <CheckboxField
+          aria-label="Summary column"
+          checked={showSummary}
+          className="runMatrixToggle"
+          label="Summary column"
+          onChange={(event) => onControlChange("matrix_show_summary", event.currentTarget.checked ? "true" : "false")}
+        />
         <button
           className="runMatrixExportButton"
           disabled={!canExport}
@@ -168,6 +181,7 @@ export function RunMatrixPanel({
               <tr aria-rowindex={1}>
                 <th aria-colindex={1} className="runMatrixCaseHeader" scope="col">Case</th>
                 {showImpact ? <th aria-colindex={2} className="runMatrixImpactHeader" scope="col">Impact</th> : null}
+                {showSummary ? <th aria-colindex={summaryColumnIndex} className="runMatrixSummaryHeader" scope="col">Summary</th> : null}
                 {runs.map((row, runIndex) => (
                   <th
                     aria-colindex={runIndex + runColumnOffset}
@@ -192,6 +206,7 @@ export function RunMatrixPanel({
                   ) : null}
                   {group.rows.map(({ impact, row }) => {
                     const rowIndex = bodyRowIndex++;
+                    const summaryText = caseResultSummaryText(caseResultSummary(cells, runs, row.case.id));
                     return (
                       <tr aria-rowindex={rowIndex} key={row.case.id}>
                         <th aria-colindex={1} className="runMatrixCaseTitle" scope="row">
@@ -205,6 +220,15 @@ export function RunMatrixPanel({
                             className="runMatrixImpactCell"
                           >
                             <span className={impactClass[impact]}>{impactCopy[impact]}</span>
+                          </td>
+                        ) : null}
+                        {showSummary ? (
+                          <td
+                            aria-colindex={summaryColumnIndex}
+                            aria-label={`${row.case.title} 的结果摘要：${summaryText}`}
+                            className="runMatrixSummaryCell"
+                          >
+                            <span>{summaryText}</span>
                           </td>
                         ) : null}
                         {runs.map((run, runIndex) => {

@@ -6938,6 +6938,24 @@ body {
   background: #ffffff;
 }
 
+.runMatrixSummaryHeader,
+.runMatrixSummaryCell {
+  width: 142px;
+  min-width: 142px;
+  background: #ffffff;
+}
+
+.runMatrixSummaryCell span {
+  display: inline-flex;
+  border-radius: 999px;
+  background: #eef4ff;
+  color: #344054;
+  font-size: 11px;
+  font-weight: 950;
+  padding: 5px 9px;
+  white-space: nowrap;
+}
+
 .runMatrixRunHeader {
   width: 148px;
   min-width: 148px;

@@ -10,6 +10,14 @@
 
 ## Session Log
 
+### 2026-05-17 19:09 CST - TASK-075 Run matrix 结果摘要列
+
+- Run matrix 默认新增 `Summary` 指标列，按当前可见 runs 汇总每条 case 的通过、失败和未覆盖数量，减少横向比较时的心算成本。
+- 控制条新增 `Summary column` checkbox；关闭后表格、URL state、saved run view config 和 CSV 导出都会同步隐藏该列。
+- CSV helper 新增 `caseResultSummary` / `caseResultSummaryText`，前端只在当前矩阵视图内计算，不新增后端 read model 字段。
+- README、产品体验评审、摩擦审计、完成度审计、Superpowers spec/plan 和 TASK-075 任务记录已更新；run comparison 视觉基线已按意图更新。
+- 已验证：红灯单元测试先失败于 CSV/saved view 缺少 Summary；红灯 API 和 Repository 先失败于 `matrix_show_summary` 被丢弃；红灯 E2E 先失败于 Run matrix 没有 `Summary column`；绿色后目标单元测试 2 files/7 tests passed、目标 API 1 passed、目标 Repository 1 passed、目标 Run matrix/saved view E2E 2 passed、目标 URL E2E 1 passed；run comparison 视觉基线更新 1 passed；`UV_NO_CACHE=1 uv run pytest` 111 passed；`npm run test:unit` 7 files/23 tests passed；`npm run build` passed；`npm audit --omit=dev` found 0 vulnerabilities；`npm run typecheck` 初次发现测试默认值漏补 `matrix_show_summary`，修复后 passed；完整 `npm run e2e` 74 passed；`git diff --check` 和任务 JSON 检查通过。
+
 ### 2026-05-17 18:52 CST - TASK-074 Run matrix sticky header
 
 - Run matrix 表头新增 sticky top，纵向滚动矩阵时 run header 会保持可见；左上角 `Case` header 提高 z-index，继续同时承担横向和纵向上下文。

@@ -18,6 +18,7 @@ export const DEFAULT_RUN_MATRIX_CONTROLS: RunMatrixControls = {
   matrix_impact: "all",
   matrix_show_impact: "true",
   matrix_show_score: "true",
+  matrix_show_summary: "true",
 };
 
 export const DEFAULT_AUDIT_FILTERS: AuditExplorerFilters = {
@@ -69,6 +70,7 @@ const MATRIX_IMPACTS: RunMatrixControls["matrix_impact"][] = [
 ];
 const MATRIX_SCORES: RunMatrixControls["matrix_show_score"][] = ["true", "false"];
 const MATRIX_IMPACT_COLUMNS: RunMatrixControls["matrix_show_impact"][] = ["true", "false"];
+const MATRIX_SUMMARIES: RunMatrixControls["matrix_show_summary"][] = ["true", "false"];
 const AUDIT_RESOURCE_TYPES = ["all", "skill", "variant", "eval_run"];
 
 export function parseWorkbenchUrlState(search: string | URLSearchParams): WorkbenchUrlState {
@@ -99,6 +101,7 @@ export function parseWorkbenchUrlState(search: string | URLSearchParams): Workbe
       matrix_impact: enumValue(params.get("matrix_impact"), MATRIX_IMPACTS, "all"),
       matrix_show_impact: enumValue(params.get("matrix_impact_column"), MATRIX_IMPACT_COLUMNS, "true"),
       matrix_show_score: enumValue(params.get("matrix_score"), MATRIX_SCORES, "true"),
+      matrix_show_summary: enumValue(params.get("matrix_summary"), MATRIX_SUMMARIES, "true"),
     },
     selectedCaseId: params.get("case"),
     selectedDiffPath: params.get("diff_file"),
@@ -136,6 +139,7 @@ export function workbenchUrlForState({ hash, pathname, state }: WorkbenchUrlInpu
     setParam(params, "matrix_impact", nonDefault(state.runMatrixControls.matrix_impact, DEFAULT_RUN_MATRIX_CONTROLS.matrix_impact));
     setParam(params, "matrix_impact_column", nonDefault(state.runMatrixControls.matrix_show_impact, DEFAULT_RUN_MATRIX_CONTROLS.matrix_show_impact));
     setParam(params, "matrix_score", nonDefault(state.runMatrixControls.matrix_show_score, DEFAULT_RUN_MATRIX_CONTROLS.matrix_show_score));
+    setParam(params, "matrix_summary", nonDefault(state.runMatrixControls.matrix_show_summary, DEFAULT_RUN_MATRIX_CONTROLS.matrix_show_summary));
   }
 
   if (state.mode === "promotion" && state.promotionTarget) {

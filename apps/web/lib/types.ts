@@ -307,6 +307,7 @@ export type SavedView = {
     | "matrix_impact"
     | "matrix_show_impact"
     | "matrix_show_score"
+    | "matrix_show_summary"
     | "compare_baseline_run_id"
     | "compare_candidate_run_id",
     string

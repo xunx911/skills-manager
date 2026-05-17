@@ -38,6 +38,7 @@ export function runMatrixControlsFromConfig(config: SavedView["config"]): Partia
     ...(isMatrixImpactConfig(config.matrix_impact) ? { matrix_impact: config.matrix_impact } : {}),
     ...(config.matrix_show_impact === "true" || config.matrix_show_impact === "false" ? { matrix_show_impact: config.matrix_show_impact } : {}),
     ...(config.matrix_show_score === "true" || config.matrix_show_score === "false" ? { matrix_show_score: config.matrix_show_score } : {}),
+    ...(config.matrix_show_summary === "true" || config.matrix_show_summary === "false" ? { matrix_show_summary: config.matrix_show_summary } : {}),
   };
 }
 

@@ -116,6 +116,7 @@ test("workbench restores history comparison and promotion review from URL", asyn
   await page.locator(".historyRunRow").filter({ hasText: "1/1" }).getByRole("button", { name: "候选" }).click();
   await page.getByLabel("Matrix impact filter").selectOption("fixed");
   await page.getByLabel("Impact column").uncheck();
+  await page.getByLabel("Summary column").uncheck();
 
   await expect(page).toHaveURL(/[?&]mode=history(?:&|$)/);
   await expect(page).toHaveURL(/[?&]run_status=finished(?:&|$)/);
@@ -124,12 +125,14 @@ test("workbench restores history comparison and promotion review from URL", asyn
   await expect(page).toHaveURL(/[?&]compare_candidate=[^&]+/);
   await expect(page).toHaveURL(/[?&]matrix_impact=fixed(?:&|$)/);
   await expect(page).toHaveURL(/[?&]matrix_impact_column=false(?:&|$)/);
+  await expect(page).toHaveURL(/[?&]matrix_summary=false(?:&|$)/);
 
   await reloadWorkbench(page);
   await expect(page.getByRole("tab", { name: "历史", exact: true })).toHaveAttribute("aria-selected", "true");
   await expect(page.getByLabel("Status filter")).toHaveValue("finished");
   await expect(page.getByLabel("Matrix impact filter")).toHaveValue("fixed");
   await expect(page.getByLabel("Impact column")).not.toBeChecked();
+  await expect(page.getByLabel("Summary column")).not.toBeChecked();
   await expect(page.getByRole("table", { name: "Run matrix results" }).getByRole("columnheader", { name: "Impact" })).toHaveCount(0);
   await expect(page.getByTestId("run-comparison-panel")).toContainText("修复 1");
 });
