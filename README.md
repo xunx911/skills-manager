@@ -114,7 +114,7 @@ description: Review pull requests for auth and data access regressions.
 5. 在评审页查看 readiness、逐 case 修复/回退、bundle diff；逐个文件勾选 `已查看此文件` 后，header 会显示 `x/y reviewed`。如果有风险，点击 `接受风险并设为当前版本` 会要求填写 `设为当前版本说明`；说明最多 1000 字符，缺失或超长都会显示字段级错误。
 6. 提交后，variant 历史列表会刷新，候选版本显示为 `Current`。
 
-记录多次手工测评后，打开 `历史` 可按 exact variant version、eval set version、strategy、status 过滤 run，并把当前筛选保存成命名视图，之后一键恢复同一组筛选。页面顶部的 `Run matrix` 会把当前筛选下的 runs 展成 case x run 矩阵，单元格显示 `通过`、`不通过` 或 `-` 未覆盖，并用原生 `table`、caption、列/行标题和完整单元格标签暴露给辅助技术。每条 run 都可以标为 `对照` 或 `候选`；选择两条 run 后，矩阵会在每个 case 行显示 `修复`、`回退`、`稳定通过`、`仍未通过` 或 `缺失`。矩阵还支持按 impact 过滤、按 impact 分组、隐藏 run header 分数、隐藏 `Impact` 列；这些矩阵控制项会和历史筛选一起保存到命名视图里。当两条 run 绑定同一个 `EvalSetVersion` 时，右侧会显示通过率变化、逐 case `修复/回退/稳定通过/仍未通过`，并可把候选 run `接受为验证依据`；可选说明最多 1000 字符，超限会在 note 字段旁显示错误并聚焦错误摘要。在 `测评` 中，每个 case 行都有 `历史`，可以查看旧 case version 的 input、expected output、notes，以及它进入过哪些 eval set snapshot；如果要回到旧 input/expected output，点击旧版本上的 `恢复此版本`，系统会创建一个新的当前 case version 和新的 `EvalSetVersion`，不会覆盖历史。
+记录多次手工测评后，打开 `历史` 可按 exact variant version、eval set version、strategy、status 过滤 run，并把当前筛选保存成命名视图，之后一键恢复同一组筛选。页面顶部的 `Run matrix` 会把当前筛选下的 runs 展成 case x run 矩阵，单元格显示 `通过`、`不通过` 或 `-` 未覆盖，并用原生 `table`、caption、列/行标题和完整单元格标签暴露给辅助技术。每条 run 都可以标为 `对照` 或 `候选`；选择两条 run 后，矩阵会在每个 case 行显示 `修复`、`回退`、`稳定通过`、`仍未通过` 或 `缺失`。矩阵还支持按 impact 过滤、按 impact 分组、隐藏 run header 分数、隐藏 `Impact` 列，并能用 `Export CSV` 导出当前可见矩阵视图；这些矩阵控制项会和历史筛选一起保存到命名视图里。当两条 run 绑定同一个 `EvalSetVersion` 时，右侧会显示通过率变化、逐 case `修复/回退/稳定通过/仍未通过`，并可把候选 run `接受为验证依据`；可选说明最多 1000 字符，超限会在 note 字段旁显示错误并聚焦错误摘要。在 `测评` 中，每个 case 行都有 `历史`，可以查看旧 case version 的 input、expected output、notes，以及它进入过哪些 eval set snapshot；如果要回到旧 input/expected output，点击旧版本上的 `恢复此版本`，系统会创建一个新的当前 case version 和新的 `EvalSetVersion`，不会覆盖历史。
 
 ### 验证命令
 

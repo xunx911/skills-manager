@@ -157,6 +157,7 @@
 - TASK-068 新增本地 session 退出控制：`Local login` 面板提供 `退出登录`，调用 `DELETE /api/session` 清除 actor cookie，前端刷新 actor 和 capabilities，退出后创建/导入 skill 回到默认 owner。
 - TASK-069 新增 EvalRun results 精确字段校验：`POST /api/eval-runs` 不再把遗漏 case result 静默记为 `false`，也不再忽略未知 result key；缺失或多余结果会返回 `results.<case_version_id>` 字段错误。
 - TASK-070 新增 Run matrix `Impact` 列配置：用户可以隐藏 `Impact` 列，URL state 和 saved run view 都会保存 `matrix_show_impact=false`。
+- TASK-071 新增 Run matrix CSV 导出：用户可以把当前可见矩阵视图导出为 CSV，导出会遵循当前 rows 和 `Impact column` 可见性。
 
 影响：
 
@@ -233,7 +234,7 @@
 建议：
 
 - 下一轮视觉重构不要先换颜色；先做信息密度层级：primary decision surface、supporting evidence、secondary admin actions 分层。
-- 对 `history/run matrix` 和 `promotion` 使用更密的数据产品排版，对 first-run 使用更强引导排版。Run matrix 已完成第一条列配置，后续继续做自定义指标列和导出。
+- 对 `history/run matrix` 和 `promotion` 使用更密的数据产品排版，对 first-run 使用更强引导排版。Run matrix 已完成第一条列配置和当前视图 CSV 导出，后续继续做自定义指标列和更自由的列配置。
 
 ## 下一轮任务排序
 

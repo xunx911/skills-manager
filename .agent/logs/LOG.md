@@ -10,6 +10,14 @@
 
 ## Session Log
 
+### 2026-05-17 18:27 CST - TASK-071 Run matrix CSV 导出
+
+- `RunMatrixPanel` 新增 `Export CSV` 按钮，导出当前可见 Run matrix rows，并跟随 `Impact column` 可见性决定是否输出 `Impact` 列。
+- 新增 `run-matrix-export` helper，集中处理 impact 文案、run label、CSV escaping、缺失单元格 `未覆盖` 和下载文件名；面板只负责当前视图状态和浏览器下载触发。
+- Run matrix E2E 覆盖真实 CSV 下载、文件名、完整矩阵内容、隐藏 `Impact` 列后的 header，以及按 impact filter 收窄后只导出当前可见 case。
+- README、产品体验评审、摩擦审计、完成度审计、Superpowers spec/plan 和 TASK-071 任务记录已更新；run comparison 视觉基线已按意图更新。
+- 已验证：红灯单元测试先失败于 helper 不存在；红灯 Run matrix E2E 先失败于没有 `Export CSV`；绿色后目标单元测试 1 file/2 tests passed、目标 Run matrix E2E 1 passed；run comparison 视觉基线更新 1 passed；`UV_NO_CACHE=1 uv run pytest` 111 passed；`npm run test:unit` 6 files/18 tests passed；`npm run build` passed；`npm run typecheck` passed；`npm audit --omit=dev` found 0 vulnerabilities；完整 `npm run e2e` 74 passed；`git diff --check` 和任务 JSON 检查通过。
+
 ### 2026-05-17 18:12 CST - TASK-070 Run matrix Impact 列配置
 
 - `RunMatrixControls` 新增 `matrix_show_impact`，默认显示 `Impact` 列；Run matrix 控制条新增 `Impact column` checkbox。

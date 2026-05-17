@@ -488,5 +488,12 @@
     "priority": 70,
     "passes": true,
     "spec": ".agent/tasks/TASK-070.json"
+  },
+  {
+    "id": "071",
+    "title": "Run matrix CSV 导出",
+    "priority": 71,
+    "passes": true,
+    "spec": ".agent/tasks/TASK-071.json"
   }
 ]

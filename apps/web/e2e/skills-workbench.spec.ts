@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { addEvalCase, appendSkillBundleVersion, clearSkillCatalog, createStoredZip, gotoSkills, importSkillBundle, reloadWorkbench } from "./helpers";
@@ -828,12 +828,32 @@ test("operator can inspect run matrix across eval runs", async ({ page }) => {
   await expect(matrixTable.getByRole("cell", { name: /PR: token logging.*通过/ })).toHaveCount(2);
   await expect(matrixTable.getByRole("cell", { name: /PR: audit log leak.*未覆盖/ })).toBeVisible();
 
+  const fullMatrixDownload = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Export CSV" }).click();
+  const fullMatrixCsv = await fullMatrixDownload;
+  expect(fullMatrixCsv.suggestedFilename()).toMatch(new RegExp(`^run-matrix-${skillName}-.+\\.csv$`));
+  const fullMatrixCsvPath = await fullMatrixCsv.path();
+  expect(fullMatrixCsvPath).toBeTruthy();
+  const fullMatrixCsvText = await readFile(fullMatrixCsvPath!, "utf8");
+  expect(fullMatrixCsvText).toContain("Case,Versions,Impact");
+  expect(fullMatrixCsvText).toContain("PR: missing tenant scope");
+  expect(fullMatrixCsvText).toContain("PR: token logging");
+  expect(fullMatrixCsvText).toContain("不通过");
+  expect(fullMatrixCsvText).toContain("通过");
+
   await expect(page.getByLabel("Impact column")).toBeChecked();
   await page.getByLabel("Impact column").uncheck();
   await expect(matrixTable).toHaveAttribute("aria-colcount", "3");
   await expect(matrixTable.getByRole("columnheader", { name: "Impact" })).toHaveCount(0);
   await expect(page.locator(".runMatrixImpactCell")).toHaveCount(0);
   await expect(matrixTable.getByRole("cell", { name: /PR: token logging.*通过/ })).toHaveCount(2);
+  const compactMatrixDownload = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Export CSV" }).click();
+  const compactMatrixCsv = await compactMatrixDownload;
+  const compactMatrixCsvPath = await compactMatrixCsv.path();
+  expect(compactMatrixCsvPath).toBeTruthy();
+  const compactMatrixCsvText = await readFile(compactMatrixCsvPath!, "utf8");
+  expect(compactMatrixCsvText.split("\n")[0]).not.toContain("Impact");
   await page.getByLabel("Impact column").check();
   await expect(matrixTable.getByRole("columnheader", { name: "Impact" })).toBeVisible();
 
@@ -853,6 +873,16 @@ test("operator can inspect run matrix across eval runs", async ({ page }) => {
   await expect(page.locator(".runMatrixCaseTitle", { hasText: "PR: missing tenant scope" })).toBeVisible();
   await expect(page.locator(".runMatrixCaseTitle", { hasText: "PR: token logging" })).toHaveCount(0);
   await expect(page.locator(".runMatrixCaseTitle", { hasText: "PR: audit log leak" })).toHaveCount(0);
+  const filteredMatrixDownload = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Export CSV" }).click();
+  const filteredMatrixCsv = await filteredMatrixDownload;
+  const filteredMatrixCsvPath = await filteredMatrixCsv.path();
+  expect(filteredMatrixCsvPath).toBeTruthy();
+  const filteredMatrixCsvText = await readFile(filteredMatrixCsvPath!, "utf8");
+  expect(filteredMatrixCsvText).toContain("修复");
+  expect(filteredMatrixCsvText).toContain("PR: missing tenant scope");
+  expect(filteredMatrixCsvText).not.toContain("PR: token logging");
+  expect(filteredMatrixCsvText).not.toContain("PR: audit log leak");
 });
 
 test("operator can save and reapply an eval run history view", async ({ page }) => {

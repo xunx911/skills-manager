@@ -1,0 +1,36 @@
+{
+  "id": "071",
+  "title": "Run matrix CSV 导出",
+  "status": "complete",
+  "goal": "让 Run matrix 支持把当前可见矩阵视图导出为 CSV，方便用户把评测证据带出系统。",
+  "scope": [
+    "RunMatrixPanel 新增 Export CSV 按钮",
+    "CSV 导出遵循当前 row filter 和 Impact column 可见性",
+    "CSV 单元格使用 通过/不通过/未覆盖",
+    "文件名包含 skill slug",
+    "新增 CSV helper 单元测试和真实下载 E2E",
+    "更新 README、产品审计和任务记录"
+  ],
+  "out_of_scope": [
+    "后端导出接口",
+    "Excel/JSON/Parquet 导出",
+    "异步导出任务",
+    "跨 skill 聚合导出",
+    "任意列拖拽或自定义指标列"
+  ],
+  "verification": [
+    "红灯单元测试: cd apps/web && npm run test:unit -- components/run-matrix/run-matrix-export.test.ts 先失败于找不到 `./run-matrix-export`。",
+    "红灯 E2E: cd apps/web && npm run e2e -- skills-workbench.spec.ts -g \"run matrix\" 先失败于找不到 `Export CSV` 按钮并等待 download 超时。",
+    "绿色目标单元测试: cd apps/web && npm run test:unit -- components/run-matrix/run-matrix-export.test.ts -> 1 file / 2 tests passed。",
+    "绿色目标 E2E: cd apps/web && npm run e2e -- skills-workbench.spec.ts -g \"run matrix\" -> 1 passed。",
+    "视觉基线: cd apps/web && npm run e2e -- visual-workbench.spec.ts -g \"run comparison\" --update-snapshots -> 1 passed。",
+    "API: cd apps/api && UV_NO_CACHE=1 uv run pytest -> 111 passed。",
+    "Web unit: cd apps/web && npm run test:unit -> 6 files / 18 tests passed。",
+    "Web build: cd apps/web && npm run build -> passed。",
+    "Web audit: cd apps/web && npm audit --omit=dev -> found 0 vulnerabilities。",
+    "Web typecheck: cd apps/web && npm run typecheck -> passed。",
+    "Web E2E: cd apps/web && npm run e2e -> 74 passed。",
+    "Whitespace: git diff --check -> passed。",
+    "Task JSON: jq empty .agent/tasks.json .agent/tasks/TASK-071.json -> passed。"
+  ]
+}
